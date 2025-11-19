@@ -22,82 +22,107 @@ public class RolBean implements Serializable {
     private RolControlador rolCtrl = new RolControladorImpl();
 
     private List<Rol> lista;
-    private Rol formulario = new Rol();   // se usa en create y edit
+    private Rol formulario;
+    private Rol rolSeleccionado;
 
-    public RolBean() { }
+    // Para editar por ?id=XX
+    private Long idRol;
 
     @PostConstruct
     public void init() {
-        cargarLista();
-
-        // Si estamos en edit.xhtml, viene un parámetro ?id=XX
-        String idStr = FacesContext.getCurrentInstance()
-                .getExternalContext()
-                .getRequestParameterMap()
-                .get("id");
-        if (idStr != null && !idStr.isEmpty()) {
-            try {
-                Long id = Long.valueOf(idStr);
-                Rol encontrado = rolCtrl.buscarPorId(id);
-                if (encontrado != null) {
-                    formulario = encontrado;
-                }
-            } catch (NumberFormatException e) {
-                // opcional: loguear
-            }
-        }
+        listar();
+        formulario = new Rol();
     }
 
-    private void cargarLista() {
+    public void listar() {
         lista = rolCtrl.listarTodos();
     }
 
-    // ---------- Navegación ----------
-
-    public String irListado() {
-        return "/Rol/index?faces-redirect=true";
+    /**
+     * Cargar un rol específico para edición (usado por <f:viewAction>).
+     */
+    public String cargarRol() {
+        if (idRol != null) {
+            Rol r = rolCtrl.buscarPorId(idRol);
+            if (r != null) {
+                rolSeleccionado = r;
+                formulario = r;
+            } else {
+                FacesContext.getCurrentInstance().addMessage(
+                        null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                "Rol no encontrado",
+                                "El registro solicitado no existe."));
+            }
+        }
+        return null;
     }
 
-    public String irCrear() {
-        formulario = new Rol(); // limpio
-        return "/Rol/create?faces-redirect=true";
+    /**
+     * Crear o actualizar un rol.
+     */
+    public String guardar() {
+        try {
+            boolean esNuevo = (formulario.getId() == null);
+
+            if (esNuevo) {
+                rolCtrl.crear(formulario);
+            } else {
+                rolCtrl.actualizar(formulario);
+            }
+
+            listar();
+            FacesContext.getCurrentInstance().addMessage(
+                    null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO,
+                            "Éxito",
+                            "Rol guardado correctamente."));
+        } catch (Exception e) {
+            FacesContext.getCurrentInstance().addMessage(
+                    null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Error al guardar",
+                            e.getMessage()));
+        }
+        return null; // por ahora nos quedamos en la misma vista
     }
 
-    public String irEditar(Long id) {
-        // Pasamos el id por parámetro y en init() se carga
-        return "/Rol/edit?faces-redirect=true&id=" + id;
+    /**
+     * Eliminar el rol seleccionado.
+     */
+    public String eliminar() {
+        if (rolSeleccionado != null && rolSeleccionado.getId() != null) {
+            try {
+                rolCtrl.eliminar(rolSeleccionado.getId());
+                listar();
+                FacesContext.getCurrentInstance().addMessage(
+                        null,
+                        new FacesMessage(FacesMessage.SEVERITY_INFO,
+                                "Eliminado",
+                                "El rol ha sido eliminado."));
+            } catch (Exception e) {
+                FacesContext.getCurrentInstance().addMessage(
+                        null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                "Error al eliminar",
+                                e.getMessage()));
+            }
+        }
+        return null;
     }
 
-    // ---------- Acciones CRUD ----------
-
-    public String guardarNuevo() {
-        rolCtrl.crear(formulario);
-        FacesContext.getCurrentInstance().addMessage(null,
-                new FacesMessage(FacesMessage.SEVERITY_INFO,
-                        "Rol creado correctamente", null));
-        return irListado();
+    public void cancelar() {
+        formulario = new Rol();
     }
 
-    public String actualizar() {
-        rolCtrl.actualizar(formulario);
-        FacesContext.getCurrentInstance().addMessage(null,
-                new FacesMessage(FacesMessage.SEVERITY_INFO,
-                        "Rol actualizado correctamente", null));
-        return irListado();
-    }
-
-    public void eliminar(Long id) {
-        rolCtrl.eliminar(id);
-        cargarLista();
-        FacesContext.getCurrentInstance().addMessage(null,
-                new FacesMessage(FacesMessage.SEVERITY_INFO,
-                        "Rol eliminado", null));
-    }
-
-    // ---------- Getters / Setters ----------
+    // ================= GETTERS / SETTERS =================
 
     public List<Rol> getLista() {
         return lista;
+    }
+
+    public void setLista(List<Rol> lista) {
+        this.lista = lista;
     }
 
     public Rol getFormulario() {
@@ -106,5 +131,21 @@ public class RolBean implements Serializable {
 
     public void setFormulario(Rol formulario) {
         this.formulario = formulario;
+    }
+
+    public Rol getRolSeleccionado() {
+        return rolSeleccionado;
+    }
+
+    public void setRolSeleccionado(Rol rolSeleccionado) {
+        this.rolSeleccionado = rolSeleccionado;
+    }
+
+    public Long getIdRol() {
+        return idRol;
+    }
+
+    public void setIdRol(Long idRol) {
+        this.idRol = idRol;
     }
 }

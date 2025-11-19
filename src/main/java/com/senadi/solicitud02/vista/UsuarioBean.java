@@ -3,6 +3,7 @@ package com.senadi.solicitud02.vista;
 import java.io.Serializable;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
@@ -19,9 +20,15 @@ public class UsuarioBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private UsuarioControlador usuarioCtrl = new UsuarioControladorImpl();
+
     private List<Usuario> lista;
     private Usuario formulario;
+    private Usuario usuarioSeleccionado;
 
+    // Para editar por ?id=XX
+    private Long idUsuario;
+
+    @PostConstruct
     public void init() {
         listar();
         formulario = new Usuario();
@@ -31,57 +38,105 @@ public class UsuarioBean implements Serializable {
         lista = usuarioCtrl.listarTodos();
     }
 
-    public void prepararNuevo() {
-        formulario = new Usuario();
+    // ====== Cargar usuario para edición (llamado desde <f:viewAction>) ======
+    public String cargarUsuario() {
+        if (idUsuario != null) {
+            Usuario u = usuarioCtrl.buscarPorId(idUsuario);
+            if (u != null) {
+                usuarioSeleccionado = u;
+                formulario = u;
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                "Usuario no encontrado",
+                                "El registro solicitado no existe."));
+            }
+        }
+        return null; // sin navegación
     }
 
-    public void prepararEdicion(Usuario u) {
-        formulario = u;
-    }
-
+    // ====== GUARDAR (crear / actualizar) ======
+    // Firma correcta para action="#{usuarioBean.guardar}"
     public String guardar() {
         try {
-            if (formulario.getId() == null) {
+            boolean esNuevo = (formulario.getId() == null);
+
+            if (esNuevo) {
                 usuarioCtrl.crear(formulario);
-                mensaje("Usuario creado correctamente");
             } else {
                 usuarioCtrl.actualizar(formulario);
-                mensaje("Usuario actualizado");
             }
+
             listar();
-            return "index?faces-redirect=true";
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO,
+                            "Éxito",
+                            "Usuario guardado correctamente."));
         } catch (Exception e) {
-            error(e.getMessage());
-            return null;
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Error al guardar",
+                            e.getMessage()));
         }
+        return null; // se queda en la misma vista
     }
 
-    public void eliminar(Long id) {
-        try {
-            usuarioCtrl.eliminar(id);
-            mensaje("Usuario eliminado");
-            listar();
-        } catch (Exception e) {
-            error(e.getMessage());
+    // ====== ELIMINAR ======
+    // Firma correcta para action="#{usuarioBean.eliminar}"
+    public String eliminar() {
+        if (usuarioSeleccionado != null && usuarioSeleccionado.getId() != null) {
+            try {
+                usuarioCtrl.eliminar(usuarioSeleccionado.getId());
+                listar();
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_INFO,
+                                "Eliminado",
+                                "El usuario ha sido eliminado."));
+            } catch (Exception e) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                "Error al eliminar",
+                                e.getMessage()));
+            }
         }
+        return null;
     }
 
-    public String cancelar() {
+    public void cancelar() {
         formulario = new Usuario();
-        return "index?faces-redirect=true";
     }
 
-    private void mensaje(String msg) {
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(msg));
+    // ====== GETTERS / SETTERS ======
+
+    public List<Usuario> getLista() {
+        return lista;
     }
 
-    private void error(String msg) {
-        FacesContext.getCurrentInstance().addMessage(null,
-            new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", msg));
+    public void setLista(List<Usuario> lista) {
+        this.lista = lista;
     }
 
-    // getters & setters
-    public List<Usuario> getLista() { return lista; }
-    public Usuario getFormulario() { return formulario; }
-    public void setFormulario(Usuario formulario) { this.formulario = formulario; }
+    public Usuario getFormulario() {
+        return formulario;
+    }
+
+    public void setFormulario(Usuario formulario) {
+        this.formulario = formulario;
+    }
+
+    public Usuario getUsuarioSeleccionado() {
+        return usuarioSeleccionado;
+    }
+
+    public void setUsuarioSeleccionado(Usuario usuarioSeleccionado) {
+        this.usuarioSeleccionado = usuarioSeleccionado;
+    }
+
+    public Long getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
+    }
 }

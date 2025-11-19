@@ -1,70 +1,71 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/templates/layout.xhtml">
 
-<ui:composition template="/home.xhtml">
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+    </f:metadata>
+
+    <ui:define name="titulo">Gestión de Roles</ui:define>
 
     <ui:define name="contenido">
+        <h:form id="formLista">
 
-        <h:form id="formRoles">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Roles</h3>
 
-            <p:messages id="msgs"
-                        showDetail="true"
-                        closable="true"
-                        autoUpdate="true"/>
+                    <h:link outcome="/Rol/create.xhtml"
+                            value="Nuevo Rol"
+                            styleClass="btn-primary" />
+                </div>
 
-            <h2>Gestión de Roles</h2>
+                <h:messages globalOnly="true" style="color:red;" />
 
-            <p:commandButton value="Nuevo Rol"
-                             icon="pi pi-plus"
-                             styleClass="ui-button-success"
-                             action="#{rolBean.irCrear}"
-                             ajax="false" />
+                <h:dataTable value="#{rolBean.lista}"
+                             var="r"
+                             styleClass="table table-striped"
+                             headerClass="table-header"
+                             rowClasses="table-row">
 
-            <br/><br/>
+                    <h:column>
+                        <f:facet name="header">ID</f:facet>
+                        #{r.id}
+                    </h:column>
 
-            <p:dataTable id="tablaRoles"
-                         value="#{rolBean.lista}"
-                         var="r"                         
-                         rowKey="#{r.id}"
-                         paginator="true"
-                         rows="10">
+                    <h:column>
+                        <f:facet name="header">Nombre</f:facet>
+                        #{r.nombre}
+                    </h:column>
 
-                <p:column headerText="ID" width="60">
-                    #{r.id}
-                </p:column>
+                    <h:column>
+                        <f:facet name="header">Descripción</f:facet>
+                        #{r.descripcion}
+                    </h:column>
 
-                <p:column headerText="Nombre">
-                    #{r.nombre}
-                </p:column>
+                    <h:column>
+                        <f:facet name="header">Acciones</f:facet>
 
-                <p:column headerText="Descripción">
-                    #{r.descripcion}
-                </p:column>
+                        <h:link value="Editar"
+                                outcome="/Rol/edit.xhtml">
+                            <f:param name="id" value="#{r.id}" />
+                        </h:link>
 
-                <p:column headerText="Acciones" style="width:170px">
-                    <!-- Editar navega a edit.xhtml?id=... -->
-                    <p:commandButton icon="pi pi-pencil"
-                                     title="Editar"
-                                     action="#{rolBean.irEditar(r.id)}"
-                                     ajax="false" />
+                        <h:commandLink value="Eliminar"
+                                       action="#{rolBean.eliminar}"
+                                       onclick="return confirm('¿Eliminar el rol seleccionado?');">
+                            <f:setPropertyActionListener
+                                    target="#{rolBean.rolSeleccionado}"
+                                    value="#{r}" />
+                        </h:commandLink>
+                    </h:column>
 
-                    <!-- Eliminar se queda en la misma página -->
-                    <p:commandButton icon="pi pi-trash"
-                                     styleClass="ui-button-danger"
-                                     actionListener="#{rolBean.eliminar(r.id)}"
-                                     update="@form"
-                                     onclick="return confirm('¿Eliminar este rol?');"/>
-                </p:column>
-
-            </p:dataTable>
+                </h:dataTable>
+            </div>
 
         </h:form>
-
     </ui:define>
 
 </ui:composition>
-</html>

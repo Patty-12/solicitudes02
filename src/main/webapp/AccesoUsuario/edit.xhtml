@@ -1,10 +1,82 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
-<body>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/templates/layout.xhtml">
 
-</body>
-</html>
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+        <f:viewParam name="id" value="#{accesoUsuarioBean.idAcceso}" />
+        <f:viewAction action="#{accesoUsuarioBean.cargarAcceso}" />
+    </f:metadata>
+
+    <ui:define name="titulo">Editar Acceso</ui:define>
+
+    <ui:define name="contenido">
+        <h:form id="formEditar">
+
+            <div class="card">
+                <h3>Editar Acceso de Usuario a Aplicación</h3>
+
+                <h:messages globalOnly="true" style="color:red;" />
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ID</label>
+                        <h:outputText value="#{accesoUsuarioBean.formulario.id}" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Solicitud</label>
+                        <h:selectOneMenu value="#{accesoUsuarioBean.idSolicitudSeleccionada}"
+                                         required="true"
+                                         requiredMessage="Debe seleccionar una solicitud"
+                                         styleClass="input">
+                            <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" />
+                            <f:selectItems value="#{accesoUsuarioBean.solicitudes}"
+                                           var="s"
+                                           itemLabel="ID #{s.id} - #{s.usuario.nombre} #{s.usuario.apellido}"
+                                           itemValue="#{s.id}" />
+                        </h:selectOneMenu>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Permiso</label>
+                        <h:selectOneMenu value="#{accesoUsuarioBean.idPermisoSeleccionado}"
+                                         required="true"
+                                         requiredMessage="Debe seleccionar un permiso"
+                                         styleClass="input">
+                            <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" />
+                            <f:selectItems value="#{accesoUsuarioBean.permisos}"
+                                           var="p"
+                                           itemLabel="#{p.aplicacion.nombre} - #{p.nombre}"
+                                           itemValue="#{p.id}" />
+                        </h:selectOneMenu>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de carga</label>
+                        <!-- LocalDateTime directo -->
+                        <h:outputText value="#{accesoUsuarioBean.formulario.fechaCarga}" />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <h:commandButton value="Actualizar"
+                                     action="#{accesoUsuarioBean.guardar}"
+                                     styleClass="btn-primary" />
+
+                    <h:button value="Regresar"
+                              outcome="/AccesoUsuario/index.xhtml?faces-redirect=true"
+                              styleClass="btn-secondary" />
+                </div>
+            </div>
+
+        </h:form>
+    </ui:define>
+
+</ui:composition>

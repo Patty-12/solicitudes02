@@ -8,16 +8,94 @@
     <f:metadata>
         <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
     </f:metadata>
-    
+
     <!-- Título de la pestaña -->
     <ui:define name="titulo">Panel principal</ui:define>
 
-    <!-- Solo defines el contenido de la tarjeta -->
+    <!-- Contenido del panel principal -->
     <ui:define name="contenido">
+
+        <!-- Tarjeta general para todos -->
         <div class="card">
-            <h3>Resumen General</h3>
-            <p>El contenido se ajustará según el rol del usuario.</p>
+            <h3>Panel principal</h3>
+            <p>
+                Bienvenido al Sistema de Solicitudes de Acceso a Aplicaciones y Sistemas.
+            </p>
+            <p>
+                Utilice el menú lateral para acceder a las opciones disponibles según su rol
+                (Usuario, Director o Administrador).
+            </p>
         </div>
+
+        <!-- ===== ADMINISTRADOR: accesos rápidos ===== -->
+        <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Administrador'}">
+            <div class="card">
+                <h3>Accesos rápidos - Administrador</h3>
+                <p>Gestione la seguridad y configuración del sistema.</p>
+                <ul class="quick-links">
+                    <li>
+                        <h:link outcome="/Usuario/index.xhtml" value="Gestión de Usuarios" />
+                    </li>
+                    <li>
+                        <h:link outcome="/Rol/index.xhtml" value="Catálogo de Roles" />
+                    </li>
+                    <li>
+                        <h:link outcome="/UsuarioRol/index.xhtml" value="Asignación Usuario–Rol" />
+                    </li>
+                    <li>
+                        <h:link outcome="/Aplicacion/index.xhtml" value="Gestión de Aplicaciones" />
+                    </li>
+                    <li>
+                        <h:link outcome="/PermisoAplicacion/index.xhtml" value="Permisos de Aplicaciones" />
+                    </li>
+                    <li>
+                        <h:link outcome="/Auditoria/index.xhtml" value="Auditoría del Sistema" />
+                    </li>
+                </ul>
+            </div>
+        </h:panelGroup>
+
+        <!-- ===== DIRECTOR: foco en solicitudes ===== -->
+        <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Director'}">
+            <div class="card">
+                <h3>Resumen para Director</h3>
+                <p>
+                    Desde este panel puede revisar y aprobar las solicitudes de acceso
+                    registradas por los usuarios de su área.
+                </p>
+                <ul class="quick-links">
+                    <li>
+                        <h:link outcome="/Solicitud/pendientes.xhtml" value="Solicitudes Pendientes" />
+                    </li>
+                    <li>
+                        <h:link outcome="/Solicitud/index.xhtml" value="Todas las Solicitudes" />
+                    </li>
+                    <li>
+                        <h:link outcome="/Auditoria/index.xhtml" value="Eventos de Auditoría" />
+                    </li>
+                </ul>
+            </div>
+        </h:panelGroup>
+
+        <!-- ===== USUARIO NORMAL: crear y consultar solicitudes ===== -->
+        <h:panelGroup rendered="#{loginBean.usuario.cargo ne 'Administrador'
+                                 and loginBean.usuario.cargo ne 'Director'}">
+            <div class="card">
+                <h3>Accesos rápidos - Usuario</h3>
+                <p>
+                    Registre nuevas solicitudes de acceso y consulte el estado de las que ya ha enviado.
+                </p>
+                <ul class="quick-links">
+                    <li>
+                        <h:link outcome="/Solicitud/create.xhtml" value="Nueva Solicitud de Acceso" />
+                    </li>
+                    <li>
+                        <h:link outcome="/Solicitud/index.xhtml" value="Mis Solicitudes" />
+                    </li>
+                </ul>
+            </div>
+        </h:panelGroup>
+
     </ui:define>
 
 </ui:composition>

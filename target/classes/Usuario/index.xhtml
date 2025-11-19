@@ -1,54 +1,81 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/templates/layout.xhtml">
 
-<ui:composition template="/home.xhtml">
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+    </f:metadata>
+
+    <ui:define name="titulo">Gestión de Usuarios</ui:define>
 
     <ui:define name="contenido">
+        <h:form id="formLista">
 
-        <h2>Gestión de Usuarios</h2>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Usuarios</h3>
 
-        <p:commandButton value="Nuevo Usuario"
-                         icon="pi pi-plus"
-                         styleClass="ui-button-success"
-                         action="create?faces-redirect=true" />
+                    <h:link outcome="/Usuario/create.xhtml"
+                            value="Nuevo Usuario"
+                            styleClass="btn-primary" />
+                </div>
 
-        <p:dataTable value="#{usuarioBean.lista}" var="u" 
-                     style="margin-top:20px"
-                     rowKey="#{u.id}">
+                <h:messages globalOnly="true" style="color:red;" />
 
-            <p:column headerText="ID">
-                #{u.id}
-            </p:column>
+                <h:dataTable value="#{usuarioBean.lista}"
+                             var="u"
+                             styleClass="table table-striped"
+                             headerClass="table-header"
+                             rowClasses="table-row">
 
-            <p:column headerText="Nombre">
-                #{u.nombre}
-            </p:column>
+                    <h:column>
+                        <f:facet name="header">ID</f:facet>
+                        #{u.id}
+                    </h:column>
 
-            <p:column headerText="Correo">
-                #{u.correo}
-            </p:column>
+                    <h:column>
+                        <f:facet name="header">Nombre</f:facet>
+                        #{u.nombre}
+                    </h:column>
 
-            <p:column headerText="Acciones" style="width:180px;">
-                <p:commandButton icon="pi pi-pencil"
-                                 title="Editar"
-                                 action="edit?faces-redirect=true">
-                    <f:setPropertyActionListener value="#{u}"
-                                                 target="#{usuarioBean.formulario}" />
-                </p:commandButton>
+                    <h:column>
+                        <f:facet name="header">Apellido</f:facet>
+                        #{u.apellido}
+                    </h:column>
 
-                <p:commandButton icon="pi pi-trash"
-                                 styleClass="ui-button-danger"
-                                 actionListener="#{usuarioBean.eliminar(u.id)}"
-                                 update="@form" />
-            </p:column>
+                    <h:column>
+                        <f:facet name="header">Correo</f:facet>
+                        #{u.correo}
+                    </h:column>
 
-        </p:dataTable>
+                    <h:column>
+                        <f:facet name="header">Cargo</f:facet>
+                        #{u.cargo}
+                    </h:column>
 
+                    <h:column>
+                        <f:facet name="header">Acciones</f:facet>
+
+                        <h:link value="Editar"
+                                outcome="/Usuario/edit.xhtml">
+                            <f:param name="id" value="#{u.id}" />
+                        </h:link>
+
+                        <h:commandLink value="Eliminar"
+                                       action="#{usuarioBean.eliminar}"
+                                       onclick="return confirm('¿Eliminar el usuario seleccionado?');">
+                            <f:setPropertyActionListener
+                                    target="#{usuarioBean.usuarioSeleccionado}"
+                                    value="#{u}" />
+                        </h:commandLink>
+                    </h:column>
+
+                </h:dataTable>
+            </div>
+
+        </h:form>
     </ui:define>
 
 </ui:composition>
-</html>

@@ -7,6 +7,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ComponentSystemEvent;
 
 import com.senadi.solicitud02.controlador.UsuarioControlador;
 import com.senadi.solicitud02.controlador.impl.UsuarioControladorImpl;
@@ -24,10 +25,15 @@ public class LoginBean implements Serializable {
 
     private final UsuarioControlador usuarioCtrl = new UsuarioControladorImpl();
 
+    // ---------- Login ----------
     public String login() {
         usuario = usuarioCtrl.autenticar(correo, password);
 
         if (usuario != null) {
+            // Guardar también en el SessionMap para otros beans (SolicitudBean usa "usuarioLogueado")
+            FacesContext fc = FacesContext.getCurrentInstance();
+            fc.getExternalContext().getSessionMap().put("usuarioLogueado", usuario);
+
             // Ir al home
             return "home?faces-redirect=true";
         } else {
@@ -38,16 +44,23 @@ public class LoginBean implements Serializable {
         }
     }
 
-    // Se ejecuta antes de renderizar home.xhtml
-    public void verificarSesion() throws IOException {
+    // ---------- Verificar sesión antes de renderizar vistas protegidas ----------
+    // Firma compatible con <f:event type="preRenderView" ...>
+    public void verificarSesion(ComponentSystemEvent event) {
+        FacesContext fc = FacesContext.getCurrentInstance();
+
         if (usuario == null) {
-            // si no hay usuario en sesión, redirigimos al login
-            FacesContext.getCurrentInstance()
-                        .getExternalContext()
-                        .redirect("index.xhtml");
+            try {
+                String ctxPath = fc.getExternalContext().getRequestContextPath();
+                fc.getExternalContext().redirect(ctxPath + "/index.xhtml");
+                fc.responseComplete(); // Evita que JSF siga renderizando
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
+    // ---------- Logout ----------
     public String logout() {
         FacesContext fc = FacesContext.getCurrentInstance();
         try {
@@ -58,20 +71,19 @@ public class LoginBean implements Serializable {
             String ctxPath = fc.getExternalContext().getRequestContextPath();
             fc.getExternalContext().redirect(ctxPath + "/index.xhtml");
 
-            // ya hicimos redirect, no hace falta navegación JSF
-            return null;
+            return null; // ya hicimos redirect
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
     }
 
-
-    // getters y setters
+    // ---------- Getters / Setters ----------
     public String getCorreo() { return correo; }
     public void setCorreo(String correo) { this.correo = correo; }
+
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
     public Usuario getUsuario() { return usuario; }
 }
-

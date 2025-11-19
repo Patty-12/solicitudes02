@@ -1,10 +1,104 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
-<body>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/templates/layout.xhtml">
 
-</body>
-</html>
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+        <f:viewParam name="id" value="#{auditoriaBean.idAuditoria}" />
+        <f:viewAction action="#{auditoriaBean.cargarAuditoria}" />
+    </f:metadata>
+
+    <ui:define name="titulo">Editar Registro de Auditoría</ui:define>
+
+    <ui:define name="contenido">
+        <h:form id="formEditar">
+
+            <div class="card">
+                <h3>Editar Registro de Auditoría</h3>
+
+                <h:messages globalOnly="true" style="color:red;" />
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ID</label>
+                        <h:outputText value="#{auditoriaBean.formulario.id}" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <h:selectOneMenu value="#{auditoriaBean.idUsuarioSeleccionado}"
+                                         required="true"
+                                         requiredMessage="Debe seleccionar un usuario"
+                                         styleClass="input">
+                            <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" />
+                            <f:selectItems value="#{auditoriaBean.usuarios}"
+                                           var="u"
+                                           itemLabel="#{u.nombre} #{u.apellido} (#{u.correo})"
+                                           itemValue="#{u.id}" />
+                        </h:selectOneMenu>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Acción</label>
+                        <h:inputText value="#{auditoriaBean.formulario.accion}"
+                                     required="true"
+                                     requiredMessage="La acción es obligatoria"
+                                     maxlength="60"
+                                     styleClass="input" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Entidad</label>
+                        <h:inputText value="#{auditoriaBean.formulario.entidad}"
+                                     maxlength="100"
+                                     styleClass="input" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>ID Entidad</label>
+                        <h:inputText value="#{auditoriaBean.formulario.entidadId}"
+                                     styleClass="input" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Detalle</label>
+                        <h:inputTextarea value="#{auditoriaBean.formulario.detalle}"
+                                         maxlength="255"
+                                         rows="3"
+                                         styleClass="input" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha evento</label>
+                        <!-- LocalDateTime directo -->
+                        <h:outputText value="#{auditoriaBean.formulario.fechaEvento}" />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <h:commandButton value="Actualizar"
+                                     action="#{auditoriaBean.guardar}"
+                                     styleClass="btn-primary" />
+
+                    <h:button value="Regresar"
+                              outcome="/Auditoria/index.xhtml?faces-redirect=true"
+                              styleClass="btn-secondary" />
+                </div>
+            </div>
+
+        </h:form>
+    </ui:define>
+
+</ui:composition>

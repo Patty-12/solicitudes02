@@ -1,10 +1,127 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
-<body>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/templates/layout.xhtml">
 
-</body>
-</html>
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+        <f:event type="preRenderView" listener="#{solicitudBean.prepararNuevo}" />
+    </f:metadata>
+
+    <ui:define name="titulo">Nueva Solicitud</ui:define>
+
+    <ui:define name="contenido">
+        <h:form id="formCrear">
+
+            <div class="card">
+                <h3>Nueva Solicitud de Acceso</h3>
+
+                <h:messages globalOnly="true" style="color:red;" />
+
+                <!-- Datos generales -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de creación</label>
+                        <h:outputText value="#{solicitudBean.formulario.fechaCreacion}">
+                            <h:outputText value="#{solicitudBean.formulario.fechaCreacion}" />
+
+                        </h:outputText>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <h:outputText value="#{solicitudBean.formulario.estado}" />
+                    </div>
+                </div>
+
+                <!-- Solicitante -->
+                <h4>Datos del servidor solicitante</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombres</label>
+                        <h:outputText value="#{solicitudBean.formulario.usuario.nombre}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Apellidos</label>
+                        <h:outputText value="#{solicitudBean.formulario.usuario.apellido}" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Correo institucional</label>
+                        <h:outputText value="#{solicitudBean.formulario.usuario.correo}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo</label>
+                        <h:outputText value="#{solicitudBean.formulario.usuario.cargo}" />
+                    </div>
+                </div>
+
+                <!-- Jefe -->
+                <h4>Datos del servidor que autoriza</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Correo del Director</label>
+                        <h:inputText value="#{solicitudBean.correoJefe}"
+                                     styleClass="input"
+                                     maxlength="100" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>&#160;</label>
+                        <h:commandButton value="Buscar jefe"
+                                         action="#{solicitudBean.llenarDatosJefe}"
+                                         styleClass="btn-secondary" />
+                    </div>
+                </div>
+
+                <h:panelGroup rendered="#{solicitudBean.jefe ne null}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombre del jefe</label>
+                            <h:outputText value="#{solicitudBean.jefe.nombre} #{solicitudBean.jefe.apellido}" />
+                        </div>
+                        <div class="form-group">
+                            <label>Cargo</label>
+                            <h:outputText value="#{solicitudBean.jefe.cargo}" />
+                        </div>
+                    </div>
+                </h:panelGroup>
+
+                <!-- Aplicaciones -->
+                <h4>Sistemas internos SENADI</h4>
+
+                <ui:repeat value="#{solicitudBean.aplicaciones}" var="app">
+                    <div class="form-group">
+                        <h5>#{app.nombre}</h5>
+
+                        <ui:repeat value="#{app.permisos}" var="perm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <h:selectBooleanCheckbox
+                                            value="#{solicitudBean.permisosSeleccionados[perm.id]}" />
+                                    <h:outputText value=" #{perm.nombre} - #{perm.descripcion}" />
+                                </div>
+                            </div>
+                        </ui:repeat>
+                    </div>
+                </ui:repeat>
+
+                <!-- Botones -->
+                <div class="form-actions">
+                    <h:commandButton value="Guardar"
+                                     action="#{solicitudBean.guardar}"
+                                     styleClass="btn-primary" />
+
+                    <h:button value="Cancelar"
+                              outcome="/Solicitud/index.xhtml?faces-redirect=true"
+                              styleClass="btn-secondary" />
+                </div>
+            </div>
+
+        </h:form>
+    </ui:define>
+
+</ui:composition>

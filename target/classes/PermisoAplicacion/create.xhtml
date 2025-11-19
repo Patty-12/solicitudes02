@@ -1,10 +1,72 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
-<body>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/templates/layout.xhtml">
 
-</body>
-</html>
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+    </f:metadata>
+
+    <ui:define name="titulo">Nuevo Permiso de Aplicación</ui:define>
+
+    <ui:define name="contenido">
+        <h:form id="formCrear">
+
+            <div class="card">
+                <h3>Nuevo Permiso de Aplicación</h3>
+
+                <h:messages globalOnly="true" style="color:red;" />
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Aplicación</label>
+                        <h:selectOneMenu value="#{permisoAplicacionBean.idAplicacionSeleccionada}"
+                                         required="true"
+                                         requiredMessage="Debe seleccionar una aplicación"
+                                         styleClass="input">
+                            <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" />
+                            <f:selectItems value="#{permisoAplicacionBean.aplicaciones}"
+                                           var="a"
+                                           itemLabel="#{a.nombre}"
+                                           itemValue="#{a.id}" />
+                        </h:selectOneMenu>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre permiso</label>
+                        <h:inputText value="#{permisoAplicacionBean.formulario.nombre}"
+                                     required="true"
+                                     requiredMessage="El nombre del permiso es obligatorio"
+                                     maxlength="100"
+                                     styleClass="input" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <h:inputTextarea value="#{permisoAplicacionBean.formulario.descripcion}"
+                                         maxlength="255"
+                                         rows="3"
+                                         styleClass="input" />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <h:commandButton value="Guardar"
+                                     action="#{permisoAplicacionBean.guardar}"
+                                     styleClass="btn-primary" />
+
+                    <h:button value="Cancelar"
+                              outcome="/PermisoAplicacion/index.xhtml?faces-redirect=true"
+                              styleClass="btn-secondary" />
+                </div>
+            </div>
+
+        </h:form>
+    </ui:define>
+
+</ui:composition>

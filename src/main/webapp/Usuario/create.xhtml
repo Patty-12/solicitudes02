@@ -1,47 +1,82 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/templates/layout.xhtml">
 
-<ui:composition template="/home.xhtml">
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+    </f:metadata>
+
+    <ui:define name="titulo">Nuevo Usuario</ui:define>
 
     <ui:define name="contenido">
+        <h:form id="formCrear">
 
-        <h2>Nuevo Usuario</h2>
+            <div class="card">
+                <h3>Nuevo Usuario</h3>
 
-        <h:form>
+                <h:messages globalOnly="true" style="color:red;" />
 
-            <p:panel header="Datos del Usuario">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <h:inputText value="#{usuarioBean.formulario.nombre}"
+                                     required="true"
+                                     requiredMessage="El nombre es obligatorio"
+                                     maxlength="80"
+                                     styleClass="input" />
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <h:inputText value="#{usuarioBean.formulario.apellido}"
+                                     required="true"
+                                     requiredMessage="El apellido es obligatorio"
+                                     maxlength="80"
+                                     styleClass="input" />
+                    </div>
+                </div>
 
-                <p:inputText value="#{usuarioBean.formulario.nombre}"
-                             label="Nombre"
-                             required="true" style="width:100%" />
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Correo</label>
+                        <h:inputText value="#{usuarioBean.formulario.correo}"
+                                     required="true"
+                                     requiredMessage="El correo es obligatorio"
+                                     maxlength="120"
+                                     styleClass="input" />
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo</label>
+                        <h:inputText value="#{usuarioBean.formulario.cargo}"
+                                     maxlength="80"
+                                     styleClass="input" />
+                    </div>
+                </div>
 
-                <p:inputText value="#{usuarioBean.formulario.correo}"
-                             label="Correo"
-                             required="true" style="width:100%" />
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <h:inputSecret value="#{usuarioBean.formulario.password}"
+                                       required="true"
+                                       requiredMessage="La contraseña es obligatoria"
+                                       maxlength="120"
+                                       styleClass="input" />
+                    </div>
+                </div>
 
-                <p:password value="#{usuarioBean.formulario.password}"
-                            label="Contraseña"
-                            required="true" style="width:100%" />
+                <div class="form-actions">
+                    <h:commandButton value="Guardar"
+                                     action="#{usuarioBean.guardar}"
+                                     styleClass="btn-primary" />
 
-                <br/><br/>
-
-                <p:commandButton value="Guardar" 
-                                 action="#{usuarioBean.guardar}"
-                                 styleClass="ui-button-success" />
-
-                <p:commandButton value="Cancelar"
-                                 action="#{usuarioBean.cancelar}"
-                                 styleClass="ui-button-secondary"
-                                 immediate="true" />
-
-            </p:panel>
+                    <h:button value="Cancelar"
+                              outcome="/Usuario/index.xhtml?faces-redirect=true"
+                              styleClass="btn-secondary" />
+                </div>
+            </div>
 
         </h:form>
-
     </ui:define>
 
 </ui:composition>
-</html>
