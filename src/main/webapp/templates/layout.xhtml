@@ -2,7 +2,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://xmlns.jcp.org/jsf/html"
       xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:fn="http://java.sun.com/jsp/jstl/functions">
 
 <h:head>
     <title><ui:insert name="titulo">Panel principal</ui:insert></title>
@@ -11,142 +12,146 @@
 
 <h:body>
 
-    <div class="dashboard">
+<div class="dashboard">
 
-        <!-- ===== SIDEBAR ===== -->
-        <aside class="sidebar">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
 
-            <div class="sidebar-header">
-                <h:graphicImage library="img" name="logo.png" styleClass="sidebar-logo" alt="Logo" />
-                <h3>Sistema de Solicitudes</h3>
-            </div>
+        <!-- LOGO Y TÍTULO -->
+        <div class="sidebar-header">
+            <h:graphicImage library="img" name="logo.png"
+                            styleClass="sidebar-logo"
+                            alt="Logo" />
+            <h3>Sistema de Solicitudes</h3>
+        </div>
 
-            <nav class="sidebar-nav">
-                <ul id="menu">
+        <!-- ===== MENÚ LATERAL ===== -->
+        <nav class="sidebar-nav">
+            <ul id="menu">
 
-                    <!-- TODOS: Inicio -->
+                <!-- TODOS: Inicio -->
+                <li>
+                    <h:link outcome="/home" value="Inicio" />
+                </li>
+
+                <!-- TODOS: Solicitudes -->
+                <li>
+                    <h:link outcome="/Solicitud/index" value="Solicitudes" />
+                </li>
+
+                <!-- ===== DIRECTOR (de área) ===== -->
+                <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Director' or loginBean.usuario.cargo eq 'director'}">
+
                     <li>
-                        <h:outputLink value="#{request.contextPath}/home.xhtml">
-                            Inicio
-                        </h:outputLink>
+                        <h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" />
                     </li>
 
-                    <!-- TODOS: Solicitudes -->
                     <li>
-                        <h:outputLink value="#{request.contextPath}/Solicitud/index.xhtml">
-                            Solicitudes
-                        </h:outputLink>
+                        <h:link outcome="/Reportes/index" value="Reportes" />
                     </li>
 
-                    <!-- ===== DIRECTOR ===== -->
-                    <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Director'}">
-                        <li>
-                            <h:outputLink value="#{request.contextPath}/Solicitud/pendientes.xhtml">
-                                Solicitudes Pendientes
-                            </h:outputLink>
-                        </li>
-                        <li>
-                            <h:outputLink value="#">
-                                Reportes
-                            </h:outputLink>
-                        </li>
-                    </h:panelGroup>
+                </h:panelGroup>
 
-                    <!-- ===== ADMINISTRADOR ===== -->
-                    <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Administrador'}">
+                <!-- ===== DIRECTOR TIC ===== -->
+                <h:panelGroup rendered="#{loginBean.usuario.cargo ne null and fn:contains(fn:toLowerCase(loginBean.usuario.cargo), 'tic')}">
 
-                        <!-- Gestión de Usuarios -->
-                        <li>
-                            <h:outputLink value="#{request.contextPath}/Usuario/index.xhtml">
-                                Gestión de Usuarios
-                            </h:outputLink>
-                        </li>
+                    <li>
+                        <h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" />
+                    </li>
 
-                        <!-- Catálogo de Roles -->
-                        <li>
-                            <h:outputLink value="#{request.contextPath}/Rol/index.xhtml">
-                                Catálogo de Roles
-                            </h:outputLink>
-                        </li>
+                    <li>
+                        <h:link outcome="/Reportes/index" value="Reportes" />
+                    </li>
 
-                        <!-- Asignación Usuario–Rol -->
-                        <li>
-                            <h:outputLink value="#{request.contextPath}/UsuarioRol/index.xhtml">
-                                Asignación Usuario–Rol
-                            </h:outputLink>
-                        </li>
+                </h:panelGroup>
 
-                        <!-- Gestión de Aplicaciones -->
-                        <li>
-                            <h:outputLink value="#{request.contextPath}/Aplicacion/index.xhtml">
-                                Gestión de Aplicaciones
-                            </h:outputLink>
-                        </li>
+                <!-- ===== OFICIAL DE SEGURIDAD ===== -->
+                <h:panelGroup rendered="#{loginBean.usuario.cargo ne null and fn:contains(fn:toLowerCase(loginBean.usuario.cargo), 'oficial')}">
 
-                        <!-- Permisos de Aplicaciones -->
-                        <li>
-                            <h:outputLink value="#{request.contextPath}/PermisoAplicacion/index.xhtml">
-                                Permisos de Aplicaciones
-                            </h:outputLink>
-                        </li>
+                    <li>
+                        <h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" />
+                    </li>
 
-                        <!-- Auditoría del Sistema -->
-                        <li>
-                            <h:outputLink value="#{request.contextPath}/Auditoria/index.xhtml">
-                                Auditoría del Sistema
-                            </h:outputLink>
-                        </li>
+                </h:panelGroup>
 
-                        <!-- Reportes (reservado para futuro) -->
-                        <li>
-                            <h:outputLink value="#">
-                                Reportes
-                            </h:outputLink>
-                        </li>
+                <!-- ===== ADMINISTRADOR ===== -->
+                <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Administrador'}">
 
-                    </h:panelGroup>
+                    <li>
+                        <h:link outcome="/Usuario/index" value="Gestión de Usuarios" />
+                    </li>
 
-                </ul>
-            </nav>
+                    <li>
+                        <h:link outcome="/Rol/index" value="Catálogo de Roles" />
+                    </li>
 
-            <!-- LOGOUT -->
-            <h:form id="logoutForm">
-                <h:commandButton id="logoutBtn"
-                                 value="Cerrar Sesión"
-                                 action="#{loginBean.logout}"
-                                 styleClass="btn-logout"
-                                 ajax="false" />
-            </h:form>
+                    <li>
+                        <h:link outcome="/UsuarioRol/index" value="Asignación Usuario–Rol" />
+                    </li>
 
-        </aside>
+                    <li>
+                        <h:link outcome="/Aplicacion/index" value="Gestión de Aplicaciones" />
+                    </li>
 
-        <!-- ===== CONTENIDO PRINCIPAL ===== -->
-        <main class="main-content">
+                    <li>
+                        <h:link outcome="/PermisoAplicacion/index" value="Permisos de Aplicaciones" />
+                    </li>
 
-            <header class="main-header">
-                <h2>
-                    Bienvenido,
-                    #{loginBean.usuario.nombre}
-                    #{loginBean.usuario.apellido}
-                </h2>
-                <p>
-                    Correo: #{loginBean.usuario.correo}
-                    · Cargo: #{loginBean.usuario.cargo}
-                </p>
-            </header>
+                    <li>
+                        <h:link outcome="/Auditoria/index" value="Auditoría del Sistema" />
+                    </li>
 
-            <section class="content">
-                <ui:insert name="contenido">
-                    <div class="card">
-                        <h3>Resumen General</h3>
-                        <p>El contenido se ajustará según el rol del usuario.</p>
-                    </div>
-                </ui:insert>
-            </section>
+                    <li>
+                        <h:link outcome="/Reportes/index" value="Reportes" />
+                    </li>
 
-        </main>
+                </h:panelGroup>
 
-    </div>
+            </ul>
+        </nav>
+
+        <!-- BOTÓN LOGOUT -->
+        <h:form id="logoutForm">
+            <h:commandButton id="logoutBtn"
+                             value="Cerrar Sesión"
+                             action="#{loginBean.logout}"
+                             styleClass="btn-logout"
+                             ajax="false" />
+        </h:form>
+
+    </aside>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="main-content">
+
+        <!-- ENCABEZADO SUPERIOR -->
+        <header class="main-header">
+            <h2>
+                Bienvenido,
+                #{loginBean.usuario.nombre}
+                #{loginBean.usuario.apellido}
+            </h2>
+
+            <p>
+                Correo: #{loginBean.usuario.correo}
+                <span style="margin: 0 10px;">·</span>
+                Cargo: #{loginBean.usuario.cargo}
+            </p>
+        </header>
+
+        <!-- CONTENIDO VARIABLE DE CADA PÁGINA -->
+        <section class="content">
+            <ui:insert name="contenido">
+                <div class="card">
+                    <h3>Resumen General</h3>
+                    <p>El contenido se ajustará según el rol del usuario.</p>
+                </div>
+            </ui:insert>
+        </section>
+
+    </main>
+
+</div>
 
 </h:body>
 </html>

@@ -51,21 +51,21 @@
       <version>2.2.20</version>
     </dependency>
 
-    <!-- ✅ PrimeFaces -->
+    <!--  PrimeFaces -->
     <dependency>
       <groupId>org.primefaces</groupId>
       <artifactId>primefaces</artifactId>
       <version>11.0.0</version>
     </dependency>
 
-    <!-- ✅ PrimeFaces Extensions (para habilitar <p:layout> y otros componentes avanzados) -->
+    <!--  PrimeFaces Extensions (para habilitar <p:layout> y otros componentes avanzados) -->
     <dependency>
       <groupId>org.primefaces.extensions</groupId>
       <artifactId>primefaces-extensions</artifactId>
       <version>11.0.6</version>
     </dependency>
 
-    <!-- ✅ PrimeFaces Themes (compatible con PrimeFaces 11) -->
+    <!--  PrimeFaces Themes (compatible con PrimeFaces 11) -->
     <dependency>
       <groupId>org.primefaces.themes</groupId>
       <artifactId>all-themes</artifactId>
@@ -91,7 +91,24 @@
     <groupId>javax.annotation</groupId>
     <artifactId>javax.annotation-api</artifactId>
     <version>1.3.2</version>
-</dependency>
+	</dependency>
+	
+	<!-- Necesario para evaluateExpressionGet y evitar error de ELException -->
+	<dependency>
+    <groupId>javax.el</groupId>
+    <artifactId>javax.el-api</artifactId>
+    <version>3.0.1-b06</version>
+    <scope>provided</scope>
+	</dependency>
+	
+	<!-- Necesario para <p:fileUpload> en PF 11 -->
+	<dependency>
+    <groupId>commons-fileupload</groupId>
+    <artifactId>commons-fileupload</artifactId>
+    <version>1.4</version>
+	</dependency>
+
+
 
 
   </dependencies>

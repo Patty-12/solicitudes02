@@ -2,8 +2,10 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
                 template="/templates/layout.xhtml">
 
+    <!-- Eventos iniciales -->
     <f:metadata>
         <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
         <f:event type="preRenderView" listener="#{solicitudBean.prepararNuevo}" />
@@ -12,116 +14,166 @@
     <ui:define name="titulo">Nueva Solicitud</ui:define>
 
     <ui:define name="contenido">
-        <h:form id="formCrear">
+
+        <h:form id="formSolicitud">
+
+            <!-- MENSAJES -->
+            <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true" />
 
             <div class="card">
-                <h3>Nueva Solicitud de Acceso</h3>
 
-                <h:messages globalOnly="true" style="color:red;" />
+                <!-- CABECERA -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="margin:0;">Nueva Solicitud de Acceso</h3>
 
-                <!-- Datos generales -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Fecha de creación</label>
-                        <h:outputText value="#{solicitudBean.formulario.fechaCreacion}">
-                            <h:outputText value="#{solicitudBean.formulario.fechaCreacion}" />
-
-                        </h:outputText>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Estado</label>
-                        <h:outputText value="#{solicitudBean.formulario.estado}" />
-                    </div>
+                    <p:button outcome="/Solicitud/index.xhtml"
+                              value=" Volver"
+                              icon="pi pi-arrow-left"
+                              styleClass="ui-button-secondary btn-cancelar" />
                 </div>
 
-                <!-- Solicitante -->
-                <h4>Datos del servidor solicitante</h4>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nombres</label>
+                <!-- ===================================================== -->
+                <!-- SECCIÓN: Datos del servidor solicitante               -->
+                <!-- ===================================================== -->
+                <p:panel header="Datos del Servidor Solicitante"
+                         style="margin-bottom:1rem;"
+                         styleClass="panel-claro">
+
+                    <h:panelGrid columns="2"
+                                 columnClasses="col-label, col-value"
+                                 styleClass="form-grid"
+                                 style="width:100%;">
+
+                        <h:outputText value="Nombres:" />
                         <h:outputText value="#{solicitudBean.formulario.usuario.nombre}" />
-                    </div>
-                    <div class="form-group">
-                        <label>Apellidos</label>
+
+                        <h:outputText value="Apellidos:" />
                         <h:outputText value="#{solicitudBean.formulario.usuario.apellido}" />
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Correo institucional</label>
-                        <h:outputText value="#{solicitudBean.formulario.usuario.correo}" />
-                    </div>
-                    <div class="form-group">
-                        <label>Cargo</label>
+                        <h:outputText value="Cargo:" />
                         <h:outputText value="#{solicitudBean.formulario.usuario.cargo}" />
-                    </div>
-                </div>
 
-                <!-- Jefe -->
-                <h4>Datos del servidor que autoriza</h4>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Correo del Director</label>
-                        <h:inputText value="#{solicitudBean.correoJefe}"
-                                     styleClass="input"
-                                     maxlength="100" />
-                    </div>
+                        <h:outputText value="Correo institucional:" />
+                        <h:outputText value="#{solicitudBean.formulario.usuario.correo}" />
 
-                    <div class="form-group">
-                        <label>&#160;</label>
-                        <h:commandButton value="Buscar jefe"
-                                         action="#{solicitudBean.llenarDatosJefe}"
-                                         styleClass="btn-secondary" />
-                    </div>
-                </div>
+                    </h:panelGrid>
 
-                <h:panelGroup rendered="#{solicitudBean.jefe ne null}">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Nombre del jefe</label>
-                            <h:outputText value="#{solicitudBean.jefe.nombre} #{solicitudBean.jefe.apellido}" />
-                        </div>
-                        <div class="form-group">
-                            <label>Cargo</label>
-                            <h:outputText value="#{solicitudBean.jefe.cargo}" />
-                        </div>
-                    </div>
-                </h:panelGroup>
+                </p:panel>
 
-                <!-- Aplicaciones -->
-                <h4>Sistemas internos SENADI</h4>
+                <!-- ===================================================== -->
+                <!-- SECCIÓN: Datos del Director                           -->
+                <!-- ===================================================== -->
+                <p:panel header="Datos del Servidor que Autoriza (Director)"
+                         style="margin-bottom:1rem;"
+                         styleClass="panel-claro">
 
-                <ui:repeat value="#{solicitudBean.aplicaciones}" var="app">
-                    <div class="form-group">
-                        <h5>#{app.nombre}</h5>
+                    <h:panelGrid columns="2"
+                                 columnClasses="col-label, col-value"
+                                 style="width:100%;">
 
-                        <ui:repeat value="#{app.permisos}" var="perm">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <h:selectBooleanCheckbox
-                                            value="#{solicitudBean.permisosSeleccionados[perm.id]}" />
-                                    <h:outputText value=" #{perm.nombre} - #{perm.descripcion}" />
+                        <!-- Correo Jefe -->
+                        <h:outputLabel for="correoJefe" value="Correo del Director:" />
+
+                        <h:panelGroup style="display:flex; align-items:center;">
+                            <h:inputText id="correoJefe"
+                                         value="#{solicitudBean.correoJefe}"
+                                         style="width:260px;" />
+
+                            <p:commandButton icon="pi pi-search"
+                                             title="Buscar Director"
+                                             actionListener="#{solicitudBean.llenarDatosJefe}"
+                                             update="formSolicitud"
+                                             styleClass="ui-button-secondary btn-accion"
+                                             style="margin-left:0.5rem;" />
+                        </h:panelGroup>
+
+                        <!-- Nombre Jefe -->
+                        <h:outputText value="Nombre del Director:" />
+                        <h:outputText value="#{solicitudBean.jefe.nombre} #{solicitudBean.jefe.apellido}"
+                                      rendered="#{solicitudBean.jefe ne null}" />
+
+                    </h:panelGrid>
+
+                </p:panel>
+
+                <!-- ===================================================== -->
+                <!-- SECCIÓN: Sistemas Internos y Permisos                 -->
+                <!-- ===================================================== -->
+                <p:panel header="Sistemas Institucionales SENADI"
+                         style="margin-bottom:1rem;"
+                         styleClass="panel-claro">
+
+                    <p style="font-size:13px; margin-bottom:0.5rem;">
+                        Seleccione los permisos que necesita en cada sistema.
+                    </p>
+
+                    <div class="sistemas-container">
+
+                        <ui:repeat value="#{solicitudBean.aplicaciones}" var="app">
+
+                            <div class="app-block">
+
+                                <!-- Cabecera de la aplicación -->
+                                <div class="app-header">
+                                    #{app.nombre}
+                                    <h:outputText value=" - #{app.descripcion}"
+                                                  rendered="#{not empty app.descripcion}" />
                                 </div>
+
+                                <!-- Tabla de permisos -->
+                                <table class="tabla-permisos">
+                                    <thead>
+                                        <tr>
+                                            <th>Permiso</th>
+                                            <th style="width:80px; text-align:center;">Seleccionar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <ui:repeat value="#{app.permisos}" var="perm">
+                                            <tr>
+                                                <td>
+                                                    #{perm.nombre}
+                                                    <h:outputText value=" - #{perm.descripcion}"
+                                                                  rendered="#{not empty perm.descripcion}" />
+                                                </td>
+                                                <td class="perm-check-cell">
+                                                    <h:selectBooleanCheckbox
+                                                            value="#{solicitudBean.permisosSeleccionados[perm.id]}" />
+                                                </td>
+                                            </tr>
+                                        </ui:repeat>
+                                    </tbody>
+                                </table>
+
                             </div>
+
                         </ui:repeat>
+
                     </div>
-                </ui:repeat>
 
-                <!-- Botones -->
-                <div class="form-actions">
-                    <h:commandButton value="Guardar"
+                </p:panel>
+
+                <!-- ===================================================== -->
+                <!-- SECCIÓN: Botones inferiores                            -->
+                <!-- ===================================================== -->
+                <div style="display:flex; justify-content:flex-end; gap:0.7rem; margin-top:1rem;">
+
+                    <p:button outcome="/Solicitud/index.xhtml"
+                              value=" Cancelar"
+                              icon="pi pi-times"
+                              styleClass="ui-button-secondary btn-cancelar" />
+
+                    <p:commandButton value=" Guardar"
+                                     icon="pi pi-save"
                                      action="#{solicitudBean.guardar}"
-                                     styleClass="btn-primary" />
-
-                    <h:button value="Cancelar"
-                              outcome="/Solicitud/index.xhtml?faces-redirect=true"
-                              styleClass="btn-secondary" />
+                                     ajax="false"
+                                     styleClass="ui-button-success btn-guardar" />
                 </div>
+
             </div>
 
         </h:form>
+
     </ui:define>
 
 </ui:composition>

@@ -2,35 +2,21 @@ package com.senadi.solicitud02.vista;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
-import javax.faces.event.ComponentSystemEvent;
 
-import com.senadi.solicitud02.controlador.AplicacionControlador;
-import com.senadi.solicitud02.controlador.PermisoAplicacionControlador;
-import com.senadi.solicitud02.controlador.SolicitudControlador;
-import com.senadi.solicitud02.controlador.UsuarioControlador;
-import com.senadi.solicitud02.controlador.AccesoUsuarioControlador;
+import com.senadi.solicitud02.controlador.*;
+import com.senadi.solicitud02.controlador.impl.*;
+import com.senadi.solicitud02.modelo.entidades.*;
 
-import com.senadi.solicitud02.controlador.impl.AplicacionControladorImpl;
-import com.senadi.solicitud02.controlador.impl.PermisoAplicacionControladorImpl;
-import com.senadi.solicitud02.controlador.impl.SolicitudControladorImpl;
-import com.senadi.solicitud02.controlador.impl.UsuarioControladorImpl;
-import com.senadi.solicitud02.controlador.impl.AccesoUsuarioControladorImpl;
-
-import com.senadi.solicitud02.modelo.entidades.Solicitud;
-import com.senadi.solicitud02.modelo.entidades.Usuario;
-import com.senadi.solicitud02.modelo.entidades.Aplicacion;
-import com.senadi.solicitud02.modelo.entidades.PermisoAplicacion;
-import com.senadi.solicitud02.modelo.entidades.AccesoUsuario;
-
+/**
+ * Bean de gestión de Solicitudes.
+ */
 @ManagedBean(name = "solicitudBean")
 @ViewScoped
 public class SolicitudBean implements Serializable {
@@ -46,229 +32,269 @@ public class SolicitudBean implements Serializable {
 
     // Datos de la vista
     private List<Solicitud> lista;
-    private Solicitud formulario;              // solicitud en edición/creación
-    private Solicitud solicitudSeleccionada;   // para eliminar / selección en tabla
+    private Solicitud formulario;
+    private Solicitud solicitudSeleccionada;
 
-    // Datos del jefe/director que autoriza
+    // Filtro
+    private String estadoFiltro = "TODAS";
+
+    // Para edición
+    private Long idSolicitud;
+
+    // Datos de Director (jefe)
     private String correoJefe;
     private Usuario jefe;
 
-    // Aplicaciones y permisos
+    // Aplicaciones / permisos
     private List<Aplicacion> aplicaciones;
     private Map<Long, Boolean> permisosSeleccionados = new HashMap<>();
 
-    // ID que viene por parámetro para editar (?id=XX)
-    private Long idSolicitud;
-
-    // ================= CICLO DE VIDA =================
-
     @PostConstruct
     public void init() {
-        listar();
         formulario = new Solicitud();
         cargarAplicacionesYPermisos();
+        aplicarFiltro(); // carga inicial según usuario logueado
     }
 
-    // ================= LÓGICA INTERNA =================
+    // ==========================
+    //   UTILIDADES
+    // ==========================
+
+    private Usuario obtenerUsuarioLogueado() {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        LoginBean lb = fc.getApplication()
+                         .evaluateExpressionGet(fc, "#{loginBean}", LoginBean.class);
+        if (lb != null) {
+            return lb.getUsuario();
+        }
+        return null;
+    }
 
     private void cargarAplicacionesYPermisos() {
         aplicaciones = aplicacionCtrl.listarTodos();
         permisosSeleccionados.clear();
-
         if (aplicaciones != null) {
             for (Aplicacion app : aplicaciones) {
                 if (app.getPermisos() != null) {
                     for (PermisoAplicacion p : app.getPermisos()) {
-                        permisosSeleccionados.put(p.getId(), false);
+                        permisosSeleccionados.put(p.getId(), Boolean.FALSE);
                     }
                 }
             }
         }
     }
 
-    public void listar() {
-        lista = solCtrl.listarTodos();
+    private void marcarPermisosDeSolicitud(Solicitud s) {
+        cargarAplicacionesYPermisos();
+        if (s != null && s.getAccesos() != null) {
+            for (AccesoUsuario au : s.getAccesos()) {
+                if (au.getPermiso() != null) {
+                    permisosSeleccionados.put(au.getPermiso().getId(), Boolean.TRUE);
+                }
+            }
+        }
     }
 
-    /**
-     * Prepara el bean para una nueva solicitud.
-     * Firma compatible con <f:event type="preRenderView" ...>
-     */
-    public void prepararNuevo(ComponentSystemEvent event) {
+    private void limpiarAccesosDeSolicitud(Solicitud s) {
+        if (s != null && s.getAccesos() != null) {
+            for (AccesoUsuario au : new ArrayList<>(s.getAccesos())) {
+                try {
+                    accesoCtrl.eliminar(au.getId());
+                } catch (Exception e) {
+                    // No detenemos el flujo de guardado por fallos en accesos individuales
+                    e.printStackTrace();
+                }
+            }
+            s.getAccesos().clear();
+        }
+    }
+
+    // ==========================
+    //   LISTADO / FILTRO
+    // ==========================
+
+    public void aplicarFiltro() {
+        try {
+            Usuario u = obtenerUsuarioLogueado();
+            if (u == null) {
+                lista = Collections.emptyList();
+                return;
+            }
+
+            if (estadoFiltro == null || "TODAS".equals(estadoFiltro)) {
+                lista = solCtrl.buscarPorUsuario(u.getId());
+            } else {
+                lista = solCtrl.buscarPorUsuarioYEstado(u.getId(), estadoFiltro);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Error al aplicar filtro", e.getMessage()));
+        }
+    }
+
+    public void limpiarFiltro() {
+        estadoFiltro = "TODAS";
+        aplicarFiltro();
+    }
+
+    // ==========================
+    //   NUEVA SOLICITUD
+    // ==========================
+
+    public void prepararNuevo() {
         formulario = new Solicitud();
 
-        // Recuperar usuario logueado de sesión
-        Usuario usuarioLogueado = (Usuario) FacesContext.getCurrentInstance()
-                .getExternalContext()
-                .getSessionMap()
-                .get("usuarioLogueado");
-
+        Usuario usuarioLogueado = obtenerUsuarioLogueado();
         if (usuarioLogueado != null) {
             formulario.setUsuario(usuarioLogueado);
         } else {
             formulario.setUsuario(new Usuario());
         }
 
-        // Estado y fecha por defecto
         formulario.setEstado("CREADA");
         formulario.setFechaCreacion(LocalDateTime.now());
 
         correoJefe = null;
         jefe = null;
+
         cargarAplicacionesYPermisos();
     }
 
-    /**
-     * Prepara los datos del formulario para edición
-     * a partir de la solicitudSeleccionada.
-     */
-    public void prepararEdicion() {
-        if (solicitudSeleccionada != null) {
-            formulario = solicitudSeleccionada;
+    // ==========================
+    //   CARGAR PARA EDICIÓN
+    // ==========================
 
-            // Datos del jefe (si aplica)
-            jefe = null;
-            correoJefe = null;
-
-            if (formulario.getUsuario() != null &&
-                "Director".equals(formulario.getUsuario().getCargo())) {
-                jefe = formulario.getUsuario();
-                correoJefe = jefe.getCorreo();
-            }
-
-            // Cargar aplicaciones y marcar permisos de la solicitud
-            cargarAplicacionesYPermisos();
-            if (formulario.getAccesos() != null) {
-                for (AccesoUsuario au : formulario.getAccesos()) {
-                    if (au.getPermiso() != null && au.getPermiso().getId() != null) {
-                        permisosSeleccionados.put(au.getPermiso().getId(), true);
-                    }
-                }
-            }
+    public void cargarSolicitud() {
+        if (idSolicitud == null) {
+            return;
         }
+
+        Solicitud s = solCtrl.buscarPorId(idSolicitud);
+        if (s == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Solicitud no encontrada", "ID: " + idSolicitud));
+            return;
+        }
+
+        formulario = s;
+
+        // Aquí podrías recuperar datos del jefe si más adelante los relacionas con la solicitud
+
+        marcarPermisosDeSolicitud(formulario);
     }
 
-    /**
-     * Se invoca desde edit.xhtml mediante <f:event>.
-     * Firma compatible con <f:event type="preRenderView" ...>
-     */
-    public void cargarSolicitud(ComponentSystemEvent event) {
-        if (idSolicitud != null) {
-            Solicitud s = solCtrl.buscarPorId(idSolicitud);
-            if (s != null) {
-                this.solicitudSeleccionada = s;
-                prepararEdicion();
-            } else {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                         "Solicitud no encontrada",
-                                         "El registro solicitado no existe."));
-            }
-        }
-    }
+    // ==========================
+    //   DIRECTOR (JEFE)
+    // ==========================
 
-    /**
-     * Busca al jefe/director por correo y setea el objeto jefe.
-     * Firma compatible con action="#{...}" → retorna String.
-     */
     public String llenarDatosJefe() {
         if (correoJefe != null && !correoJefe.isEmpty()) {
             jefe = usuarioCtrl.buscarPorCorreoYCargo(correoJefe, "Director");
             if (jefe == null) {
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_WARN,
-                                         "Jefe no encontrado",
-                                         "Verifique el correo institucional del Director."));
-            }
-        }
-        return null; // sin navegación
-    }
-
-    /**
-     * Crea o actualiza la solicitud y registra accesos según permisosSeleccionados.
-     * Firma compatible con action="#{...}" → retorna String.
-     */
-    public String guardar() {
-        try {
-            boolean esNueva = (formulario.getId() == null);
-
-            if (esNueva) {
-                formulario.setEstado("CREADA");
-                formulario.setFechaCreacion(LocalDateTime.now());
-                solCtrl.crear(formulario);
+                                "Director no encontrado",
+                                "Verifica el correo y que tenga cargo 'Director'"));
             } else {
-                solCtrl.actualizar(formulario);
-                // Dependiendo de tu lógica, aquí podrías limpiar accesos previos
-            }
-
-            // Crear accesos por cada permiso marcado
-            for (Map.Entry<Long, Boolean> entry : permisosSeleccionados.entrySet()) {
-                if (Boolean.TRUE.equals(entry.getValue())) {
-                    PermisoAplicacion permiso = permisoCtrl.buscarPorId(entry.getKey());
-                    if (permiso != null) {
-                        AccesoUsuario acceso = new AccesoUsuario();
-                        acceso.setSolicitud(formulario);
-                        acceso.setPermiso(permiso);
-                        accesoCtrl.crear(acceso);
-                    }
-                }
-            }
-
-            listar();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                     "Éxito",
-                                     "Solicitud guardada correctamente."));
-        } catch (Exception e) {
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                     "Error al guardar",
-                                     e.getMessage()));
-        }
-        return null; // permanece en la misma vista
-    }
-
-    /**
-     * Elimina la solicitud seleccionada.
-     * Firma compatible con action="#{...}" → retorna String.
-     */
-    public String eliminar() {
-        if (solicitudSeleccionada != null && solicitudSeleccionada.getId() != null) {
-            try {
-                solCtrl.eliminar(solicitudSeleccionada.getId());
-                listar();
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                         "Eliminada",
-                                         "La solicitud ha sido eliminada."));
-            } catch (Exception e) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                         "Error al eliminar",
-                                         e.getMessage()));
+                                "Director encontrado",
+                                jefe.getNombre() + " " + jefe.getApellido()));
             }
         }
         return null;
     }
 
-    /**
-     * Limpia el formulario y vuelve a estado inicial.
-     */
-    public void cancelar() {
-        formulario = new Solicitud();
-        correoJefe = null;
-        jefe = null;
-        cargarAplicacionesYPermisos();
+    // ==========================
+    //   GUARDAR / ELIMINAR
+    // ==========================
+
+    public String guardar() {
+        try {
+            Usuario usuarioLogueado = obtenerUsuarioLogueado();
+            if (usuarioLogueado != null && formulario.getUsuario() == null) {
+                formulario.setUsuario(usuarioLogueado);
+            }
+
+            boolean nueva = (formulario.getId() == null);
+
+            if (nueva) {
+                // Si ya se identificó director, pasamos a "PENDIENTE DIRECTOR"
+                if (jefe != null) {
+                    formulario.setEstado("PENDIENTE DIRECTOR");
+                } else {
+                    formulario.setEstado("CREADA");
+                }
+                formulario.setFechaCreacion(LocalDateTime.now());
+                solCtrl.crear(formulario);
+
+                // Aquí, más adelante, se podrá enviar notificación al director (jefe) si no es null
+
+            } else {
+                // limpiar accesos previos para re-generarlos
+                limpiarAccesosDeSolicitud(formulario);
+                solCtrl.actualizar(formulario);
+            }
+
+            // Crear accesos según los permisos marcados
+            for (Map.Entry<Long, Boolean> entry : permisosSeleccionados.entrySet()) {
+                if (Boolean.TRUE.equals(entry.getValue())) {
+                    PermisoAplicacion permiso = permisoCtrl.buscarPorId(entry.getKey());
+                    if (permiso != null) {
+                        AccesoUsuario au = new AccesoUsuario();
+                        au.setSolicitud(formulario);
+                        au.setPermiso(permiso);
+                        au.setFechaCarga(LocalDateTime.now());
+                        accesoCtrl.crear(au);
+                    }
+                }
+            }
+
+            aplicarFiltro();
+
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO,
+                            "Solicitud guardada",
+                            "La solicitud se ha guardado correctamente."));
+
+            // Volver al listado
+            return "/Solicitud/index?faces-redirect=true";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Error al guardar solicitud", e.getMessage()));
+            return null;
+        }
     }
 
-    // ================= GETTERS / SETTERS =================
+    public void eliminar() {
+        if (solicitudSeleccionada != null && solicitudSeleccionada.getId() != null) {
+            try {
+                solCtrl.eliminar(solicitudSeleccionada.getId());
+                aplicarFiltro();
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_INFO,
+                                "Solicitud eliminada", null));
+            } catch (Exception e) {
+                e.printStackTrace();
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                "Error al eliminar solicitud", e.getMessage()));
+            }
+        }
+    }
+
+    // ==========================
+    //   GETTERS / SETTERS
+    // ==========================
 
     public List<Solicitud> getLista() {
         return lista;
-    }
-
-    public void setLista(List<Solicitud> lista) {
-        this.lista = lista;
     }
 
     public Solicitud getFormulario() {
@@ -285,6 +311,22 @@ public class SolicitudBean implements Serializable {
 
     public void setSolicitudSeleccionada(Solicitud solicitudSeleccionada) {
         this.solicitudSeleccionada = solicitudSeleccionada;
+    }
+
+    public String getEstadoFiltro() {
+        return estadoFiltro;
+    }
+
+    public void setEstadoFiltro(String estadoFiltro) {
+        this.estadoFiltro = estadoFiltro;
+    }
+
+    public Long getIdSolicitud() {
+        return idSolicitud;
+    }
+
+    public void setIdSolicitud(Long idSolicitud) {
+        this.idSolicitud = idSolicitud;
     }
 
     public String getCorreoJefe() {
@@ -307,23 +349,7 @@ public class SolicitudBean implements Serializable {
         return aplicaciones;
     }
 
-    public void setAplicaciones(List<Aplicacion> aplicaciones) {
-        this.aplicaciones = aplicaciones;
-    }
-
     public Map<Long, Boolean> getPermisosSeleccionados() {
         return permisosSeleccionados;
-    }
-
-    public void setPermisosSeleccionados(Map<Long, Boolean> permisosSeleccionados) {
-        this.permisosSeleccionados = permisosSeleccionados;
-    }
-
-    public Long getIdSolicitud() {
-        return idSolicitud;
-    }
-
-    public void setIdSolicitud(Long idSolicitud) {
-        this.idSolicitud = idSolicitud;
     }
 }
