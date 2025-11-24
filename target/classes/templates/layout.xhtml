@@ -29,81 +29,42 @@
         <nav class="sidebar-nav">
             <ul id="menu">
 
-                <!-- TODOS: Inicio -->
-                <li>
-                    <h:link outcome="/home" value="Inicio" />
-                </li>
+                <!-- TODOS -->
+                <li><h:link outcome="/home" value="Inicio" /></li>
+                <li><h:link outcome="/Solicitud/index" value="Solicitudes" /></li>
 
-                <!-- TODOS: Solicitudes -->
-                <li>
-                    <h:link outcome="/Solicitud/index" value="Solicitudes" />
-                </li>
-
-                <!-- ===== DIRECTOR (de área) ===== -->
-                <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Director' or loginBean.usuario.cargo eq 'director'}">
-
-                    <li>
-                        <h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" />
-                    </li>
-
-                    <li>
-                        <h:link outcome="/Reportes/index" value="Reportes" />
-                    </li>
-
+                <!-- ===== DIRECTOR DE ÁREA ===== -->
+                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director'}">
+                    <li><h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" /></li>
+                    <li><h:link outcome="/Reportes/index" value="Reportes" /></li>
                 </h:panelGroup>
 
                 <!-- ===== DIRECTOR TIC ===== -->
-                <h:panelGroup rendered="#{loginBean.usuario.cargo ne null and fn:contains(fn:toLowerCase(loginBean.usuario.cargo), 'tic')}">
-
-                    <li>
-                        <h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" />
-                    </li>
-
-                    <li>
-                        <h:link outcome="/Reportes/index" value="Reportes" />
-                    </li>
-
+                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director tic'}">
+                    <li><h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" /></li>
+                    <li><h:link outcome="/Reportes/index" value="Reportes" /></li>
                 </h:panelGroup>
 
                 <!-- ===== OFICIAL DE SEGURIDAD ===== -->
-                <h:panelGroup rendered="#{loginBean.usuario.cargo ne null and fn:contains(fn:toLowerCase(loginBean.usuario.cargo), 'oficial')}">
+                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'oficial seguridad'}">
+                    <li><h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" /></li>
+                </h:panelGroup>
 
-                    <li>
-                        <h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" />
-                    </li>
-
+                <!-- ===== RESPONSABLE DE ACCESOS / MESA TIC ===== -->
+                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'responsable accesos'}">
+                    <li><h:link outcome="/Solicitud/pendientesAccesos" value="Permisos por aplicar" /></li>
                 </h:panelGroup>
 
                 <!-- ===== ADMINISTRADOR ===== -->
-                <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Administrador'}">
+                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'administrador'}">
 
-                    <li>
-                        <h:link outcome="/Usuario/index" value="Gestión de Usuarios" />
-                    </li>
-
-                    <li>
-                        <h:link outcome="/Rol/index" value="Catálogo de Roles" />
-                    </li>
-
-                    <li>
-                        <h:link outcome="/UsuarioRol/index" value="Asignación Usuario–Rol" />
-                    </li>
-
-                    <li>
-                        <h:link outcome="/Aplicacion/index" value="Gestión de Aplicaciones" />
-                    </li>
-
-                    <li>
-                        <h:link outcome="/PermisoAplicacion/index" value="Permisos de Aplicaciones" />
-                    </li>
-
-                    <li>
-                        <h:link outcome="/Auditoria/index" value="Auditoría del Sistema" />
-                    </li>
-
-                    <li>
-                        <h:link outcome="/Reportes/index" value="Reportes" />
-                    </li>
+                    <li><h:link outcome="/Usuario/index" value="Gestión de Usuarios" /></li>
+                    <li><h:link outcome="/Rol/index" value="Catálogo de Roles" /></li>
+                    <li><h:link outcome="/UsuarioRol/index" value="Asignación Usuario–Rol" /></li>
+                    <li><h:link outcome="/Aplicacion/index" value="Gestión de Aplicaciones" /></li>
+                    <li><h:link outcome="/PermisoAplicacion/index" value="Permisos de Aplicaciones" /></li>
+                    <li><h:link outcome="/Auditoria/index" value="Auditoría del Sistema" /></li>
+                    <li><h:link outcome="/Reportes/index" value="Reportes" /></li>
 
                 </h:panelGroup>
 
@@ -139,7 +100,7 @@
             </p>
         </header>
 
-        <!-- CONTENIDO VARIABLE DE CADA PÁGINA -->
+        <!-- CONTENIDO VARIABLE -->
         <section class="content">
             <ui:insert name="contenido">
                 <div class="card">

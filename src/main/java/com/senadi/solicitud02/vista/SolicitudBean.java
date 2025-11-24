@@ -77,7 +77,7 @@ public class SolicitudBean implements Serializable {
             for (Aplicacion app : aplicaciones) {
                 if (app.getPermisos() != null) {
                     for (PermisoAplicacion p : app.getPermisos()) {
-                        permisosSeleccionados.put(p.getId(), Boolean.FALSE);
+                        permisosSeleccionados.put(p.getId(), false);
                     }
                 }
             }
@@ -89,7 +89,7 @@ public class SolicitudBean implements Serializable {
         if (s != null && s.getAccesos() != null) {
             for (AccesoUsuario au : s.getAccesos()) {
                 if (au.getPermiso() != null) {
-                    permisosSeleccionados.put(au.getPermiso().getId(), Boolean.TRUE);
+                    permisosSeleccionados.put(au.getPermiso().getId(), true);
                 }
             }
         }
@@ -101,7 +101,6 @@ public class SolicitudBean implements Serializable {
                 try {
                     accesoCtrl.eliminar(au.getId());
                 } catch (Exception e) {
-                    // No detenemos el flujo de guardado por fallos en accesos individuales
                     e.printStackTrace();
                 }
             }
@@ -122,8 +121,13 @@ public class SolicitudBean implements Serializable {
             }
 
             if (estadoFiltro == null || "TODAS".equals(estadoFiltro)) {
+                // Todas las solicitudes del usuario, pero ocultando ANULADAS en la vista normal
                 lista = solCtrl.buscarPorUsuario(u.getId());
+                if (lista != null) {
+                    lista.removeIf(s -> "ANULADA".equalsIgnoreCase(s.getEstado()));
+                }
             } else {
+                // Filtro específico por estado (si el usuario selecciona ANULADA, también las verá)
                 lista = solCtrl.buscarPorUsuarioYEstado(u.getId(), estadoFiltro);
             }
         } catch (Exception e) {
@@ -179,10 +183,16 @@ public class SolicitudBean implements Serializable {
             return;
         }
 
+        // Regla: sólo se permite editar solicitudes en estado CREADA
+        if (!"CREADA".equalsIgnoreCase(s.getEstado())) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN,
+                            "Edición no permitida",
+                            "Sólo puede editar solicitudes en estado CREADA."));
+            return;
+        }
+
         formulario = s;
-
-        // Aquí podrías recuperar datos del jefe si más adelante los relacionas con la solicitud
-
         marcarPermisosDeSolicitud(formulario);
     }
 
@@ -209,7 +219,7 @@ public class SolicitudBean implements Serializable {
     }
 
     // ==========================
-    //   GUARDAR / ELIMINAR
+    //   GUARDAR / ELIMINAR (ANULAR)
     // ==========================
 
     public String guardar() {
@@ -221,18 +231,19 @@ public class SolicitudBean implements Serializable {
 
             boolean nueva = (formulario.getId() == null);
 
+            // Regla de negocio: sólo se guarda/actualiza si está CREADA o es nueva
+            if (!nueva && !"CREADA".equalsIgnoreCase(formulario.getEstado())) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                "No permitido",
+                                "Sólo puede modificar solicitudes en estado CREADA."));
+                return null;
+            }
+
             if (nueva) {
-                // Si ya se identificó director, pasamos a "PENDIENTE DIRECTOR"
-                if (jefe != null) {
-                    formulario.setEstado("PENDIENTE DIRECTOR");
-                } else {
-                    formulario.setEstado("CREADA");
-                }
+                formulario.setEstado("CREADA");
                 formulario.setFechaCreacion(LocalDateTime.now());
                 solCtrl.crear(formulario);
-
-                // Aquí, más adelante, se podrá enviar notificación al director (jefe) si no es null
-
             } else {
                 // limpiar accesos previos para re-generarlos
                 limpiarAccesosDeSolicitud(formulario);
@@ -272,19 +283,45 @@ public class SolicitudBean implements Serializable {
         }
     }
 
+    /**
+     * "Eliminar" ahora significa ANULAR la solicitud (soft delete).
+     * No se borra de la base, sólo cambia el estado a ANULADA y se oculta de la vista normal.
+     */
     public void eliminar() {
         if (solicitudSeleccionada != null && solicitudSeleccionada.getId() != null) {
             try {
-                solCtrl.eliminar(solicitudSeleccionada.getId());
+                Solicitud s = solCtrl.buscarPorId(solicitudSeleccionada.getId());
+                if (s == null) {
+                    FacesContext.getCurrentInstance().addMessage(null,
+                            new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                    "Solicitud no encontrada",
+                                    "ID: " + solicitudSeleccionada.getId()));
+                    return;
+                }
+
+                // Regla: sólo se puede anular cuando está CREADA
+                if (!"CREADA".equalsIgnoreCase(s.getEstado())) {
+                    FacesContext.getCurrentInstance().addMessage(null,
+                            new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                    "No permitido",
+                                    "Sólo puede anular solicitudes en estado CREADA."));
+                    return;
+                }
+
+                s.setEstado("ANULADA");
+                solCtrl.actualizar(s);
+
                 aplicarFiltro();
+
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                "Solicitud eliminada", null));
+                                "Solicitud anulada",
+                                "La solicitud ha sido anulada y ya no aparecerá en su listado principal."));
             } catch (Exception e) {
                 e.printStackTrace();
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                "Error al eliminar solicitud", e.getMessage()));
+                                "Error al anular solicitud", e.getMessage()));
             }
         }
     }

@@ -29,7 +29,7 @@
                      style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>Solicitudes</h3>
 
-                    <!-- Botón Nueva Solicitud con icono -->
+                    <!-- Botón Nueva Solicitud -->
                     <p:button outcome="/Solicitud/create.xhtml"
                               value=" Nueva Solicitud"
                               icon="pi pi-plus"
@@ -121,33 +121,35 @@
 
                     <!-- Acciones -->
                     <p:column headerText="Acciones"
-                              style="width:220px; text-align:center;">
+                              style="width:260px; text-align:center;">
 
-                        <!-- Ver formulario / formato -->
+                        <!-- Ver: SIEMPRE -->
                         <p:button icon="pi pi-eye"
                                   title="Ver formulario"
                                   outcome="/Solicitud/formato.xhtml"
                                   styleClass="ui-button-secondary btn-accion"
-                                  style="margin-right:0.25rem;">
+                                  style="margin-right:0.3rem;">
                             <f:param name="id" value="#{s.id}" />
                         </p:button>
 
-                        <!-- Editar -->
+                        <!-- Editar: SOLO CREADA -->
                         <p:button icon="pi pi-pencil"
                                   title="Editar solicitud"
                                   outcome="/Solicitud/edit.xhtml"
                                   styleClass="ui-button-warning btn-accion"
-                                  style="margin-right:0.25rem;">
+                                  style="margin-right:0.3rem;"
+                                  rendered="#{s.estado eq 'CREADA'}">
                             <f:param name="id" value="#{s.id}" />
                         </p:button>
 
-                        <!-- Eliminar -->
+                        <!-- Anular (eliminar lógico): SOLO CREADA -->
                         <p:commandButton icon="pi pi-trash"
-                                         title="Eliminar"
+                                         title="Anular solicitud"
                                          styleClass="ui-button-danger btn-accion"
                                          action="#{solicitudBean.eliminar}"
                                          update="formSolicitudes"
-                                         onclick="return confirm('¿Eliminar esta solicitud?');">
+                                         rendered="#{s.estado eq 'CREADA'}"
+                                         onclick="return confirm('¿Seguro que desea ANULAR esta solicitud? No se eliminará de la base de datos.');">
                             <f:setPropertyActionListener
                                     target="#{solicitudBean.solicitudSeleccionada}"
                                     value="#{s}" />

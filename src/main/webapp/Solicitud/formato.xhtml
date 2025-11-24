@@ -21,7 +21,6 @@
             margin: 0 auto;
         }
 
-        /* ----- Botonera superior ----- */
         .top-actions {
             display: flex;
             flex-wrap: wrap;
@@ -83,13 +82,6 @@
             font-weight: bold;
         }
 
-        .section-title {
-            background: #0066cc;
-            color: #fff;
-            font-weight: bold;
-            text-align: center;
-        }
-
         .subsection-title {
             font-weight: bold;
             text-transform: uppercase;
@@ -113,12 +105,6 @@
             width: 20px;
             text-align: center;
         }
-
-        .role-block-title {
-            font-size: 11px;
-            font-weight: 600;
-            margin-right: 4px;
-        }
     </style>
 </h:head>
 
@@ -137,139 +123,103 @@
         <!-- Botonera superior -->
         <div class="top-actions">
 
-            <!-- VOLVER SIEMPRE -->
+            <!-- VOLVER -->
             <h:link outcome="/Solicitud/index.xhtml" styleClass="btn-volver">
                 ← Volver
             </h:link>
 
-            <!-- DESCARGAR / IMPRIMIR (usa print del navegador) -->
+            <!-- DESCARGAR (usa impresión del navegador para guardar como PDF) -->
             <h:outputLink value="#" styleClass="btn-pdf"
                           onclick="window.print(); return false;">
                 Descargar / Imprimir PDF
             </h:outputLink>
 
-            <!-- ============================
-                 BLOQUE: SOLICITANTE
-                 ============================ -->
-            <p:outputPanel rendered="#{solicitudDetalleBean.solicitanteActual}">
-                <span class="role-block-title">Solicitante:</span>
+            <!-- ACCIONES DEL SOLICITANTE (solo estado CREADA) -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.mostrarAccionesSolicitante}">
 
                 <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
                               mode="simple"
-                              label="PDF firmado"
-                              allowTypes="application/pdf"
-                              style="max-width:220px;" />
+                              label="Seleccionar PDF firmado"
+                              allowTypes="/(\.|\/)(pdf)$/"
+                              style="max-width:260px;" />
 
                 <p:commandButton value=" Subir firmado"
                                  icon="pi pi-upload"
                                  actionListener="#{solicitudDetalleBean.subirFirmado}"
                                  update="@form"
-                                 styleClass="ui-button-success"
-                                 style="margin-left:4px;" />
+                                 styleClass="ui-button-success" />
 
                 <p:commandButton value=" Enviar al Director"
                                  icon="pi pi-send"
                                  actionListener="#{solicitudDetalleBean.enviarAlDirector}"
                                  update="@form"
-                                 styleClass="ui-button-primary"
-                                 style="margin-left:4px;"
-                                 rendered="#{solicitudDetalleBean.puedeEnviarADirector}" />
-            </p:outputPanel>
+                                 styleClass="ui-button-primary" />
+            </h:panelGroup>
 
-            <!-- ============================
-                 BLOQUE: DIRECTOR DE ÁREA
-                 ============================ -->
-            <p:outputPanel rendered="#{solicitudDetalleBean.directorArea and solicitudDetalleBean.estadoPendienteDirector}">
-                <span class="role-block-title">Director:</span>
+            <!-- ACCIONES DEL DIRECTOR (estado PENDIENTE DIRECTOR) -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.directorPuedeFirmar}">
 
-                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmadoDirector}"
-                              mode="simple"
-                              label="PDF firmado Director"
-                              allowTypes="application/pdf"
-                              style="max-width:220px;" />
-
-                <p:commandButton value=" Subir firmado"
-                                 icon="pi pi-upload"
-                                 actionListener="#{solicitudDetalleBean.subirFirmadoDirector}"
-                                 update="@form"
-                                 styleClass="ui-button-success"
-                                 style="margin-left:4px;" />
-
-                <p:commandButton value=" Aprobar"
+                <p:commandButton value=" Aprobar (Director)"
                                  icon="pi pi-check"
-                                 actionListener="#{solicitudDetalleBean.directorAprueba}"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{solicitudDetalleBean.aprobarComoDirector}"
                                  update="@form"
-                                 styleClass="ui-button-primary"
-                                 style="margin-left:4px;" />
+                                 onclick="return confirm('¿Aprobar la solicitud como Director?');" />
 
-                <p:commandButton value=" Rechazar"
+                <p:commandButton value=" Rechazar (Director)"
                                  icon="pi pi-times"
-                                 actionListener="#{solicitudDetalleBean.directorRechaza}"
-                                 update="@form"
                                  styleClass="ui-button-danger"
-                                 style="margin-left:4px;" />
-            </p:outputPanel>
-
-            <!-- ============================
-                 BLOQUE: DIRECTOR TIC
-                 ============================ -->
-            <p:outputPanel rendered="#{solicitudDetalleBean.directorTIC and solicitudDetalleBean.estadoPendienteDTIC}">
-                <span class="role-block-title">Director TIC:</span>
-
-                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmadoDTIC}"
-                              mode="simple"
-                              label="PDF firmado DTIC"
-                              allowTypes="application/pdf"
-                              style="max-width:220px;" />
-
-                <p:commandButton value=" Subir firmado"
-                                 icon="pi pi-upload"
-                                 actionListener="#{solicitudDetalleBean.subirFirmadoDTIC}"
+                                 actionListener="#{solicitudDetalleBean.rechazarComoDirector}"
                                  update="@form"
-                                 styleClass="ui-button-success"
-                                 style="margin-left:4px;" />
+                                 onclick="return confirm('¿Rechazar la solicitud como Director?');" />
+            </h:panelGroup>
 
-                <p:commandButton value=" Aprobar directo"
+            <!-- ACCIONES DEL DIRECTOR TIC (estado PENDIENTE DIRECTOR TIC) -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.directorTicPuedeFirmar}">
+
+                <p:commandButton value=" Aprobar (Director TIC)"
                                  icon="pi pi-check"
-                                 actionListener="#{solicitudDetalleBean.dticApruebaSinOficial}"
-                                 update="@form"
-                                 styleClass="ui-button-primary"
-                                 style="margin-left:4px;" />
-
-                <p:commandButton value=" Enviar a Oficial"
-                                 icon="pi pi-share-alt"
-                                 actionListener="#{solicitudDetalleBean.dticEnviaOficial}"
-                                 update="@form"
-                                 styleClass="ui-button-warning"
-                                 style="margin-left:4px;" />
-            </p:outputPanel>
-
-            <!-- ============================
-                 BLOQUE: OFICIAL DE SEGURIDAD
-                 ============================ -->
-            <p:outputPanel rendered="#{solicitudDetalleBean.oficialSeguridad and solicitudDetalleBean.estadoPendienteOficial}">
-                <span class="role-block-title">Oficial:</span>
-
-                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmadoOficial}"
-                              mode="simple"
-                              label="PDF firmado Oficial"
-                              allowTypes="application/pdf"
-                              style="max-width:220px;" />
-
-                <p:commandButton value=" Subir firmado"
-                                 icon="pi pi-upload"
-                                 actionListener="#{solicitudDetalleBean.subirFirmadoOficial}"
-                                 update="@form"
                                  styleClass="ui-button-success"
-                                 style="margin-left:4px;" />
-
-                <p:commandButton value=" Aprobar"
-                                 icon="pi pi-badge-check"
-                                 actionListener="#{solicitudDetalleBean.oficialAprueba}"
+                                 actionListener="#{solicitudDetalleBean.aprobarComoDirectorTic}"
                                  update="@form"
-                                 styleClass="ui-button-primary"
-                                 style="margin-left:4px;" />
-            </p:outputPanel>
+                                 onclick="return confirm('¿Aprobar la solicitud como Director TIC?');" />
+
+                <p:commandButton value=" Rechazar (Director TIC)"
+                                 icon="pi pi-times"
+                                 styleClass="ui-button-danger"
+                                 actionListener="#{solicitudDetalleBean.rechazarComoDirectorTic}"
+                                 update="@form"
+                                 onclick="return confirm('¿Rechazar la solicitud como Director TIC?');" />
+            </h:panelGroup>
+
+            <!-- ACCIONES DEL OFICIAL DE SEGURIDAD (estado PENDIENTE OFICIAL SEGURIDAD) -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.oficialPuedeFirmar}">
+
+                <p:commandButton value=" Aprobar (Oficial Seguridad)"
+                                 icon="pi pi-check"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{solicitudDetalleBean.aprobarComoOficial}"
+                                 update="@form"
+                                 onclick="return confirm('¿Aprobar la solicitud como Oficial de Seguridad?');" />
+
+                <p:commandButton value=" Rechazar (Oficial Seguridad)"
+                                 icon="pi pi-times"
+                                 styleClass="ui-button-danger"
+                                 actionListener="#{solicitudDetalleBean.rechazarComoOficial}"
+                                 update="@form"
+                                 onclick="return confirm('¿Rechazar la solicitud como Oficial de Seguridad?');" />
+            </h:panelGroup>
+
+            <!-- ACCIONES DEL RESPONSABLE DE ACCESOS (estado PENDIENTE APLICACIÓN ACCESOS) -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.responsablePuedeAplicarPermisos}">
+
+                <p:commandButton value=" Marcar permisos aplicados"
+                                 icon="pi pi-check"
+                                 styleClass="ui-button-help"
+                                 actionListener="#{solicitudDetalleBean.marcarPermisosAplicados}"
+                                 update="@form"
+                                 onclick="return confirm('¿Confirmar que los permisos ya fueron aplicados en los sistemas reales?');" />
+            </h:panelGroup>
 
         </div>
 
@@ -299,6 +249,10 @@
             <tr>
                 <th style="width:25%;">Fecha de solicitud</th>
                 <td>#{solicitudDetalleBean.fechaSolicitudFormateada}</td>
+            </tr>
+            <tr>
+                <th>Estado actual</th>
+                <td>#{solicitudDetalleBean.solicitud.estado}</td>
             </tr>
         </table>
 
@@ -331,7 +285,7 @@
             </tr>
         </table>
 
-        <!-- DATOS SERVIDOR QUE AUTORIZA -->
+        <!-- DATOS SERVIDOR QUE AUTORIZA (Director área) -->
         <div class="subsection-title">DATOS DEL SERVIDOR QUE AUTORIZA</div>
         <table class="form-main">
             <tr>
@@ -365,7 +319,7 @@
 
         <table class="form-main">
             <tr>
-                <th rowspan="2" style="width:30%;">SISTEMA / APLICACIÓN</th>
+                <th style="width:30%;">SISTEMA / APLICACIÓN</th>
                 <th>Descripción</th>
                 <th class="checkbox-cell">X</th>
             </tr>
@@ -428,6 +382,24 @@
                 <td class="center small-text">Nombre / Firma</td>
             </tr>
         </table>
+
+        <!-- HISTORIAL DE FIRMAS -->
+        <div class="subsection-title">HISTORIAL DE FIRMAS</div>
+
+        <p:dataTable value="#{solicitudDetalleBean.firmasOrdenadas}"
+                     var="f"
+                     emptyMessage="Aún no existen firmas registradas"
+                     style="margin-top:5px;">
+
+            <p:column headerText="Fecha / Hora" style="width:200px;">
+                #{solicitudDetalleBean.formatearFechaHora(f.fechaFirma)}
+            </p:column>
+
+            <p:column headerText="Detalle">
+                #{f.descripcion}
+            </p:column>
+
+        </p:dataTable>
 
     </div>
 

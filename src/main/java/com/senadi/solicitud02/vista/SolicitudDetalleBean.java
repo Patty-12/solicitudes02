@@ -7,7 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -15,17 +18,18 @@ import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ComponentSystemEvent;
 
 import org.primefaces.model.file.UploadedFile;
 
 import com.senadi.solicitud02.controlador.SolicitudControlador;
-import com.senadi.solicitud02.controlador.UsuarioControlador;
 import com.senadi.solicitud02.controlador.impl.SolicitudControladorImpl;
-import com.senadi.solicitud02.controlador.impl.UsuarioControladorImpl;
 import com.senadi.solicitud02.modelo.entidades.AccesoUsuario;
+import com.senadi.solicitud02.modelo.entidades.Firma;
 import com.senadi.solicitud02.modelo.entidades.PermisoAplicacion;
 import com.senadi.solicitud02.modelo.entidades.Solicitud;
 import com.senadi.solicitud02.modelo.entidades.Usuario;
+import com.senadi.solicitud02.servicio.NotificacionService;
 
 @ManagedBean(name = "solicitudDetalleBean")
 @ViewScoped
@@ -33,29 +37,20 @@ public class SolicitudDetalleBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // ------------------------------
-    //        VARIABLES PRINCIPALES
-    // ------------------------------
-
-    private Long id;
+    private Long id;                 // id de la solicitud (viewParam)
     private Solicitud solicitud;
 
     private SolicitudControlador solCtrl = new SolicitudControladorImpl();
-    private UsuarioControlador usuarioCtrl = new UsuarioControladorImpl();
 
+    // Usuario logueado
     private Usuario usuarioActual;
 
-    // Archivos de firma
-    private UploadedFile archivoFirmado;            // solicitante
-    private UploadedFile archivoFirmadoDirector;    // director
-    private UploadedFile archivoFirmadoDTIC;        // director TIC
-    private UploadedFile archivoFirmadoOficial;     // oficial seguridad
+    // Archivo PDF firmado por el solicitante
+    private UploadedFile archivoFirmado;
 
-    private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-    // ------------------------------
-    //             INIT
-    // ------------------------------
+    // formateadores
+    private DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private DateTimeFormatter fmtFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @PostConstruct
     public void init() {
@@ -69,16 +64,26 @@ public class SolicitudDetalleBean implements Serializable {
         try {
             FacesContext fc = FacesContext.getCurrentInstance();
             LoginBean lb = fc.getApplication()
-                    .evaluateExpressionGet(fc, "#{loginBean}", LoginBean.class);
+                             .evaluateExpressionGet(fc, "#{loginBean}", LoginBean.class);
             return (lb != null) ? lb.getUsuario() : null;
         } catch (Exception e) {
             return null;
         }
     }
 
-    // ------------------------------
-    //            CARGA
-    // ------------------------------
+    // Por si quieres usar verificarSesion en la vista
+    public void verificarSesion(ComponentSystemEvent event) {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        if (usuarioActual == null) {
+            try {
+                String ctxPath = fc.getExternalContext().getRequestContextPath();
+                fc.getExternalContext().redirect(ctxPath + "/index.xhtml");
+                fc.responseComplete();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public void cargar() {
         if (id == null) {
@@ -86,11 +91,10 @@ public class SolicitudDetalleBean implements Serializable {
                     .getExternalContext()
                     .getRequestParameterMap()
                     .get("id");
-
             if (param != null && !param.isEmpty()) {
                 try {
                     id = Long.parseLong(param);
-                } catch (Exception e) {
+                } catch (NumberFormatException e) {
                     id = null;
                 }
             }
@@ -101,68 +105,151 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
-    // ========================================================
-    //                ROLES Y PERMISOS
-    // ========================================================
+    // =====================================================
+    //  HELPERS DE ESTADO
+    // =====================================================
 
-    public boolean isSolicitanteActual() {
-        if (solicitud == null || solicitud.getUsuario() == null || usuarioActual == null) return false;
-        return solicitud.getUsuario().getId().equals(usuarioActual.getId());
+    public boolean isEstadoCreada() {
+        return solicitud != null && "CREADA".equalsIgnoreCase(solicitud.getEstado());
     }
-
-    public boolean isDirectorArea() {
-        return usuarioActual != null && "Director".equalsIgnoreCase(usuarioActual.getCargo());
-    }
-
-    public boolean isDirectorTIC() {
-        return usuarioActual != null && "Director TIC".equalsIgnoreCase(usuarioActual.getCargo());
-    }
-
-    public boolean isOficialSeguridad() {
-        return usuarioActual != null && "Oficial Seguridad".equalsIgnoreCase(usuarioActual.getCargo());
-    }
-
-    // ========================================================
-    //          ESTADOS DEL FLUJO DE FIRMA
-    // ========================================================
 
     public boolean isEstadoPendienteDirector() {
         return solicitud != null && "PENDIENTE DIRECTOR".equalsIgnoreCase(solicitud.getEstado());
     }
 
-    public boolean isEstadoPendienteDTIC() {
+    public boolean isEstadoPendienteDirectorTic() {
         return solicitud != null && "PENDIENTE DIRECTOR TIC".equalsIgnoreCase(solicitud.getEstado());
     }
 
-    public boolean isEstadoPendienteOficial() {
-        return solicitud != null && "PENDIENTE OFICIAL".equalsIgnoreCase(solicitud.getEstado());
+    public boolean isEstadoPendienteOficialSeguridad() {
+        return solicitud != null && "PENDIENTE OFICIAL SEGURIDAD".equalsIgnoreCase(solicitud.getEstado());
     }
 
-    public boolean isPuedeEnviarADirector() {
-        return isSolicitanteActual() && solicitud != null
-                && "CREADA".equalsIgnoreCase(solicitud.getEstado());
+    public boolean isEstadoPendienteAplicacionAccesos() {
+        return solicitud != null && "PENDIENTE APLICACIÓN ACCESOS".equalsIgnoreCase(solicitud.getEstado());
     }
 
-    // ========================================================
-    //             LOGICA DE SUBIDA DE PDF
-    // ========================================================
+    public boolean isEstadoPermisosAplicados() {
+        return solicitud != null && "PERMISOS APLICADOS".equalsIgnoreCase(solicitud.getEstado());
+    }
 
-    private boolean guardarArchivo(UploadedFile file, String nombreDestino) {
+    // =====================================================
+    //  HELPERS DE ROL (según CARGO)
+    // =====================================================
 
-        if (file == null || file.getFileName() == null || file.getFileName().isEmpty()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Archivo requerido", "Debe seleccionar un archivo PDF.");
+    public boolean isSolicitanteActual() {
+        if (solicitud == null || solicitud.getUsuario() == null || usuarioActual == null) {
             return false;
         }
+        return solicitud.getUsuario().getId().equals(usuarioActual.getId());
+    }
 
-        try (InputStream in = file.getInputStream()) {
+    public boolean isDirectorActual() {
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
+        return "Director".equalsIgnoreCase(usuarioActual.getCargo().trim());
+    }
 
+    public boolean isDirectorTicActual() {
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
+        return "Director TIC".equalsIgnoreCase(usuarioActual.getCargo().trim());
+    }
+
+    public boolean isOficialSeguridadActual() {
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
+        return "Oficial Seguridad".equalsIgnoreCase(usuarioActual.getCargo().trim());
+    }
+
+    public boolean isResponsableAccesosActual() {
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
+        return "Responsable Accesos".equalsIgnoreCase(usuarioActual.getCargo().trim());
+    }
+
+    // =====================================================
+    //  FLAGS PARA LA VISTA (rendered)
+    // =====================================================
+
+    /**
+     * El solicitante puede enviar al Director sólo si la solicitud está en estado CREADA.
+     */
+    public boolean isPuedeEnviarADirector() {
+        return isSolicitanteActual() && isEstadoCreada();
+    }
+
+    public boolean isMostrarAccionesSolicitante() {
+        return isPuedeEnviarADirector();
+    }
+
+    /**
+     * Director de área: firma (aprueba/rechaza) en PENDIENTE DIRECTOR.
+     */
+    public boolean isDirectorPuedeFirmar() {
+        return isDirectorActual() && isEstadoPendienteDirector();
+    }
+
+    /**
+     * Director TIC: firma en PENDIENTE DIRECTOR TIC.
+     */
+    public boolean isDirectorTicPuedeFirmar() {
+        return isDirectorTicActual() && isEstadoPendienteDirectorTic();
+    }
+
+    /**
+     * Oficial de Seguridad: firma en PENDIENTE OFICIAL SEGURIDAD.
+     */
+    public boolean isOficialPuedeFirmar() {
+        return isOficialSeguridadActual() && isEstadoPendienteOficialSeguridad();
+    }
+
+    /**
+     * Responsable de Accesos: marca permisos aplicados en PENDIENTE APLICACIÓN ACCESOS.
+     */
+    public boolean isResponsablePuedeAplicarPermisos() {
+        return isResponsableAccesosActual() && isEstadoPendienteAplicacionAccesos();
+    }
+
+    // =====================================================
+    //  SUBIDA DE PDF FIRMADO (SOLICITANTE)
+    // =====================================================
+
+    public void subirFirmado() {
+        if (!isSolicitanteActual()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el solicitante puede subir el archivo firmado.");
+            return;
+        }
+
+        if (!isEstadoCreada()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo se puede cargar el archivo mientras la solicitud está en estado CREADA.");
+            return;
+        }
+
+        if (solicitud == null || solicitud.getId() == null) {
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Solicitud no cargada",
+                    "No se pudo identificar la solicitud.");
+            return;
+        }
+
+        if (archivoFirmado == null || archivoFirmado.getFileName() == null
+                || archivoFirmado.getFileName().isEmpty()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Archivo requerido",
+                    "Debe seleccionar un archivo PDF firmado.");
+            return;
+        }
+
+        try (InputStream in = archivoFirmado.getInputStream()) {
             String basePath = FacesContext.getCurrentInstance()
                     .getExternalContext()
                     .getRealPath("/firmas");
-
             if (basePath == null) {
-                addMessage(FacesMessage.SEVERITY_ERROR, "Error de ruta", "No se pudo determinar ruta base.");
-                return false;
+                addMessage(FacesMessage.SEVERITY_ERROR,
+                        "Error de ruta",
+                        "No se pudo determinar la ruta de almacenamiento.");
+                return;
             }
 
             Path dir = Paths.get(basePath);
@@ -170,207 +257,347 @@ public class SolicitudDetalleBean implements Serializable {
                 Files.createDirectories(dir);
             }
 
-            Path destino = dir.resolve(nombreDestino);
-            Files.copy(in, destino, StandardCopyOption.REPLACE_EXISTING);
+            String fileName = "solicitud_" + solicitud.getId() + "_firmada_usuario.pdf";
+            Path target = dir.resolve(fileName);
 
-            return true;
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
 
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            addMessage(FacesMessage.SEVERITY_ERROR, "Error al guardar archivo", ex.getMessage());
-            return false;
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Archivo cargado",
+                    "El archivo firmado se ha guardado correctamente.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al subir archivo",
+                    e.getMessage());
         }
     }
 
-    // ================================
-    //          1. SOLICITANTE
-    // ================================
-
-    public void subirFirmado() {
-
-        if (!isSolicitanteActual()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No es el solicitante.");
-            return;
-        }
-
-        boolean ok = guardarArchivo(
-                archivoFirmado,
-                "solicitud_" + solicitud.getId() + "_firmada_solicitante.pdf"
-        );
-
-        if (ok) {
-            addMessage(FacesMessage.SEVERITY_INFO, "Archivo cargado", "Se cargó PDF del solicitante.");
-        }
-    }
-
+    /**
+     * CREADA → PENDIENTE DIRECTOR
+     */
     public void enviarAlDirector() {
         if (!isSolicitanteActual()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No es solicitante.");
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el solicitante puede enviar la solicitud al Director.");
             return;
         }
 
-        solicitud.setEstado("PENDIENTE DIRECTOR");
-        solCtrl.actualizar(solicitud);
-
-        addMessage(FacesMessage.SEVERITY_INFO, "Enviado", "La solicitud fue enviada al Director.");
-    }
-
-    // ================================
-    //          2. DIRECTOR
-    // ================================
-
-    public void subirFirmadoDirector() {
-        if (!isDirectorArea() || !isEstadoPendienteDirector()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No corresponde");
+        if (!isEstadoCreada()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "La solicitud ya no está en estado CREADA.");
             return;
         }
 
-        boolean ok = guardarArchivo(
-                archivoFirmadoDirector,
-                "solicitud_" + solicitud.getId() + "_firmada_director.pdf"
-        );
-
-        if (ok) {
-            addMessage(FacesMessage.SEVERITY_INFO, "PDF cargado", "Firma del Director registrada.");
-        }
-    }
-
-    public void directorAprueba() {
-        if (!isDirectorArea() || !isEstadoPendienteDirector()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No corresponde.");
+        if (solicitud == null || solicitud.getId() == null) {
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Solicitud no cargada",
+                    "No se pudo identificar la solicitud.");
             return;
         }
 
-        solicitud.setEstado("PENDIENTE DIRECTOR TIC");
-        solCtrl.actualizar(solicitud);
+        try {
+            String estadoAnterior = solicitud.getEstado();
+            solicitud.setEstado("PENDIENTE DIRECTOR");
+            solCtrl.actualizar(solicitud);
 
-        addMessage(FacesMessage.SEVERITY_INFO, "Aprobado por Director", "Ahora el Director TIC debe revisar.");
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Solicitud enviada",
+                    "La solicitud ha sido enviada al Director para su revisión.");
+
+            // Correo de ejemplo (ajustar en producción)
+            String correoDirector = "dlopez@senadi.com";
+            NotificacionService.notificarPendienteDirector(solicitud, correoDirector);
+            NotificacionService.notificarSolicitanteEnvio(solicitud);
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al cambiar estado",
+                    e.getMessage());
+        }
     }
 
-    public void directorRechaza() {
-        if (!isDirectorArea() || !isEstadoPendienteDirector()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No corresponde.");
+    // =====================================================
+    //  DIRECTOR (APROBAR / RECHAZAR)
+    // =====================================================
+
+    /**
+     * PENDIENTE DIRECTOR → PENDIENTE DIRECTOR TIC
+     */
+    public void aprobarComoDirector() {
+        if (!isDirectorPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo un Director puede aprobar una solicitud en estado PENDIENTE DIRECTOR.");
             return;
         }
 
-        solicitud.setEstado("RECHAZADA");
-        solCtrl.actualizar(solicitud);
+        try {
+            String estadoAnterior = solicitud.getEstado();
 
-        addMessage(FacesMessage.SEVERITY_INFO, "Solicitud rechazada", "El Director rechazó la solicitud.");
+            Firma f = new Firma();
+            f.setSolicitud(solicitud);
+            f.setDescripcion("Aprobada por Director: "
+                    + usuarioActual.getNombre() + " " + usuarioActual.getApellido());
+            f.setFechaFirma(LocalDateTime.now());
+            solicitud.getFirmas().add(f);
+
+            solicitud.setEstado("PENDIENTE DIRECTOR TIC");
+            solCtrl.actualizar(solicitud);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Solicitud aprobada",
+                    "La solicitud ha sido aprobada por el Director y enviada al Director TIC.");
+
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al aprobar solicitud",
+                    e.getMessage());
+        }
     }
 
-    // ================================
-    //          3. DIRECTOR TIC
-    // ================================
-
-    public void subirFirmadoDTIC() {
-        if (!isDirectorTIC() || !isEstadoPendienteDTIC()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No corresponde.");
+    /**
+     * PENDIENTE DIRECTOR → RECHAZADA
+     */
+    public void rechazarComoDirector() {
+        if (!isDirectorPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo un Director puede rechazar una solicitud en estado PENDIENTE DIRECTOR.");
             return;
         }
 
-        boolean ok = guardarArchivo(
-                archivoFirmadoDTIC,
-                "solicitud_" + solicitud.getId() + "_firmada_dtic.pdf"
-        );
+        try {
+            String estadoAnterior = solicitud.getEstado();
+            solicitud.setEstado("RECHAZADA");
+            solCtrl.actualizar(solicitud);
 
-        if (ok) {
-            addMessage(FacesMessage.SEVERITY_INFO, "PDF cargado", "Firma del Director TIC registrada.");
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Solicitud rechazada",
+                    "La solicitud ha sido rechazada por el Director.");
+
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al rechazar solicitud",
+                    e.getMessage());
         }
     }
 
-    public void dticApruebaSinOficial() {
-        if (!isDirectorTIC() || !isEstadoPendienteDTIC()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No corresponde.");
+    // =====================================================
+    //  DIRECTOR TIC (APROBAR / RECHAZAR)
+    // =====================================================
+
+    /**
+     * PENDIENTE DIRECTOR TIC → PENDIENTE OFICIAL SEGURIDAD
+     */
+    public void aprobarComoDirectorTic() {
+        if (!isDirectorTicPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Director TIC puede aprobar una solicitud en estado PENDIENTE DIRECTOR TIC.");
             return;
         }
 
-        solicitud.setEstado("APROBADA");
-        solCtrl.actualizar(solicitud);
+        try {
+            String estadoAnterior = solicitud.getEstado();
 
-        addMessage(FacesMessage.SEVERITY_INFO, "Aprobada", "El Director TIC aprobó definitivamente la solicitud.");
+            Firma f = new Firma();
+            f.setSolicitud(solicitud);
+            f.setDescripcion("Validada técnicamente por Director TIC: "
+                    + usuarioActual.getNombre() + " " + usuarioActual.getApellido());
+            f.setFechaFirma(LocalDateTime.now());
+            solicitud.getFirmas().add(f);
+
+            solicitud.setEstado("PENDIENTE OFICIAL SEGURIDAD");
+            solCtrl.actualizar(solicitud);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Solicitud aprobada por Director TIC",
+                    "La solicitud ha sido enviada al Oficial de Seguridad para su revisión.");
+
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al aprobar como Director TIC",
+                    e.getMessage());
+        }
     }
 
-    public void dticEnviaOficial() {
-        if (!isDirectorTIC() || !isEstadoPendienteDTIC()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No corresponde.");
+    /**
+     * PENDIENTE DIRECTOR TIC → RECHAZADA
+     */
+    public void rechazarComoDirectorTic() {
+        if (!isDirectorTicPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Director TIC puede rechazar una solicitud en estado PENDIENTE DIRECTOR TIC.");
             return;
         }
 
-        solicitud.setEstado("PENDIENTE OFICIAL");
-        solCtrl.actualizar(solicitud);
+        try {
+            String estadoAnterior = solicitud.getEstado();
+            solicitud.setEstado("RECHAZADA");
+            solCtrl.actualizar(solicitud);
 
-        addMessage(FacesMessage.SEVERITY_INFO, "Enviado a Oficial", "El Oficial de Seguridad debe firmar.");
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Solicitud rechazada por Director TIC",
+                    "La solicitud ha sido rechazada en la validación técnica.");
+
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al rechazar como Director TIC",
+                    e.getMessage());
+        }
     }
 
-    // ================================
-    //          4. OFICIAL
-    // ================================
+    // =====================================================
+    //  OFICIAL DE SEGURIDAD (APROBAR / RECHAZAR)
+    // =====================================================
 
-    public void subirFirmadoOficial() {
-        if (!isOficialSeguridad() || !isEstadoPendienteOficial()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No corresponde.");
+    /**
+     * PENDIENTE OFICIAL SEGURIDAD → PENDIENTE APLICACIÓN ACCESOS
+     */
+    public void aprobarComoOficial() {
+        if (!isOficialPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Oficial de Seguridad puede aprobar una solicitud en estado PENDIENTE OFICIAL SEGURIDAD.");
             return;
         }
 
-        boolean ok = guardarArchivo(
-                archivoFirmadoOficial,
-                "solicitud_" + solicitud.getId() + "_firmada_oficial.pdf"
-        );
+        try {
+            String estadoAnterior = solicitud.getEstado();
 
-        if (ok) {
-            addMessage(FacesMessage.SEVERITY_INFO, "PDF cargado", "Firma del Oficial registrada.");
+            Firma f = new Firma();
+            f.setSolicitud(solicitud);
+            f.setDescripcion("Aprobada por Oficial de Seguridad: "
+                    + usuarioActual.getNombre() + " " + usuarioActual.getApellido());
+            f.setFechaFirma(LocalDateTime.now());
+            solicitud.getFirmas().add(f);
+
+            solicitud.setEstado("PENDIENTE APLICACIÓN ACCESOS");
+            solCtrl.actualizar(solicitud);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Solicitud aprobada por Oficial de Seguridad",
+                    "La solicitud ha sido enviada al Responsable de Accesos.");
+
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al aprobar como Oficial de Seguridad",
+                    e.getMessage());
         }
     }
 
-    public void oficialAprueba() {
-        if (!isOficialSeguridad() || !isEstadoPendienteOficial()) {
-            addMessage(FacesMessage.SEVERITY_WARN, "Acción no permitida", "No corresponde.");
+    /**
+     * PENDIENTE OFICIAL SEGURIDAD → RECHAZADA
+     */
+    public void rechazarComoOficial() {
+        if (!isOficialPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Oficial de Seguridad puede rechazar una solicitud en estado PENDIENTE OFICIAL SEGURIDAD.");
             return;
         }
 
-        solicitud.setEstado("APROBADA");
-        solCtrl.actualizar(solicitud);
+        try {
+            String estadoAnterior = solicitud.getEstado();
+            solicitud.setEstado("RECHAZADA");
+            solCtrl.actualizar(solicitud);
 
-        addMessage(FacesMessage.SEVERITY_INFO, "Solicitud aprobada", "El Oficial aprobó la solicitud.");
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Solicitud rechazada por Oficial de Seguridad",
+                    "La solicitud ha sido rechazada por Seguridad de la Información.");
+
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al rechazar como Oficial de Seguridad",
+                    e.getMessage());
+        }
     }
 
-    // ------------------------------
-    // UTILIDAD PARA MENSAJES
-    // ------------------------------
+    // =====================================================
+    //  RESPONSABLE DE ACCESOS (APLICAR PERMISOS)
+    // =====================================================
+
+    /**
+     * PENDIENTE APLICACIÓN ACCESOS → PERMISOS APLICADOS
+     */
+    public void marcarPermisosAplicados() {
+        if (!isResponsablePuedeAplicarPermisos()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Responsable de Accesos puede marcar los permisos como aplicados.");
+            return;
+        }
+
+        try {
+            String estadoAnterior = solicitud.getEstado();
+
+            Firma f = new Firma();
+            f.setSolicitud(solicitud);
+            f.setDescripcion("Permisos aplicados en sistemas reales por Responsable de Accesos: "
+                    + usuarioActual.getNombre() + " " + usuarioActual.getApellido());
+            f.setFechaFirma(LocalDateTime.now());
+            solicitud.getFirmas().add(f);
+
+            solicitud.setEstado("PERMISOS APLICADOS");
+            solCtrl.actualizar(solicitud);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Permisos aplicados",
+                    "La solicitud ha sido marcada como PERMISOS APLICADOS.");
+
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al marcar permisos aplicados",
+                    e.getMessage());
+        }
+    }
+
+    // =====================================================
+    //  UTILIDADES
+    // =====================================================
 
     private void addMessage(FacesMessage.Severity sev, String resumen, String detalle) {
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(sev, resumen, detalle));
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(sev, resumen, detalle));
     }
-
-    // ------------------------------
-    // GETTERS y SETTERS
-    // ------------------------------
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Solicitud getSolicitud() { return solicitud; }
-
-    public UploadedFile getArchivoFirmado() { return archivoFirmado; }
-    public void setArchivoFirmado(UploadedFile archivoFirmado) { this.archivoFirmado = archivoFirmado; }
-
-    public UploadedFile getArchivoFirmadoDirector() { return archivoFirmadoDirector; }
-    public void setArchivoFirmadoDirector(UploadedFile archivoFirmadoDirector) { this.archivoFirmadoDirector = archivoFirmadoDirector; }
-
-    public UploadedFile getArchivoFirmadoDTIC() { return archivoFirmadoDTIC; }
-    public void setArchivoFirmadoDTIC(UploadedFile archivoFirmadoDTIC) { this.archivoFirmadoDTIC = archivoFirmadoDTIC; }
-
-    public UploadedFile getArchivoFirmadoOficial() { return archivoFirmadoOficial; }
-    public void setArchivoFirmadoOficial(UploadedFile archivoFirmadoOficial) { this.archivoFirmadoOficial = archivoFirmadoOficial; }
-
-    public Usuario getUsuarioActual() { return usuarioActual; }
 
     public String getFechaSolicitudFormateada() {
         if (solicitud != null && solicitud.getFechaCreacion() != null) {
-            return solicitud.getFechaCreacion().format(fmt);
+            return solicitud.getFechaCreacion().format(fmtFecha);
         }
         return "";
+    }
+
+    public String formatearFechaHora(LocalDateTime dt) {
+        return (dt != null) ? dt.format(fmtFechaHora) : "";
     }
 
     public Usuario getServidorSolicitante() {
@@ -381,12 +608,71 @@ public class SolicitudDetalleBean implements Serializable {
         return (solicitud != null) ? solicitud.getAccesos() : null;
     }
 
-    public boolean tienePermiso(PermisoAplicacion p) {
+    public boolean tienePermiso(PermisoAplicacion permiso) {
         if (solicitud == null || solicitud.getAccesos() == null) return false;
+        for (AccesoUsuario au : solicitud.getAccesos()) {
+            if (au.getPermiso() != null && au.getPermiso().getId().equals(permiso.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        return solicitud.getAccesos().stream().anyMatch(
-                au -> au.getPermiso() != null &&
-                      au.getPermiso().getId().equals(p.getId())
-        );
+    /**
+     * Historial de firmas ordenado cronológicamente.
+     */
+    public List<Firma> getFirmasOrdenadas() {
+        if (solicitud == null || solicitud.getFirmas() == null) {
+            return new ArrayList<>();
+        }
+        List<Firma> lista = new ArrayList<>(solicitud.getFirmas());
+        lista.sort(Comparator.comparing(Firma::getFechaFirma));
+        return lista;
+    }
+
+    // ================= GETTERS / SETTERS =================
+
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Solicitud getSolicitud() {
+        return solicitud;
+    }
+
+    public UploadedFile getArchivoFirmado() {
+        return archivoFirmado;
+    }
+
+    public void setArchivoFirmado(UploadedFile archivoFirmado) {
+        this.archivoFirmado = archivoFirmado;
+    }
+
+    public Usuario getUsuarioActual() {
+        return usuarioActual;
+    }
+
+    // Expuestos para EL (por si necesitas nombres "public")
+    public boolean isMostrarAccionesSolicitantePublic() {
+        return isMostrarAccionesSolicitante();
+    }
+
+    public boolean isDirectorPuedeFirmarPublic() {
+        return isDirectorPuedeFirmar();
+    }
+
+    public boolean isDirectorTicPuedeFirmarPublic() {
+        return isDirectorTicPuedeFirmar();
+    }
+
+    public boolean isOficialPuedeFirmarPublic() {
+        return isOficialPuedeFirmar();
+    }
+
+    public boolean isResponsablePuedeAplicarPermisosPublic() {
+        return isResponsablePuedeAplicarPermisos();
     }
 }

@@ -20,18 +20,19 @@ public class SolicitudesPendientesBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private SolicitudControlador solCtrl = new SolicitudControladorImpl();
+    private List<Solicitud> listaPendientes = new ArrayList<>();
 
-    private Usuario usuarioActual;
-    private List<Solicitud> listaPendientes;
+    private final SolicitudControlador solCtrl = new SolicitudControladorImpl();
 
     @PostConstruct
     public void init() {
-        usuarioActual = obtenerUsuarioLogueado();
         cargarPendientes();
     }
 
-    private Usuario obtenerUsuarioLogueado() {
+    /**
+     * Obtiene el usuario logueado desde loginBean.
+     */
+    private Usuario obtenerUsuarioActual() {
         try {
             FacesContext fc = FacesContext.getCurrentInstance();
             LoginBean lb = fc.getApplication()
@@ -43,55 +44,51 @@ public class SolicitudesPendientesBean implements Serializable {
     }
 
     /**
-     * Carga las solicitudes pendientes según el rol/cargo del usuario:
-     *  - Director       -> PENDIENTE DIRECTOR
-     *  - Director TIC   -> PENDIENTE DIRECTOR TIC
-     *  - Oficial Seg.   -> PENDIENTE OFICIAL
+     * Carga las solicitudes pendientes según el rol/cargo del usuario.
+     * - Director           -> PENDIENTE DIRECTOR
+     * - Director TIC       -> PENDIENTE DIRECTOR TIC
+     * - Oficial Seguridad  -> PENDIENTE OFICIAL SEGURIDAD
+     * - Responsable Accesos-> PENDIENTE RESPONSABLE ACCESOS
      */
     public void cargarPendientes() {
-        listaPendientes = new ArrayList<>();
-
-        if (usuarioActual == null) {
+        Usuario u = obtenerUsuarioActual();
+        if (u == null || u.getCargo() == null) {
+            listaPendientes = new ArrayList<>();
             return;
         }
 
-        String cargo = (usuarioActual.getCargo() != null)
-                ? usuarioActual.getCargo().toUpperCase()
-                : "";
+        String cargo = u.getCargo().trim();
 
-        String estadoObjetivo = null;
+        // Normalizamos a minúsculas para comparar con contains cuando haga falta
+        String cargoLower = cargo.toLowerCase();
 
-        if (cargo.contains("DIRECTOR TIC")) {
-            estadoObjetivo = "PENDIENTE DIRECTOR TIC";
-        } else if (cargo.contains("OFICIAL")) {
-            estadoObjetivo = "PENDIENTE OFICIAL";
-        } else if (cargo.contains("DIRECTOR")) {
-            // Director de área
-            estadoObjetivo = "PENDIENTE DIRECTOR";
+        String estadoBuscado = null;
+
+        if ("Director".equalsIgnoreCase(cargo)) {
+            estadoBuscado = "PENDIENTE DIRECTOR";
+        } else if (cargoLower.contains("director tic")) {
+            estadoBuscado = "PENDIENTE DIRECTOR TIC";
+        } else if (cargoLower.contains("oficial seguridad")) {
+            estadoBuscado = "PENDIENTE OFICIAL SEGURIDAD";
+        } else if (cargoLower.contains("responsable accesos")) {
+            estadoBuscado = "PENDIENTE RESPONSABLE ACCESOS";
         }
 
-        if (estadoObjetivo == null) {
-            return; // no es ninguno de los roles de aprobación
-        }
-
-        // Se asume que el controlador tiene un listarTodos();
-        // en caso contrario, aquí se ajusta a lo que tengas.
-        List<Solicitud> todas = solCtrl.listarTodos();
-        if (todas == null) {
-            return;
-        }
-
-        for (Solicitud s : todas) {
-            if (s.getEstado() != null &&
-                s.getEstado().equalsIgnoreCase(estadoObjetivo)) {
-                listaPendientes.add(s);
-            }
+        if (estadoBuscado != null) {
+            listaPendientes = solCtrl.buscarPorEstado(estadoBuscado);
+        } else {
+            // Para otros cargos (Usuario, Administrador, etc.) no mostramos nada
+            listaPendientes = new ArrayList<>();
         }
     }
 
-    // ================= GETTERS =================
+    // ===== Getter / Setter =====
 
     public List<Solicitud> getListaPendientes() {
         return listaPendientes;
+    }
+
+    public void setListaPendientes(List<Solicitud> listaPendientes) {
+        this.listaPendientes = listaPendientes;
     }
 }
