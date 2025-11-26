@@ -5,9 +5,9 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/templates/layout.xhtml">
 
-    <!-- Eventos iniciales -->
     <f:metadata>
         <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+        <!-- Sólo inicializa la primera vez, gracias al isPostback dentro de prepararNuevo() -->
         <f:event type="preRenderView" listener="#{solicitudBean.prepararNuevo}" />
     </f:metadata>
 
@@ -15,16 +15,58 @@
 
     <ui:define name="contenido">
 
+        <!-- Estilos locales para tabla zebra y tabla de director -->
+        <style>
+            .tabla-director {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 0.5rem;
+            }
+            .tabla-director th,
+            .tabla-director td {
+                border: 1px solid #e0e0e0;
+                padding: 6px 8px;
+                text-align: left;
+            }
+            .tabla-director th {
+                background: #f5f5f5;
+                font-weight: 600;
+            }
+
+            .tabla-permisos {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 0.5rem;
+            }
+            .tabla-permisos th,
+            .tabla-permisos td {
+                padding: 4px 8px;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .tabla-permisos thead th {
+                background: #f5f5f5;
+                font-weight: 600;
+            }
+            .tabla-permisos tbody tr:nth-child(odd) {
+                background: #ffffff;
+            }
+            .tabla-permisos tbody tr:nth-child(even) {
+                background: #f9fbff;
+            }
+            .perm-check-cell {
+                text-align: center;
+            }
+        </style>
+
         <h:form id="formSolicitud">
 
-            <!-- MENSAJES -->
             <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true" />
 
-            <div class="card">
+            <div>
 
                 <!-- CABECERA -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="margin:0;">Nueva Solicitud de Acceso</h3>
+                    <h3 style="margin:0;">Formulario de Autorización a Sistemas y Aplicaciones</h3>
 
                     <p:button outcome="/Solicitud/index.xhtml"
                               value=" Volver"
@@ -32,130 +74,132 @@
                               styleClass="ui-button-secondary btn-cancelar" />
                 </div>
 
-                <!-- ===================================================== -->
-                <!-- SECCIÓN: Datos del servidor solicitante               -->
-                <!-- ===================================================== -->
-                <p:panel header="Datos del Servidor Solicitante"
+                <p:separator style="margin:0.5rem 0 1rem 0;" />
+
+                <!-- ============================================ -->
+                <!-- DATOS DEL SERVIDOR QUE AUTORIZA (DIRECTOR)  -->
+                <!-- ============================================ -->
+                <p:panel header="DATOS DEL SERVIDOR QUE AUTORIZA"
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
 
-                    <h:panelGrid columns="2"
-                                 columnClasses="col-label, col-value"
-                                 styleClass="form-grid"
-                                 style="width:100%;">
+                    <!-- Fila de búsqueda -->
+                    <h:panelGrid columns="3"
+                                 columnClasses="col-label, col-input, col-button"
+                                 style="width:100%; margin-bottom:0.5rem;">
+                        <h:outputLabel for="nombreJefe" value="Buscar Director por nombre:" />
 
-                        <h:outputText value="Nombres:" />
-                        <h:outputText value="#{solicitudBean.formulario.usuario.nombre}" />
+                        <h:inputText id="nombreJefe"
+                                     value="#{solicitudBean.nombreJefeBusqueda}"
+                                     style="width:100%;" />
 
-                        <h:outputText value="Apellidos:" />
-                        <h:outputText value="#{solicitudBean.formulario.usuario.apellido}" />
-
-                        <h:outputText value="Cargo:" />
-                        <h:outputText value="#{solicitudBean.formulario.usuario.cargo}" />
-
-                        <h:outputText value="Correo institucional:" />
-                        <h:outputText value="#{solicitudBean.formulario.usuario.correo}" />
-
+                        <p:commandButton value=" Buscar"
+                                         icon="pi pi-search"
+                                         actionListener="#{solicitudBean.buscarDirectorPorNombre}"
+                                         update="formSolicitud"
+                                         styleClass="ui-button-secondary btn-accion" />
                     </h:panelGrid>
+
+                    <!-- Tabla de datos del director -->
+                    <table class="tabla-director">
+                        <thead>
+                            <tr>
+                                <th style="width:50%;">Nombres</th>
+                                <th>Apellidos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.nombre}
+                                </td>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.apellido}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Unidad/Sección</th>
+                                <th>Cargo</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.unidadGestion}
+                                </td>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.cargo}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Correo institucional</th>
+                                <th>Teléfono / Extensión</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.correo}
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                 </p:panel>
 
-                <!-- ===================================================== -->
-                <!-- SECCIÓN: Datos del Director                           -->
-                <!-- ===================================================== -->
-                <p:panel header="Datos del Servidor que Autoriza (Director)"
-                         style="margin-bottom:1rem;"
-                         styleClass="panel-claro">
+                <p:separator style="margin:0.5rem 0 1rem 0;" />
 
-                    <h:panelGrid columns="2"
-                                 columnClasses="col-label, col-value"
-                                 style="width:100%;">
-
-                        <!-- Correo Jefe -->
-                        <h:outputLabel for="correoJefe" value="Correo del Director:" />
-
-                        <h:panelGroup style="display:flex; align-items:center;">
-                            <h:inputText id="correoJefe"
-                                         value="#{solicitudBean.correoJefe}"
-                                         style="width:260px;" />
-
-                            <p:commandButton icon="pi pi-search"
-                                             title="Buscar Director"
-                                             actionListener="#{solicitudBean.llenarDatosJefe}"
-                                             update="formSolicitud"
-                                             styleClass="ui-button-secondary btn-accion"
-                                             style="margin-left:0.5rem;" />
-                        </h:panelGroup>
-
-                        <!-- Nombre Jefe -->
-                        <h:outputText value="Nombre del Director:" />
-                        <h:outputText value="#{solicitudBean.jefe.nombre} #{solicitudBean.jefe.apellido}"
-                                      rendered="#{solicitudBean.jefe ne null}" />
-
-                    </h:panelGrid>
-
-                </p:panel>
-
-                <!-- ===================================================== -->
-                <!-- SECCIÓN: Sistemas Internos y Permisos                 -->
-                <!-- ===================================================== -->
-                <p:panel header="Sistemas Institucionales SENADI"
+                <!-- ============================================ -->
+                <!-- SISTEMAS INTERNOS SENADI (TABLA ZEBRA)       -->
+                <!-- ============================================ -->
+                <p:panel header="SISTEMAS INTERNOS SENADI"
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
 
                     <p style="font-size:13px; margin-bottom:0.5rem;">
-                        Seleccione los permisos que necesita en cada sistema.
+                        SISTEMA / APLICACIÓN  |  ACCESOS / PERMISOS (Marque el casillero correspondiente).
                     </p>
 
-                    <div class="sistemas-container">
+                    <!-- Filtro -->
+                    <h:panelGrid columns="2"
+                                 columnClasses="col-label, col-value"
+                                 style="margin-bottom:0.8rem; width:100%;">
+                        <h:outputLabel for="filtroPermisos" value="Filtrar:" />
+                        <h:inputText id="filtroPermisos"
+                                     onkeyup="filtrarPermisos()"
+                                     style="width:260px;"
+                                     placeholder="Escriba parte del sistema o permiso..." />
+                    </h:panelGrid>
 
-                        <ui:repeat value="#{solicitudBean.aplicaciones}" var="app">
-
-                            <div class="app-block">
-
-                                <!-- Cabecera de la aplicación -->
-                                <div class="app-header">
-                                    #{app.nombre}
-                                    <h:outputText value=" - #{app.descripcion}"
-                                                  rendered="#{not empty app.descripcion}" />
-                                </div>
-
-                                <!-- Tabla de permisos -->
-                                <table class="tabla-permisos">
-                                    <thead>
-                                        <tr>
-                                            <th>Permiso</th>
-                                            <th style="width:80px; text-align:center;">Seleccionar</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <ui:repeat value="#{app.permisos}" var="perm">
-                                            <tr>
-                                                <td>
-                                                    #{perm.nombre}
-                                                    <h:outputText value=" - #{perm.descripcion}"
-                                                                  rendered="#{not empty perm.descripcion}" />
-                                                </td>
-                                                <td class="perm-check-cell">
-                                                    <h:selectBooleanCheckbox
-                                                            value="#{solicitudBean.permisosSeleccionados[perm.id]}" />
-                                                </td>
-                                            </tr>
-                                        </ui:repeat>
-                                    </tbody>
-                                </table>
-
-                            </div>
-
-                        </ui:repeat>
-
-                    </div>
+                    <!-- TABLA UNIFICADA -->
+                    <table class="tabla-permisos">
+                        <thead>
+                            <tr>
+                                <th style="width:220px;">Sistema / Aplicación</th>
+                                <th>Acceso / Permiso</th>
+                                <th style="width:100px; text-align:center;">Seleccionar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <ui:repeat value="#{solicitudBean.aplicaciones}" var="app">
+                                <ui:repeat value="#{app.permisos}" var="perm">
+                                    <tr>
+                                        <td>#{app.nombre}</td>
+                                        <td>
+                                            #{perm.nombre}
+                                            <h:outputText value=" - #{perm.descripcion}"
+                                                          rendered="#{not empty perm.descripcion}" />
+                                        </td>
+                                        <td class="perm-check-cell">
+                                            <h:selectBooleanCheckbox
+                                                value="#{solicitudBean.permisosSeleccionados[perm.id]}" />
+                                        </td>
+                                    </tr>
+                                </ui:repeat>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
 
                 </p:panel>
 
-                <!-- ===================================================== -->
-                <!-- SECCIÓN: Botones inferiores                            -->
-                <!-- ===================================================== -->
+                <!-- BOTONES -->
                 <div style="display:flex; justify-content:flex-end; gap:0.7rem; margin-top:1rem;">
 
                     <p:button outcome="/Solicitud/index.xhtml"
@@ -171,6 +215,25 @@
                 </div>
 
             </div>
+
+            <!-- Script de filtro en cliente -->
+            <h:outputScript target="body">
+                function filtrarPermisos() {
+                    var input = document.getElementById('formSolicitud:filtroPermisos');
+                    if (!input) return;
+                    var filtro = input.value.toLowerCase();
+                    var filas = document.querySelectorAll('#formSolicitud .tabla-permisos tbody tr');
+                    filas.forEach(function(tr) {
+                        var sistema = tr.cells[0].textContent.toLowerCase();
+                        var permiso = tr.cells[1].textContent.toLowerCase();
+                        if (sistema.indexOf(filtro) > -1 || permiso.indexOf(filtro) > -1) {
+                            tr.style.display = '';
+                        } else {
+                            tr.style.display = 'none';
+                        }
+                    });
+                }
+            </h:outputScript>
 
         </h:form>
 

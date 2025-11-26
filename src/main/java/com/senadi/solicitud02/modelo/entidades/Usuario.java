@@ -7,6 +7,7 @@ import java.util.List;
 @Entity
 @Table(name = "usuario")
 public class Usuario {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -17,109 +18,78 @@ public class Usuario {
     @Column(length = 80, nullable = false)
     private String apellido;
 
-    @Column(length = 120, nullable = false, unique = true)
-    private String correo;
-    
-    @Column(length = 120, nullable = false, unique = true)
-    private String password;
+    // NUEVO: Cédula
+    @Column(name = "CEDULA", length = 20)
+    private String cedula;
 
     @Column(length = 80)
     private String cargo;
 
-    // Usuario -> Solicitudes (1:N)
+    // NUEVO: Unidad/Gestión
+    @Column(name = "UNIDAD_GESTION", length = 120)
+    private String unidadGestion;
+
+    @Column(length = 120, nullable = false, unique = true)
+    private String correo;
+
+    @Column(length = 120, nullable = false, unique = true)
+    private String password;
+
+    // Relación con Solicitud
     @OneToMany(mappedBy = "usuario")
     private List<Solicitud> solicitudes = new ArrayList<>();
 
-    // Usuario -> UsuarioRol (1:N)
+    // Relación con UsuarioRol
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UsuarioRol> rolesAsignados = new ArrayList<>();
 
-    // Usuario -> Auditoria (1:N)
+    // Relación con Auditoria
     @OneToMany(mappedBy = "usuario")
     private List<Auditoria> auditorias = new ArrayList<>();
 
-	public Long getId() {
-		return id;
-	}
+    // ====== GETTERS / SETTERS ======
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-	public String getNombre() {
-		return nombre;
-	}
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-	public void setNombre(String nombre) {
-		this.nombre = nombre;
-	}
+    public String getApellido() { return apellido; }
+    public void setApellido(String apellido) { this.apellido = apellido; }
 
-	public String getApellido() {
-		return apellido;
-	}
+    public String getCedula() { return cedula; }
+    public void setCedula(String cedula) { this.cedula = cedula; }
 
-	public void setApellido(String apellido) {
-		this.apellido = apellido;
-	}
+    public String getCargo() { return cargo; }
+    public void setCargo(String cargo) { this.cargo = cargo; }
 
-	public String getCorreo() {
-		return correo;
-	}
+    public String getUnidadGestion() { return unidadGestion; }
+    public void setUnidadGestion(String unidadGestion) { this.unidadGestion = unidadGestion; }
 
-	public void setCorreo(String correo) {
-		this.correo = correo;
-	}
+    public String getCorreo() { return correo; }
+    public void setCorreo(String correo) { this.correo = correo; }
 
-	public String getCargo() {
-		return cargo;
-	}
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-	public void setCargo(String cargo) {
-		this.cargo = cargo;
-	}
+    public List<Solicitud> getSolicitudes() { return solicitudes; }
+    public void setSolicitudes(List<Solicitud> solicitudes) { this.solicitudes = solicitudes; }
 
-	public List<Solicitud> getSolicitudes() {
-		return solicitudes;
-	}
+    public List<UsuarioRol> getRolesAsignados() { return rolesAsignados; }
+    public void setRolesAsignados(List<UsuarioRol> rolesAsignados) { this.rolesAsignados = rolesAsignados; }
 
-	public void setSolicitudes(List<Solicitud> solicitudes) {
-		this.solicitudes = solicitudes;
-	}
+    public List<Auditoria> getAuditorias() { return auditorias; }
+    public void setAuditorias(List<Auditoria> auditorias) { this.auditorias = auditorias; }
 
-	public List<UsuarioRol> getRolesAsignados() {
-		return rolesAsignados;
-	}
-
-	public void setRolesAsignados(List<UsuarioRol> rolesAsignados) {
-		this.rolesAsignados = rolesAsignados;
-	}
-
-	public List<Auditoria> getAuditorias() {
-		return auditorias;
-	}
-
-	public void setAuditorias(List<Auditoria> auditorias) {
-		this.auditorias = auditorias;
-	}
-	
-	
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	@Override
-	public String toString() {
-		return "Usuario [id=" + id + ", nombre=" + nombre + ", apellido=" + apellido + ", correo=" + correo
-				+ ", password=" + password + ", cargo=" + cargo + ", solicitudes=" + solicitudes + ", rolesAsignados="
-				+ rolesAsignados + ", auditorias=" + auditorias + "]";
-	}
-
-	
-
-    
+    @Override
+    public String toString() {
+        return "Usuario [id=" + id
+                + ", nombre=" + nombre
+                + ", apellido=" + apellido
+                + ", cedula=" + cedula
+                + ", unidadGestion=" + unidadGestion
+                + ", correo=" + correo
+                + ", cargo=" + cargo + "]";
+    }
 }

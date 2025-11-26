@@ -1,7 +1,7 @@
 package com.senadi.solicitud02.vista;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -26,104 +26,151 @@ public class AplicacionBean implements Serializable {
     private Aplicacion formulario;
     private Aplicacion aplicacionSeleccionada;
 
-    // Para cargar por parámetro en edit.xhtml (?id=XX)
+    // para edit.xhtml (viewParam)
     private Long idAplicacion;
+
+    // Filtro por nombre
+    private String filtroNombre;
 
     @PostConstruct
     public void init() {
-        listar();
         formulario = new Aplicacion();
+        cargarLista();
     }
 
-    public void listar() {
-        lista = aplicacionCtrl.listarTodos();
-    }
-
-    /** Preparar para nueva aplicación (create.xhtml) */
-    public void prepararNuevo() {
-        formulario = new Aplicacion();
-        formulario.setFechaCreacion(LocalDateTime.now());
-    }
-
-    /** Preparar para edición cuando ya tenemos aplicacionSeleccionada */
-    public void prepararEdicion() {
-        if (aplicacionSeleccionada != null) {
-            formulario = aplicacionSeleccionada;
-        }
-    }
-
-    /** Usado desde edit.xhtml con <f:viewParam> */
-    public void cargarAplicacion() {
-        if (idAplicacion != null) {
-            Aplicacion app = aplicacionCtrl.buscarPorId(idAplicacion);
-            if (app != null) {
-                this.aplicacionSeleccionada = app;
-                prepararEdicion();
-            } else {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                         "Aplicación no encontrada",
-                                         "El registro solicitado no existe."));
-            }
-        }
-    }
-
-    public void guardar() {
+    private void cargarLista() {
         try {
-            boolean esNueva = (formulario.getId() == null);
+            lista = aplicacionCtrl.listarTodos();
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(
+                null,
+                new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Error al cargar aplicaciones", e.getMessage())
+            );
+        }
+    }
 
-            if (esNueva) {
-                if (formulario.getFechaCreacion() == null) {
-                    formulario.setFechaCreacion(LocalDateTime.now());
-                }
+    // ==============================
+    //   ACCIONES
+    // ==============================
+
+    /** Usado en create.xhtml y edit.xhtml */
+    public String guardar() {
+        try {
+            if (formulario.getId() == null) {
                 aplicacionCtrl.crear(formulario);
+                FacesContext.getCurrentInstance().addMessage(
+                    null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO,
+                            "Aplicación creada",
+                            "La aplicación se guardó correctamente.")
+                );
             } else {
                 aplicacionCtrl.actualizar(formulario);
-            }
-
-            listar();
-            FacesContext.getCurrentInstance().addMessage(null,
+                FacesContext.getCurrentInstance().addMessage(
+                    null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                     "Éxito",
-                                     "Aplicación guardada correctamente."));
+                            "Aplicación actualizada",
+                            "La aplicación se actualizó correctamente.")
+                );
+            }
+
+            cargarLista();
+            return "/Aplicacion/index.xhtml?faces-redirect=true";
+
         } catch (Exception e) {
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                     "Error al guardar",
-                                     e.getMessage()));
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(
+                null,
+                new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Error al guardar aplicación", e.getMessage())
+            );
+            return null;
         }
     }
 
-    public void eliminar() {
-        if (aplicacionSeleccionada != null && aplicacionSeleccionada.getId() != null) {
-            try {
-                aplicacionCtrl.eliminar(aplicacionSeleccionada.getId());
-                listar();
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                         "Eliminada",
-                                         "La aplicación ha sido eliminada."));
-            } catch (Exception e) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                         "Error al eliminar",
-                                         e.getMessage()));
+    /** Usado en index.xhtml */
+    public String eliminar() {
+        if (aplicacionSeleccionada == null || aplicacionSeleccionada.getId() == null) {
+            return null;
+        }
+
+        try {
+            aplicacionCtrl.eliminar(aplicacionSeleccionada.getId());
+            cargarLista();
+            FacesContext.getCurrentInstance().addMessage(
+                null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO,
+                        "Aplicación eliminada",
+                        "La aplicación se eliminó correctamente.")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(
+                null,
+                new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Error al eliminar aplicación", e.getMessage())
+            );
+        }
+        return null;  // mantenerse en el listado
+    }
+
+    /** Se llama desde edit.xhtml */
+    public void cargarAplicacion() {
+        if (idAplicacion == null) {
+            return;
+        }
+        try {
+            Aplicacion a = aplicacionCtrl.buscarPorId(idAplicacion);
+            if (a != null) {
+                formulario = a;
+            } else {
+                FacesContext.getCurrentInstance().addMessage(
+                    null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Aplicación no encontrada",
+                            "ID: " + idAplicacion)
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(
+                null,
+                new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Error al cargar la aplicación", e.getMessage())
+            );
+        }
+    }
+
+    // ==============================
+    //   LISTA FILTRADA
+    // ==============================
+
+    public List<Aplicacion> getListaFiltrada() {
+        if (lista == null) {
+            return null;
+        }
+        if (filtroNombre == null || filtroNombre.trim().isEmpty()) {
+            return lista;
+        }
+        String f = filtroNombre.trim().toLowerCase();
+        List<Aplicacion> filtrada = new ArrayList<>();
+        for (Aplicacion a : lista) {
+            if (a.getNombre() != null &&
+                a.getNombre().toLowerCase().contains(f)) {
+                filtrada.add(a);
             }
         }
+        return filtrada;
     }
 
-    public void cancelar() {
-        formulario = new Aplicacion();
-    }
-
-    // ===== GETTERS y SETTERS =====
+    // ==============================
+    //   GETTERS / SETTERS
+    // ==============================
 
     public List<Aplicacion> getLista() {
         return lista;
-    }
-
-    public void setLista(List<Aplicacion> lista) {
-        this.lista = lista;
     }
 
     public Aplicacion getFormulario() {
@@ -148,5 +195,13 @@ public class AplicacionBean implements Serializable {
 
     public void setIdAplicacion(Long idAplicacion) {
         this.idAplicacion = idAplicacion;
+    }
+
+    public String getFiltroNombre() {
+        return filtroNombre;
+    }
+
+    public void setFiltroNombre(String filtroNombre) {
+        this.filtroNombre = filtroNombre;
     }
 }

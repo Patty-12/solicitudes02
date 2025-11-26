@@ -128,14 +128,17 @@
                 ← Volver
             </h:link>
 
-            <!-- DESCARGAR (usa impresión del navegador para guardar como PDF) -->
-            <h:outputLink value="#" styleClass="btn-pdf"
+            <!-- DESCARGAR / IMPRIMIR PDF
+                 Sólo visible mientras el actor puede actuar sobre la solicitud -->
+            <h:outputLink value="#"
+                          styleClass="btn-pdf"
+                          rendered="#{solicitudDetalleBean.puedeDescargarImprimirPdfPublic}"
                           onclick="window.print(); return false;">
                 Descargar / Imprimir PDF
             </h:outputLink>
 
             <!-- ACCIONES DEL SOLICITANTE (solo estado CREADA) -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.mostrarAccionesSolicitante}">
+            <h:panelGroup rendered="#{solicitudDetalleBean.mostrarAccionesSolicitantePublic}">
 
                 <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
                               mode="simple"
@@ -156,8 +159,8 @@
                                  styleClass="ui-button-primary" />
             </h:panelGroup>
 
-            <!-- ACCIONES DEL DIRECTOR (estado PENDIENTE DIRECTOR) -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.directorPuedeFirmar}">
+            <!-- ACCIONES DEL DIRECTOR -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.directorPuedeFirmarPublic}">
 
                 <p:commandButton value=" Aprobar (Director)"
                                  icon="pi pi-check"
@@ -174,8 +177,8 @@
                                  onclick="return confirm('¿Rechazar la solicitud como Director?');" />
             </h:panelGroup>
 
-            <!-- ACCIONES DEL DIRECTOR TIC (estado PENDIENTE DIRECTOR TIC) -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.directorTicPuedeFirmar}">
+            <!-- ACCIONES DEL DIRECTOR TIC -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.directorTicPuedeFirmarPublic}">
 
                 <p:commandButton value=" Aprobar (Director TIC)"
                                  icon="pi pi-check"
@@ -192,8 +195,8 @@
                                  onclick="return confirm('¿Rechazar la solicitud como Director TIC?');" />
             </h:panelGroup>
 
-            <!-- ACCIONES DEL OFICIAL DE SEGURIDAD (estado PENDIENTE OFICIAL SEGURIDAD) -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.oficialPuedeFirmar}">
+            <!-- ACCIONES DEL OFICIAL DE SEGURIDAD -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.oficialPuedeFirmarPublic}">
 
                 <p:commandButton value=" Aprobar (Oficial Seguridad)"
                                  icon="pi pi-check"
@@ -210,8 +213,8 @@
                                  onclick="return confirm('¿Rechazar la solicitud como Oficial de Seguridad?');" />
             </h:panelGroup>
 
-            <!-- ACCIONES DEL RESPONSABLE DE ACCESOS (estado PENDIENTE APLICACIÓN ACCESOS) -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.responsablePuedeAplicarPermisos}">
+            <!-- ACCIONES DEL RESPONSABLE DE ACCESOS -->
+            <h:panelGroup rendered="#{solicitudDetalleBean.responsablePuedeAplicarPermisosPublic}">
 
                 <p:commandButton value=" Marcar permisos aplicados"
                                  icon="pi pi-check"
@@ -272,7 +275,7 @@
                 <th>Cargo</th>
             </tr>
             <tr>
-                <td></td>
+                <td>#{solicitudDetalleBean.servidorSolicitante.unidadGestion}</td>
                 <td>#{solicitudDetalleBean.servidorSolicitante.cargo}</td>
             </tr>
             <tr>
@@ -293,23 +296,38 @@
                 <th>Apellidos</th>
             </tr>
             <tr>
-                <td></td>
-                <td></td>
+                <td>
+                    #{empty solicitudDetalleBean.servidorAutoriza
+                        ? '' : solicitudDetalleBean.servidorAutoriza.nombre}
+                </td>
+                <td>
+                    #{empty solicitudDetalleBean.servidorAutoriza
+                        ? '' : solicitudDetalleBean.servidorAutoriza.apellido}
+                </td>
             </tr>
             <tr>
                 <th>Unidad/Sección</th>
                 <th>Cargo</th>
             </tr>
             <tr>
-                <td></td>
-                <td>Director</td>
+                <td>
+                    #{empty solicitudDetalleBean.servidorAutoriza
+                        ? '' : solicitudDetalleBean.servidorAutoriza.unidadGestion}
+                </td>
+                <td>
+                    #{empty solicitudDetalleBean.servidorAutoriza
+                        ? '' : solicitudDetalleBean.servidorAutoriza.cargo}
+                </td>
             </tr>
             <tr>
                 <th>Correo institucional</th>
                 <th>Teléfono / Extensión</th>
             </tr>
             <tr>
-                <td></td>
+                <td>
+                    #{empty solicitudDetalleBean.servidorAutoriza
+                        ? '' : solicitudDetalleBean.servidorAutoriza.correo}
+                </td>
                 <td></td>
             </tr>
         </table>
@@ -324,6 +342,7 @@
                 <th class="checkbox-cell">X</th>
             </tr>
 
+            <!-- Usa los accesos de la solicitud ya inicializados en el bean -->
             <ui:repeat value="#{solicitudDetalleBean.accesos}" var="acc">
                 <tr>
                     <td>#{acc.permiso.aplicacion.nombre}</td>

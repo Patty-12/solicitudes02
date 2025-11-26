@@ -1,10 +1,10 @@
 /* ==========================================
-   PANEL CLARO (Ignora tema oscuro)
+   PANEL CLARO
    ========================================== */
 .panel-claro .ui-panel-titlebar,
 .panel-claro .ui-panel-content {
     background: #ffffff !important;
-    color: #1f2937 !important; /* gris oscuro */
+    color: #1f2937 !important;
     border: 1px solid #d1d5db !important;
 }
 
@@ -15,38 +15,7 @@
 }
 
 /* ==========================================
-   CONTENEDOR GENERAL DE SISTEMAS
-   ========================================== */
-.sistemas-container {
-    max-height: 350px;
-    overflow-y: auto;
-    padding: 8px;
-    background: #ffffff !important;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-}
-
-/* ==========================================
-   BLOQUE DE CADA APLICACIÓN
-   ========================================== */
-.app-block {
-    margin-bottom: 1.2rem;
-    background: #ffffff;
-    border-radius: 4px;
-}
-
-/* Cabecera de la aplicación */
-.app-header {
-    font-weight: 600;
-    color: #034383;
-    background: #f3f4f6;
-    padding: 6px 10px;
-    border: 1px solid #d1d5db;
-    border-bottom: none;
-}
-
-/* ==========================================
-   TABLA DE PERMISOS (tipo Excel)
+   TABLA GENERAL DE SISTEMAS Y PERMISOS
    ========================================== */
 .tabla-permisos {
     width: 100%;
@@ -56,7 +25,6 @@
     border: 1px solid #d1d5db;
 }
 
-/* Encabezados */
 .tabla-permisos th {
     background: #e5e7eb;
     padding: 6px;
@@ -65,31 +33,60 @@
     color: #111827;
 }
 
-/* Celdas */
 .tabla-permisos td {
     border: 1px solid #e5e7eb;
     padding: 6px;
     color: #1f2937;
 }
 
-/* Filas alternadas tipo Excel */
 .tabla-permisos tr:nth-child(odd) {
-    background: #ffffff;
+    background: #fff7e6;  /* crema claro */
 }
 
 .tabla-permisos tr:nth-child(even) {
-    background: #f9fafb;
+    background: #e3f2fd;  /* azul muy claro */
 }
 
-/* Checkbox alineado al centro */
+
+/* ==========================================
+   COLUMNA DEL CHECKBOX
+   ========================================== */
 .perm-check-cell {
-    width: 70px;
-    text-align: center;
+    width: 100px;
+    text-align: right;
     vertical-align: middle;
+    padding-right: 12px;
 }
 
-/* Evitar que PrimeFaces altere el checkbox */
 .perm-check-cell .ui-chkbox {
     display: inline-block;
-    margin: 0 auto;
+    margin: 0;
 }
+
+/* Tabla de datos del servidor que autoriza */
+.tabla-datos-autoriza {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.tabla-datos-autoriza th,
+.tabla-datos-autoriza td {
+    border: 1px solid #d1d5db;
+    padding: 6px 10px;
+}
+
+.tabla-datos-autoriza th {
+    background: #e5eef8; /* azul clarito */
+    font-weight: 600;
+    text-align: left;
+}
+
+.tabla-datos-autoriza tr:nth-child(odd) td {
+    background: #fdf7e3; /* crema */
+}
+
+.tabla-datos-autoriza tr:nth-child(even) td {
+    background: #f1f5fb; /* azul muy claro */
+}
+

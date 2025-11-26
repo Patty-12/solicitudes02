@@ -70,7 +70,8 @@ public class UsuarioControladorImpl implements UsuarioControlador {
     @Override
     public Usuario buscarPorCorreo(String correo) {
         try {
-            return em.createQuery("SELECT u FROM Usuario u WHERE u.correo = :correo", Usuario.class)
+            return em.createQuery(
+                    "SELECT u FROM Usuario u WHERE u.correo = :correo", Usuario.class)
                      .setParameter("correo", correo)
                      .getSingleResult();
         } catch (NoResultException e) {
@@ -78,12 +79,12 @@ public class UsuarioControladorImpl implements UsuarioControlador {
         }
     }
 
-    // NUEVO MÉTODO: Buscar por correo y cargo
     @Override
     public Usuario buscarPorCorreoYCargo(String correo, String cargo) {
         try {
             return em.createQuery(
-                    "SELECT u FROM Usuario u WHERE u.correo = :correo AND u.cargo = :cargo", Usuario.class)
+                    "SELECT u FROM Usuario u WHERE u.correo = :correo AND u.cargo = :cargo",
+                    Usuario.class)
                      .setParameter("correo", correo)
                      .setParameter("cargo", cargo)
                      .getSingleResult();
@@ -99,21 +100,24 @@ public class UsuarioControladorImpl implements UsuarioControlador {
 
     @Override
     public List<Usuario> buscarPorNombre(String nombre) {
-        return em.createQuery("SELECT u FROM Usuario u WHERE u.nombre = :nombre", Usuario.class)
+        return em.createQuery(
+                "SELECT u FROM Usuario u WHERE u.nombre = :nombre", Usuario.class)
                  .setParameter("nombre", nombre)
                  .getResultList();
     }
 
     @Override
     public List<Usuario> buscarPorApellido(String apellido) {
-        return em.createQuery("SELECT u FROM Usuario u WHERE u.apellido = :apellido", Usuario.class)
+        return em.createQuery(
+                "SELECT u FROM Usuario u WHERE u.apellido = :apellido", Usuario.class)
                  .setParameter("apellido", apellido)
                  .getResultList();
     }
 
     @Override
     public List<Usuario> buscarPorCargo(String cargo) {
-        return em.createQuery("SELECT u FROM Usuario u WHERE u.cargo = :cargo", Usuario.class)
+        return em.createQuery(
+                "SELECT u FROM Usuario u WHERE u.cargo = :cargo", Usuario.class)
                  .setParameter("cargo", cargo)
                  .getResultList();
     }
@@ -121,7 +125,8 @@ public class UsuarioControladorImpl implements UsuarioControlador {
     @Override
     public List<Usuario> buscarPorNombreYApellido(String nombre, String apellido) {
         return em.createQuery(
-                "SELECT u FROM Usuario u WHERE u.nombre = :nombre AND u.apellido = :apellido", Usuario.class)
+                "SELECT u FROM Usuario u WHERE u.nombre = :nombre AND u.apellido = :apellido",
+                Usuario.class)
                  .setParameter("nombre", nombre)
                  .setParameter("apellido", apellido)
                  .getResultList();
@@ -130,7 +135,8 @@ public class UsuarioControladorImpl implements UsuarioControlador {
     @Override
     public List<Usuario> buscarPorNombreOCorreo(String texto) {
         return em.createQuery(
-                "SELECT u FROM Usuario u WHERE u.nombre LIKE :texto OR u.correo LIKE :texto", Usuario.class)
+                "SELECT u FROM Usuario u WHERE u.nombre LIKE :texto OR u.correo LIKE :texto",
+                Usuario.class)
                  .setParameter("texto", "%" + texto + "%")
                  .getResultList();
     }
@@ -139,12 +145,60 @@ public class UsuarioControladorImpl implements UsuarioControlador {
     public Usuario autenticar(String correo, String password) {
         try {
             return em.createQuery(
-                    "SELECT u FROM Usuario u WHERE u.correo = :correo AND u.password = :password", Usuario.class)
+                    "SELECT u FROM Usuario u WHERE u.correo = :correo AND u.password = :password",
+                    Usuario.class)
                      .setParameter("correo", correo)
                      .setParameter("password", password)
                      .getSingleResult();
         } catch (NoResultException e) {
             return null;
         }
+    }
+
+    // ======================================================
+    //   MÉTODOS NUEVOS PARA DIRECTORES / AUTOCOMPLETE
+    // ======================================================
+
+    @Override
+    public Usuario buscarPorNombreYCargo(String nombre, String cargo) {
+        try {
+            return em.createQuery(
+                    "SELECT u FROM Usuario u " +
+                    "WHERE LOWER(u.nombre) = :nombre AND LOWER(u.cargo) = LOWER(:cargo)",
+                    Usuario.class)
+                     .setParameter("nombre", nombre.toLowerCase())
+                     .setParameter("cargo", cargo)
+                     .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Usuario buscarPorCedulaYCargo(String cedula, String cargo) {
+        try {
+            return em.createQuery(
+                    "SELECT u FROM Usuario u " +
+                    "WHERE u.cedula = :cedula AND LOWER(u.cargo) = LOWER(:cargo)",
+                    Usuario.class)
+                     .setParameter("cedula", cedula)
+                     .setParameter("cargo", cargo)
+                     .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public List<Usuario> buscarDirectoresPorNombreLike(String patronNombre) {
+        return em.createQuery(
+                "SELECT u FROM Usuario u " +
+                "WHERE LOWER(CONCAT(u.nombre, ' ', u.apellido)) LIKE :patron " +
+                "AND LOWER(u.cargo) = LOWER(:cargo) " +
+                "ORDER BY u.nombre, u.apellido",
+                Usuario.class)
+                 .setParameter("patron", "%" + patronNombre.toLowerCase() + "%")
+                 .setParameter("cargo", "Director")
+                 .getResultList();
     }
 }

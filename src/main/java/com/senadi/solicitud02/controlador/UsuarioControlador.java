@@ -5,8 +5,8 @@ import java.util.List;
 import com.senadi.solicitud02.modelo.entidades.Usuario;
 
 public interface UsuarioControlador {
-	
-	void crear(Usuario u);
+    
+    void crear(Usuario u);
     Usuario actualizar(Usuario u);
     void eliminar(Long id);
     Usuario buscarPorId(Long id);
@@ -21,4 +21,11 @@ public interface UsuarioControlador {
     Usuario buscarPorCorreoYCargo(String correo, String cargo);
     Usuario autenticar(String correo, String password);
 
+    // === NUEVOS MÉTODOS PARA EL FORMULARIO DE SOLICITUD ===
+
+    Usuario buscarPorNombreYCargo(String nombre, String cargo);
+
+    Usuario buscarPorCedulaYCargo(String cedula, String cargo);
+
+    List<Usuario> buscarDirectoresPorNombreLike(String patronNombre);
 }

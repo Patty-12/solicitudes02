@@ -14,9 +14,6 @@ import com.senadi.solicitud02.controlador.*;
 import com.senadi.solicitud02.controlador.impl.*;
 import com.senadi.solicitud02.modelo.entidades.*;
 
-/**
- * Bean de gestión de Solicitudes.
- */
 @ManagedBean(name = "solicitudBean")
 @ViewScoped
 public class SolicitudBean implements Serializable {
@@ -41,8 +38,8 @@ public class SolicitudBean implements Serializable {
     // Para edición
     private Long idSolicitud;
 
-    // Datos de Director (jefe)
-    private String correoJefe;
+    // Datos del Director (Jefe inmediato)
+    private String nombreJefeBusqueda;
     private Usuario jefe;
 
     // Aplicaciones / permisos
@@ -53,7 +50,7 @@ public class SolicitudBean implements Serializable {
     public void init() {
         formulario = new Solicitud();
         cargarAplicacionesYPermisos();
-        aplicarFiltro(); // carga inicial según usuario logueado
+        aplicarFiltro();
     }
 
     // ==========================
@@ -64,15 +61,13 @@ public class SolicitudBean implements Serializable {
         FacesContext fc = FacesContext.getCurrentInstance();
         LoginBean lb = fc.getApplication()
                          .evaluateExpressionGet(fc, "#{loginBean}", LoginBean.class);
-        if (lb != null) {
-            return lb.getUsuario();
-        }
-        return null;
+        return (lb != null) ? lb.getUsuario() : null;
     }
 
     private void cargarAplicacionesYPermisos() {
         aplicaciones = aplicacionCtrl.listarTodos();
         permisosSeleccionados.clear();
+
         if (aplicaciones != null) {
             for (Aplicacion app : aplicaciones) {
                 if (app.getPermisos() != null) {
@@ -120,21 +115,19 @@ public class SolicitudBean implements Serializable {
                 return;
             }
 
-            if (estadoFiltro == null || "TODAS".equals(estadoFiltro)) {
-                // Todas las solicitudes del usuario, pero ocultando ANULADAS en la vista normal
+            if ("TODAS".equals(estadoFiltro)) {
                 lista = solCtrl.buscarPorUsuario(u.getId());
                 if (lista != null) {
                     lista.removeIf(s -> "ANULADA".equalsIgnoreCase(s.getEstado()));
                 }
             } else {
-                // Filtro específico por estado (si el usuario selecciona ANULADA, también las verá)
                 lista = solCtrl.buscarPorUsuarioYEstado(u.getId(), estadoFiltro);
             }
         } catch (Exception e) {
             e.printStackTrace();
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Error al aplicar filtro", e.getMessage()));
+                new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                 "Error al aplicar filtro", e.getMessage()));
         }
     }
 
@@ -147,20 +140,26 @@ public class SolicitudBean implements Serializable {
     //   NUEVA SOLICITUD
     // ==========================
 
+    /**
+     * Se invoca desde preRenderView, pero sólo debe ejecutar la inicialización
+     * la primera vez (no en postbacks ni en peticiones AJAX).
+     */
     public void prepararNuevo() {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        if (fc != null && fc.isPostback()) {
+            // Si es postback, no reseteamos nada para no perder el jefe ni los permisos.
+            return;
+        }
+
         formulario = new Solicitud();
 
         Usuario usuarioLogueado = obtenerUsuarioLogueado();
-        if (usuarioLogueado != null) {
-            formulario.setUsuario(usuarioLogueado);
-        } else {
-            formulario.setUsuario(new Usuario());
-        }
+        formulario.setUsuario(usuarioLogueado != null ? usuarioLogueado : new Usuario());
 
         formulario.setEstado("CREADA");
         formulario.setFechaCreacion(LocalDateTime.now());
 
-        correoJefe = null;
+        nombreJefeBusqueda = null;
         jefe = null;
 
         cargarAplicacionesYPermisos();
@@ -178,21 +177,27 @@ public class SolicitudBean implements Serializable {
         Solicitud s = solCtrl.buscarPorId(idSolicitud);
         if (s == null) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Solicitud no encontrada", "ID: " + idSolicitud));
+                new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                 "Solicitud no encontrada", "ID: " + idSolicitud));
             return;
         }
 
-        // Regla: sólo se permite editar solicitudes en estado CREADA
         if (!"CREADA".equalsIgnoreCase(s.getEstado())) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_WARN,
-                            "Edición no permitida",
-                            "Sólo puede editar solicitudes en estado CREADA."));
+                new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                 "Edición no permitida",
+                                 "Sólo puede editar solicitudes en estado CREADA."));
             return;
         }
 
         formulario = s;
+
+        // Si la solicitud ya tenía jefe guardado, lo mostramos en la vista
+        jefe = formulario.getJefeAutoriza();
+        if (jefe != null) {
+            nombreJefeBusqueda = jefe.getNombre();
+        }
+
         marcarPermisosDeSolicitud(formulario);
     }
 
@@ -200,26 +205,51 @@ public class SolicitudBean implements Serializable {
     //   DIRECTOR (JEFE)
     // ==========================
 
-    public String llenarDatosJefe() {
-        if (correoJefe != null && !correoJefe.isEmpty()) {
-            jefe = usuarioCtrl.buscarPorCorreoYCargo(correoJefe, "Director");
-            if (jefe == null) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_WARN,
-                                "Director no encontrado",
-                                "Verifica el correo y que tenga cargo 'Director'"));
-            } else {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                "Director encontrado",
-                                jefe.getNombre() + " " + jefe.getApellido()));
+    public void buscarDirectorPorNombre() {
+        if (nombreJefeBusqueda == null || nombreJefeBusqueda.trim().isEmpty()) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                 "Búsqueda vacía",
+                                 "Ingrese al menos un nombre para buscar al Director."));
+            return;
+        }
+
+        String criterio = nombreJefeBusqueda.trim();
+
+        List<Usuario> encontrados = usuarioCtrl.buscarPorNombre(criterio);
+
+        if (encontrados == null || encontrados.isEmpty()) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                 "Director no encontrado",
+                                 "No se encontraron usuarios con ese nombre."));
+            jefe = null;
+            return;
+        }
+
+        Usuario candidatoDirector = null;
+        for (Usuario u : encontrados) {
+            if (u.getCargo() != null &&
+                u.getCargo().toLowerCase().contains("director")) {
+                candidatoDirector = u;
+                break;
             }
         }
-        return null;
+
+        if (candidatoDirector == null) {
+            candidatoDirector = encontrados.get(0);
+        }
+
+        jefe = candidatoDirector;
+
+        FacesContext.getCurrentInstance().addMessage(null,
+            new FacesMessage(FacesMessage.SEVERITY_INFO,
+                             "Director seleccionado",
+                             jefe.getNombre() + " " + jefe.getApellido()));
     }
 
     // ==========================
-    //   GUARDAR / ELIMINAR (ANULAR)
+    //   GUARDAR / ANULAR
     // ==========================
 
     public String guardar() {
@@ -229,14 +259,18 @@ public class SolicitudBean implements Serializable {
                 formulario.setUsuario(usuarioLogueado);
             }
 
+            // Guardar el jefe seleccionado en la solicitud
+            if (jefe != null) {
+                formulario.setJefeAutoriza(jefe);
+            }
+
             boolean nueva = (formulario.getId() == null);
 
-            // Regla de negocio: sólo se guarda/actualiza si está CREADA o es nueva
             if (!nueva && !"CREADA".equalsIgnoreCase(formulario.getEstado())) {
                 FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_WARN,
-                                "No permitido",
-                                "Sólo puede modificar solicitudes en estado CREADA."));
+                    new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                     "No permitido",
+                                     "Sólo puede modificar solicitudes en estado CREADA."));
                 return null;
             }
 
@@ -245,12 +279,11 @@ public class SolicitudBean implements Serializable {
                 formulario.setFechaCreacion(LocalDateTime.now());
                 solCtrl.crear(formulario);
             } else {
-                // limpiar accesos previos para re-generarlos
                 limpiarAccesosDeSolicitud(formulario);
                 solCtrl.actualizar(formulario);
             }
 
-            // Crear accesos según los permisos marcados
+            // Guardar accesos seleccionados
             for (Map.Entry<Long, Boolean> entry : permisosSeleccionados.entrySet()) {
                 if (Boolean.TRUE.equals(entry.getValue())) {
                     PermisoAplicacion permiso = permisoCtrl.buscarPorId(entry.getKey());
@@ -267,44 +300,38 @@ public class SolicitudBean implements Serializable {
             aplicarFiltro();
 
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO,
-                            "Solicitud guardada",
-                            "La solicitud se ha guardado correctamente."));
+                new FacesMessage(FacesMessage.SEVERITY_INFO,
+                                 "Solicitud guardada",
+                                 "La solicitud se ha guardado correctamente."));
 
-            // Volver al listado
             return "/Solicitud/index?faces-redirect=true";
 
         } catch (Exception e) {
             e.printStackTrace();
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Error al guardar solicitud", e.getMessage()));
+                new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                 "Error al guardar solicitud", e.getMessage()));
             return null;
         }
     }
 
-    /**
-     * "Eliminar" ahora significa ANULAR la solicitud (soft delete).
-     * No se borra de la base, sólo cambia el estado a ANULADA y se oculta de la vista normal.
-     */
     public void eliminar() {
         if (solicitudSeleccionada != null && solicitudSeleccionada.getId() != null) {
             try {
                 Solicitud s = solCtrl.buscarPorId(solicitudSeleccionada.getId());
                 if (s == null) {
                     FacesContext.getCurrentInstance().addMessage(null,
-                            new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                    "Solicitud no encontrada",
-                                    "ID: " + solicitudSeleccionada.getId()));
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                         "Solicitud no encontrada",
+                                         "ID: " + solicitudSeleccionada.getId()));
                     return;
                 }
 
-                // Regla: sólo se puede anular cuando está CREADA
                 if (!"CREADA".equalsIgnoreCase(s.getEstado())) {
                     FacesContext.getCurrentInstance().addMessage(null,
-                            new FacesMessage(FacesMessage.SEVERITY_WARN,
-                                    "No permitido",
-                                    "Sólo puede anular solicitudes en estado CREADA."));
+                        new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                         "No permitido",
+                                         "Sólo puede anular solicitudes en estado CREADA."));
                     return;
                 }
 
@@ -314,14 +341,14 @@ public class SolicitudBean implements Serializable {
                 aplicarFiltro();
 
                 FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                "Solicitud anulada",
-                                "La solicitud ha sido anulada y ya no aparecerá en su listado principal."));
+                    new FacesMessage(FacesMessage.SEVERITY_INFO,
+                                     "Solicitud anulada",
+                                     "La solicitud ha sido anulada."));
             } catch (Exception e) {
                 e.printStackTrace();
                 FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                "Error al anular solicitud", e.getMessage()));
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                                     "Error al anular solicitud", e.getMessage()));
             }
         }
     }
@@ -366,12 +393,12 @@ public class SolicitudBean implements Serializable {
         this.idSolicitud = idSolicitud;
     }
 
-    public String getCorreoJefe() {
-        return correoJefe;
+    public String getNombreJefeBusqueda() {
+        return nombreJefeBusqueda;
     }
 
-    public void setCorreoJefe(String correoJefe) {
-        this.correoJefe = correoJefe;
+    public void setNombreJefeBusqueda(String nombreJefeBusqueda) {
+        this.nombreJefeBusqueda = nombreJefeBusqueda;
     }
 
     public Usuario getJefe() {

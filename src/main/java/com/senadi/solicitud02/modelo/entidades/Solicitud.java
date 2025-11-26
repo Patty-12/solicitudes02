@@ -8,6 +8,7 @@ import java.util.List;
 @Entity
 @Table(name = "solicitud")
 public class Solicitud {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -16,77 +17,96 @@ public class Solicitud {
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
     @Column(length = 30, nullable = false)
-    private String estado = "CREADA"; // ejemplo
+    private String estado = "CREADA";
 
-    // (N) -> Usuario (1)
+    // Solicitante (usuario que pide los accesos)
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
+
+    // Jefe inmediato / servidor que autoriza
+    @ManyToOne
+    @JoinColumn(name = "id_jefe_autoriza")
+    private Usuario jefeAutoriza;
 
     // Solicitud -> Firma (1:N)
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Firma> firmas = new ArrayList<>();
 
-
     // Solicitud -> AccesoUsuario (1:N)
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AccesoUsuario> accesos = new ArrayList<>();
 
-	public Long getId() {
-		return id;
-	}
+    // =======================
+    // Getters y Setters
+    // =======================
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public LocalDateTime getFechaCreacion() {
-		return fechaCreacion;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setFechaCreacion(LocalDateTime fechaCreacion) {
-		this.fechaCreacion = fechaCreacion;
-	}
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
 
-	public String getEstado() {
-		return estado;
-	}
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
 
-	public void setEstado(String estado) {
-		this.estado = estado;
-	}
+    public String getEstado() {
+        return estado;
+    }
 
-	public Usuario getUsuario() {
-		return usuario;
-	}
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
 
-	public void setUsuario(Usuario usuario) {
-		this.usuario = usuario;
-	}
+    public Usuario getUsuario() {
+        return usuario;
+    }
 
-	public List<Firma> getFirmas() {
-	    return firmas;
-	}
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 
-	public void setFirmas(List<Firma> firmas) {
-	    this.firmas = firmas;
-	}
+    public Usuario getJefeAutoriza() {
+        return jefeAutoriza;
+    }
 
+    public void setJefeAutoriza(Usuario jefeAutoriza) {
+        this.jefeAutoriza = jefeAutoriza;
+    }
 
-	public List<AccesoUsuario> getAccesos() {
-		return accesos;
-	}
+    public List<Firma> getFirmas() {
+        return firmas;
+    }
 
-	public void setAccesos(List<AccesoUsuario> accesos) {
-		this.accesos = accesos;
-	}
+    public void setFirmas(List<Firma> firmas) {
+        this.firmas = firmas;
+    }
 
-	@Override
-	public String toString() {
-		return "Solicitud [id=" + id + ", fechaCreacion=" + fechaCreacion + ", estado=" + estado + ", usuario="
-				+ usuario + ", firmas=" + firmas + ", accesos=" + accesos + "]";
-	}
+    public List<AccesoUsuario> getAccesos() {
+        return accesos;
+    }
 
-    
+    public void setAccesos(List<AccesoUsuario> accesos) {
+        this.accesos = accesos;
+    }
+
+    @Override
+    public String toString() {
+        return "Solicitud{" +
+                "id=" + id +
+                ", fechaCreacion=" + fechaCreacion +
+                ", estado='" + estado + '\'' +
+                ", usuario=" + usuario +
+                ", jefeAutoriza=" + jefeAutoriza +
+                ", firmas=" + firmas +
+                ", accesos=" + accesos +
+                '}';
+    }
 }
-

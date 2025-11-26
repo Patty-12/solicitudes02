@@ -48,7 +48,7 @@ public class SolicitudDetalleBean implements Serializable {
     // Archivo PDF firmado por el solicitante
     private UploadedFile archivoFirmado;
 
-    // formateadores
+    // Formateadores
     private DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private DateTimeFormatter fmtFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -102,6 +102,11 @@ public class SolicitudDetalleBean implements Serializable {
 
         if (id != null) {
             solicitud = solCtrl.buscarPorId(id);
+
+            // Forzar la carga de los accesos mientras la sesión JPA sigue abierta
+            if (solicitud != null && solicitud.getAccesos() != null) {
+                solicitud.getAccesos().size();
+            }
         }
     }
 
@@ -168,9 +173,6 @@ public class SolicitudDetalleBean implements Serializable {
     //  FLAGS PARA LA VISTA (rendered)
     // =====================================================
 
-    /**
-     * El solicitante puede enviar al Director sólo si la solicitud está en estado CREADA.
-     */
     public boolean isPuedeEnviarADirector() {
         return isSolicitanteActual() && isEstadoCreada();
     }
@@ -179,32 +181,36 @@ public class SolicitudDetalleBean implements Serializable {
         return isPuedeEnviarADirector();
     }
 
-    /**
-     * Director de área: firma (aprueba/rechaza) en PENDIENTE DIRECTOR.
-     */
     public boolean isDirectorPuedeFirmar() {
         return isDirectorActual() && isEstadoPendienteDirector();
     }
 
-    /**
-     * Director TIC: firma en PENDIENTE DIRECTOR TIC.
-     */
     public boolean isDirectorTicPuedeFirmar() {
         return isDirectorTicActual() && isEstadoPendienteDirectorTic();
     }
 
-    /**
-     * Oficial de Seguridad: firma en PENDIENTE OFICIAL SEGURIDAD.
-     */
     public boolean isOficialPuedeFirmar() {
         return isOficialSeguridadActual() && isEstadoPendienteOficialSeguridad();
     }
 
-    /**
-     * Responsable de Accesos: marca permisos aplicados en PENDIENTE APLICACIÓN ACCESOS.
-     */
     public boolean isResponsablePuedeAplicarPermisos() {
         return isResponsableAccesosActual() && isEstadoPendienteAplicacionAccesos();
+    }
+
+    /**
+     * Controla quién puede ver el botón "Descargar / Imprimir PDF".
+     */
+    public boolean isPuedeDescargarImprimirPdf() {
+        if (solicitud == null) return false;
+
+        if (isSolicitanteActual() && isEstadoCreada()) return true;
+        if (isDirectorActual() && isEstadoPendienteDirector()) return true;
+        if (isDirectorTicActual() && isEstadoPendienteDirectorTic()) return true;
+        if (isOficialSeguridadActual() && isEstadoPendienteOficialSeguridad()) return true;
+        if (isResponsableAccesosActual() && isEstadoPendienteAplicacionAccesos()) return true;
+
+        // En cualquier otro estado / rol, sólo visualiza, ya no descarga
+        return false;
     }
 
     // =====================================================
@@ -274,9 +280,10 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
-    /**
-     * CREADA → PENDIENTE DIRECTOR
-     */
+    // =====================================================
+    //  DIRECTOR (APROBAR / RECHAZAR)
+    // =====================================================
+
     public void enviarAlDirector() {
         if (!isSolicitanteActual()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -308,7 +315,6 @@ public class SolicitudDetalleBean implements Serializable {
                     "Solicitud enviada",
                     "La solicitud ha sido enviada al Director para su revisión.");
 
-            // Correo de ejemplo (ajustar en producción)
             String correoDirector = "dlopez@senadi.com";
             NotificacionService.notificarPendienteDirector(solicitud, correoDirector);
             NotificacionService.notificarSolicitanteEnvio(solicitud);
@@ -322,13 +328,6 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
-    // =====================================================
-    //  DIRECTOR (APROBAR / RECHAZAR)
-    // =====================================================
-
-    /**
-     * PENDIENTE DIRECTOR → PENDIENTE DIRECTOR TIC
-     */
     public void aprobarComoDirector() {
         if (!isDirectorPuedeFirmar()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -364,9 +363,6 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
-    /**
-     * PENDIENTE DIRECTOR → RECHAZADA
-     */
     public void rechazarComoDirector() {
         if (!isDirectorPuedeFirmar()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -398,9 +394,6 @@ public class SolicitudDetalleBean implements Serializable {
     //  DIRECTOR TIC (APROBAR / RECHAZAR)
     // =====================================================
 
-    /**
-     * PENDIENTE DIRECTOR TIC → PENDIENTE OFICIAL SEGURIDAD
-     */
     public void aprobarComoDirectorTic() {
         if (!isDirectorTicPuedeFirmar()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -436,9 +429,6 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
-    /**
-     * PENDIENTE DIRECTOR TIC → RECHAZADA
-     */
     public void rechazarComoDirectorTic() {
         if (!isDirectorTicPuedeFirmar()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -470,9 +460,6 @@ public class SolicitudDetalleBean implements Serializable {
     //  OFICIAL DE SEGURIDAD (APROBAR / RECHAZAR)
     // =====================================================
 
-    /**
-     * PENDIENTE OFICIAL SEGURIDAD → PENDIENTE APLICACIÓN ACCESOS
-     */
     public void aprobarComoOficial() {
         if (!isOficialPuedeFirmar()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -508,9 +495,6 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
-    /**
-     * PENDIENTE OFICIAL SEGURIDAD → RECHAZADA
-     */
     public void rechazarComoOficial() {
         if (!isOficialPuedeFirmar()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -542,9 +526,6 @@ public class SolicitudDetalleBean implements Serializable {
     //  RESPONSABLE DE ACCESOS (APLICAR PERMISOS)
     // =====================================================
 
-    /**
-     * PENDIENTE APLICACIÓN ACCESOS → PERMISOS APLICADOS
-     */
     public void marcarPermisosAplicados() {
         if (!isResponsablePuedeAplicarPermisos()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -600,10 +581,17 @@ public class SolicitudDetalleBean implements Serializable {
         return (dt != null) ? dt.format(fmtFechaHora) : "";
     }
 
+    // Servidor solicitante
     public Usuario getServidorSolicitante() {
         return (solicitud != null) ? solicitud.getUsuario() : null;
     }
 
+    // Servidor que autoriza (jefe inmediato)
+    public Usuario getServidorAutoriza() {
+        return (solicitud != null) ? solicitud.getJefeAutoriza() : null;
+    }
+
+    // Accesos asociados a la solicitud (ya inicializados en cargar())
     public List<AccesoUsuario> getAccesos() {
         return (solicitud != null) ? solicitud.getAccesos() : null;
     }
@@ -618,9 +606,6 @@ public class SolicitudDetalleBean implements Serializable {
         return false;
     }
 
-    /**
-     * Historial de firmas ordenado cronológicamente.
-     */
     public List<Firma> getFirmasOrdenadas() {
         if (solicitud == null || solicitud.getFirmas() == null) {
             return new ArrayList<>();
@@ -655,7 +640,7 @@ public class SolicitudDetalleBean implements Serializable {
         return usuarioActual;
     }
 
-    // Expuestos para EL (por si necesitas nombres "public")
+    // Expuestos para EL
     public boolean isMostrarAccionesSolicitantePublic() {
         return isMostrarAccionesSolicitante();
     }
@@ -674,5 +659,9 @@ public class SolicitudDetalleBean implements Serializable {
 
     public boolean isResponsablePuedeAplicarPermisosPublic() {
         return isResponsablePuedeAplicarPermisos();
+    }
+
+    public boolean isPuedeDescargarImprimirPdfPublic() {
+        return isPuedeDescargarImprimirPdf();
     }
 }

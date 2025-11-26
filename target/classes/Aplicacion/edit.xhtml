@@ -16,7 +16,16 @@
         <h:form id="formEditar">
 
             <div class="card">
-                <h3>Editar Aplicación</h3>
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+                    <h3 style="margin:0;">Editar Aplicación</h3>
+
+                    <!-- Atajo para ver permisos de esta aplicación -->
+                    <h:link value="Ver permisos de esta aplicación"
+                            outcome="/PermisoAplicacion/index.xhtml"
+                            styleClass="btn-secondary">
+                        <f:param name="idAplicacion" value="#{aplicacionBean.formulario.id}" />
+                    </h:link>
+                </div>
 
                 <h:messages globalOnly="true" style="color:red;" />
 
@@ -51,7 +60,6 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Fecha creación</label>
-                        <!-- LocalDateTime directo -->
                         <h:outputText value="#{aplicacionBean.formulario.fechaCreacion}" />
                     </div>
                 </div>

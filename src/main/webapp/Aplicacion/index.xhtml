@@ -22,13 +22,25 @@
                             styleClass="btn-primary" />
                 </div>
 
+                <!-- FILTRO POR NOMBRE -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Filtrar por nombre:</label>
+                        <h:inputText value="#{aplicacionBean.filtroNombre}"
+                                     styleClass="input">
+                            <f:ajax render="tablaApps" />
+                        </h:inputText>
+                    </div>
+                </div>
+
                 <h:messages globalOnly="true" style="color:red;" />
 
-                <h:dataTable value="#{aplicacionBean.lista}"
+                <h:dataTable id="tablaApps"
+                             value="#{aplicacionBean.listaFiltrada}"
                              var="a"
-                             styleClass="table table-striped"
+                             styleClass="table table-striped table-bordered"
                              headerClass="table-header"
-                             rowClasses="table-row">
+                             rowClasses="row-par,row-impar">
 
                     <h:column>
                         <f:facet name="header">ID</f:facet>
@@ -47,8 +59,16 @@
 
                     <h:column>
                         <f:facet name="header">Fecha creación</f:facet>
-                        <!-- LocalDateTime directo -->
                         <h:outputText value="#{a.fechaCreacion}" />
+                    </h:column>
+
+                    <!-- Botón para ver permisos de la aplicación -->
+                    <h:column>
+                        <f:facet name="header">Permisos</f:facet>
+                        <h:link value="Ver permisos"
+                                outcome="/PermisoAplicacion/index.xhtml">
+                            <f:param name="idAplicacion" value="#{a.id}" />
+                        </h:link>
                     </h:column>
 
                     <h:column>
@@ -58,6 +78,8 @@
                                 outcome="/Aplicacion/edit.xhtml">
                             <f:param name="id" value="#{a.id}" />
                         </h:link>
+
+
 
                         <h:commandLink value="Eliminar"
                                        action="#{aplicacionBean.eliminar}"
