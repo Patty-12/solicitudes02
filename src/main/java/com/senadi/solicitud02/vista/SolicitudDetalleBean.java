@@ -51,7 +51,7 @@ public class SolicitudDetalleBean implements Serializable {
     // Usuario logueado
     private Usuario usuarioActual;
 
-    // Archivo PDF firmado por el solicitante
+    // Archivo PDF firmado (se reutiliza para todos los roles)
     private UploadedFile archivoFirmado;
 
     // Formateadores
@@ -77,7 +77,6 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
-    // Por si quieres usar verificarSesion en la vista
     public void verificarSesion(ComponentSystemEvent event) {
         FacesContext fc = FacesContext.getCurrentInstance();
         if (usuarioActual == null) {
@@ -92,7 +91,6 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     public void cargar() {
-        // Asegurar que tengamos el id, ya sea por viewParam o por parámetro crudo
         if (id == null) {
             String param = FacesContext.getCurrentInstance()
                     .getExternalContext()
@@ -110,21 +108,10 @@ public class SolicitudDetalleBean implements Serializable {
         if (id != null) {
             solicitud = solCtrl.buscarPorId(id);
 
-            // Accesos SIEMPRE desde BD
             if (solicitud != null && solicitud.getId() != null) {
                 accesos = accesoCtrl.listarPorSolicitud(solicitud.getId());
             } else {
                 accesos = null;
-            }
-
-            // Intentar inicializar firmas (por si el JPA lo permite)
-            try {
-                if (solicitud != null && solicitud.getFirmas() != null) {
-                    solicitud.getFirmas().size();
-                }
-            } catch (Exception e) {
-                // Si el proveedor lanza LazyInitialization, lo ignoramos aquí y
-                // simplemente devolveremos una lista vacía en getFirmasOrdenadas().
             }
         }
     }
@@ -159,13 +146,7 @@ public class SolicitudDetalleBean implements Serializable {
 
     // =====================================================
     //  HELPERS DE ROL (según CARGO)
-    //  (flexibles + caso Director TIC = Oficial Seguridad)
     // =====================================================
-
-    private String cargoActual() {
-        if (usuarioActual == null || usuarioActual.getCargo() == null) return "";
-        return usuarioActual.getCargo().trim().toLowerCase();
-    }
 
     public boolean isSolicitanteActual() {
         if (solicitud == null || solicitud.getUsuario() == null || usuarioActual == null) {
@@ -175,27 +156,23 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     public boolean isDirectorActual() {
-        String c = cargoActual();
-        // Director de área (financiero, administrativo, etc.), pero NO Director TIC
-        return c.contains("director") && !c.contains("tic");
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
+        return "Director".equalsIgnoreCase(usuarioActual.getCargo().trim());
     }
 
     public boolean isDirectorTicActual() {
-        String c = cargoActual();
-        return c.contains("director") && c.contains("tic");
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
+        return "Director TIC".equalsIgnoreCase(usuarioActual.getCargo().trim());
     }
 
     public boolean isOficialSeguridadActual() {
-        String c = cargoActual();
-        // Oficial de Seguridad O el mismo Director TIC actuando como Oficial
-        boolean oficialSeg = c.contains("oficial") && c.contains("seguridad");
-        boolean directorTic = c.contains("director") && c.contains("tic");
-        return oficialSeg || directorTic;
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
+        return "Oficial Seguridad".equalsIgnoreCase(usuarioActual.getCargo().trim());
     }
 
     public boolean isResponsableAccesosActual() {
-        String c = cargoActual();
-        return c.contains("responsable") && c.contains("accesos");
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
+        return "Responsable Accesos".equalsIgnoreCase(usuarioActual.getCargo().trim());
     }
 
     // =====================================================
@@ -226,10 +203,6 @@ public class SolicitudDetalleBean implements Serializable {
         return isResponsableAccesosActual() && isEstadoPendienteAplicacionAccesos();
     }
 
-    /**
-     * Controla quién puede ver el botón "Descargar / Imprimir PDF".
-     * Sólo mientras ese actor puede actuar.
-     */
     public boolean isPuedeDescargarImprimirPdf() {
         if (solicitud == null) return false;
 
@@ -243,9 +216,40 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     // =====================================================
-    //  SUBIDA DE PDF FIRMADO (SOLICITANTE)
+    //  SUBIDA DE PDF FIRMADO (DISTINTOS ACTORES)
     // =====================================================
 
+    private Path getFirmasBasePath() throws IOException {
+        String basePath = FacesContext.getCurrentInstance()
+                .getExternalContext()
+                .getRealPath("/firmas");
+        if (basePath == null) {
+            throw new IOException("No se pudo determinar la ruta de almacenamiento (/firmas).");
+        }
+        Path dir = Paths.get(basePath);
+        if (!Files.exists(dir)) {
+            Files.createDirectories(dir);
+        }
+        return dir;
+    }
+
+    private void guardarArchivoFirmado(String nombreArchivo) throws IOException {
+        if (solicitud == null || solicitud.getId() == null) {
+            throw new IOException("Solicitud no cargada, no se puede guardar el archivo.");
+        }
+        if (archivoFirmado == null || archivoFirmado.getFileName() == null
+                || archivoFirmado.getFileName().isEmpty()) {
+            throw new IOException("Debe seleccionar un archivo PDF firmado.");
+        }
+
+        try (InputStream in = archivoFirmado.getInputStream()) {
+            Path dir = getFirmasBasePath();
+            Path target = dir.resolve(nombreArchivo);
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    // --- Solicitante (ya existía, pero ahora usa el helper) ---
     public void subirFirmado() {
         if (!isSolicitanteActual()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -261,45 +265,13 @@ public class SolicitudDetalleBean implements Serializable {
             return;
         }
 
-        if (solicitud == null || solicitud.getId() == null) {
-            addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Solicitud no cargada",
-                    "No se pudo identificar la solicitud.");
-            return;
-        }
-
-        if (archivoFirmado == null || archivoFirmado.getFileName() == null
-                || archivoFirmado.getFileName().isEmpty()) {
-            addMessage(FacesMessage.SEVERITY_WARN,
-                    "Archivo requerido",
-                    "Debe seleccionar un archivo PDF firmado.");
-            return;
-        }
-
-        try (InputStream in = archivoFirmado.getInputStream()) {
-            String basePath = FacesContext.getCurrentInstance()
-                    .getExternalContext()
-                    .getRealPath("/firmas");
-            if (basePath == null) {
-                addMessage(FacesMessage.SEVERITY_ERROR,
-                        "Error de ruta",
-                        "No se pudo determinar la ruta de almacenamiento.");
-                return;
-            }
-
-            Path dir = Paths.get(basePath);
-            if (!Files.exists(dir)) {
-                Files.createDirectories(dir);
-            }
-
+        try {
             String fileName = "solicitud_" + solicitud.getId() + "_firmada_usuario.pdf";
-            Path target = dir.resolve(fileName);
-
-            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+            guardarArchivoFirmado(fileName);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Archivo cargado",
-                    "El archivo firmado se ha guardado correctamente.");
+                    "El archivo firmado del solicitante se ha guardado correctamente.");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -309,8 +281,109 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
+    // --- Director ---
+    public void subirFirmadoDirector() {
+        if (!isDirectorPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Director puede subir el PDF firmado en este estado.");
+            return;
+        }
+
+        try {
+            String fileName = "solicitud_" + solicitud.getId() + "_firmada_director.pdf";
+            guardarArchivoFirmado(fileName);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Archivo cargado",
+                    "El archivo firmado por el Director se ha guardado correctamente.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al subir archivo del Director",
+                    e.getMessage());
+        }
+    }
+
+    // --- Director TIC ---
+    public void subirFirmadoDirectorTic() {
+        if (!isDirectorTicPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Director TIC puede subir el PDF firmado en este estado.");
+            return;
+        }
+
+        try {
+            String fileName = "solicitud_" + solicitud.getId() + "_firmada_director_tic.pdf";
+            guardarArchivoFirmado(fileName);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Archivo cargado",
+                    "El archivo firmado por el Director TIC se ha guardado correctamente.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al subir archivo del Director TIC",
+                    e.getMessage());
+        }
+    }
+
+    // --- Oficial de Seguridad ---
+    public void subirFirmadoOficial() {
+        if (!isOficialPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Oficial de Seguridad puede subir el PDF firmado en este estado.");
+            return;
+        }
+
+        try {
+            String fileName = "solicitud_" + solicitud.getId() + "_firmada_oficial_seguridad.pdf";
+            guardarArchivoFirmado(fileName);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Archivo cargado",
+                    "El archivo firmado por el Oficial de Seguridad se ha guardado correctamente.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al subir archivo del Oficial de Seguridad",
+                    e.getMessage());
+        }
+    }
+
+    // --- Responsable de Accesos ---
+    public void subirFirmadoResponsable() {
+        if (!isResponsablePuedeAplicarPermisos()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Responsable de Accesos puede subir el PDF firmado en este estado.");
+            return;
+        }
+
+        try {
+            String fileName = "solicitud_" + solicitud.getId() + "_firmada_responsable_accesos.pdf";
+            guardarArchivoFirmado(fileName);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Archivo cargado",
+                    "El archivo firmado por el Responsable de Accesos se ha guardado correctamente.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al subir archivo del Responsable de Accesos",
+                    e.getMessage());
+        }
+    }
+
     // =====================================================
     //  DIRECTOR / DIRECTOR TIC / OFICIAL / RESPONSABLE
+    //  (firma lógica en BD: NO se toca flujo original)
     // =====================================================
 
     public void enviarAlDirector() {
@@ -600,7 +673,6 @@ public class SolicitudDetalleBean implements Serializable {
         return (solicitud != null) ? solicitud.getJefeAutoriza() : null;
     }
 
-    // Accesos siempre desde BD
     public List<AccesoUsuario> getAccesos() {
         if (accesos == null && solicitud != null && solicitud.getId() != null) {
             accesos = accesoCtrl.listarPorSolicitud(solicitud.getId());
@@ -626,6 +698,48 @@ public class SolicitudDetalleBean implements Serializable {
         List<Firma> lista = new ArrayList<>(solicitud.getFirmas());
         lista.sort(Comparator.comparing(Firma::getFechaFirma));
         return lista;
+    }
+
+    // --- Helpers para saber si existen PDFs firmados (para mostrar enlaces) ---
+
+    private boolean existeArchivoPdf(String nombreArchivo) {
+        try {
+            Path dir = getFirmasBasePath();
+            Path target = dir.resolve(nombreArchivo);
+            return Files.exists(target);
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public boolean isPdfSolicitanteSubido() {
+        if (solicitud == null || solicitud.getId() == null) return false;
+        String fileName = "solicitud_" + solicitud.getId() + "_firmada_usuario.pdf";
+        return existeArchivoPdf(fileName);
+    }
+
+    public boolean isPdfDirectorSubido() {
+        if (solicitud == null || solicitud.getId() == null) return false;
+        String fileName = "solicitud_" + solicitud.getId() + "_firmada_director.pdf";
+        return existeArchivoPdf(fileName);
+    }
+
+    public boolean isPdfDirectorTicSubido() {
+        if (solicitud == null || solicitud.getId() == null) return false;
+        String fileName = "solicitud_" + solicitud.getId() + "_firmada_director_tic.pdf";
+        return existeArchivoPdf(fileName);
+    }
+
+    public boolean isPdfOficialSubido() {
+        if (solicitud == null || solicitud.getId() == null) return false;
+        String fileName = "solicitud_" + solicitud.getId() + "_firmada_oficial_seguridad.pdf";
+        return existeArchivoPdf(fileName);
+    }
+
+    public boolean isPdfResponsableSubido() {
+        if (solicitud == null || solicitud.getId() == null) return false;
+        String fileName = "solicitud_" + solicitud.getId() + "_firmada_responsable_accesos.pdf";
+        return existeArchivoPdf(fileName);
     }
 
     // ================= GETTERS / SETTERS =================

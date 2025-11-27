@@ -105,6 +105,15 @@
             width: 20px;
             text-align: center;
         }
+
+        .pdf-links {
+            margin-top: 5px;
+            font-size: 10px;
+        }
+
+        .pdf-links a {
+            margin-right: 10px;
+        }
     </style>
 </h:head>
 
@@ -138,7 +147,7 @@
 
                 <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
                               mode="simple"
-                              label="Seleccionar PDF firmado"
+                              label="Seleccionar PDF firmado (Solicitante)"
                               allowTypes="/(\.|\/)(pdf)$/"
                               style="max-width:260px;" />
 
@@ -158,6 +167,18 @@
             <!-- ACCIONES DEL DIRECTOR -->
             <h:panelGroup rendered="#{solicitudDetalleBean.directorPuedeFirmarPublic}">
 
+                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
+                              mode="simple"
+                              label="PDF firmado Director"
+                              allowTypes="/(\.|\/)(pdf)$/"
+                              style="max-width:260px;" />
+
+                <p:commandButton value=" Subir firmado (Director)"
+                                 icon="pi pi-upload"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{solicitudDetalleBean.subirFirmadoDirector}"
+                                 update="@form" />
+
                 <p:commandButton value=" Aprobar (Director)"
                                  icon="pi pi-check"
                                  styleClass="ui-button-success"
@@ -175,6 +196,18 @@
 
             <!-- ACCIONES DEL DIRECTOR TIC -->
             <h:panelGroup rendered="#{solicitudDetalleBean.directorTicPuedeFirmarPublic}">
+
+                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
+                              mode="simple"
+                              label="PDF firmado Director TIC"
+                              allowTypes="/(\.|\/)(pdf)$/"
+                              style="max-width:260px;" />
+
+                <p:commandButton value=" Subir firmado (Director TIC)"
+                                 icon="pi pi-upload"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{solicitudDetalleBean.subirFirmadoDirectorTic}"
+                                 update="@form" />
 
                 <p:commandButton value=" Aprobar (Director TIC)"
                                  icon="pi pi-check"
@@ -194,6 +227,18 @@
             <!-- ACCIONES DEL OFICIAL DE SEGURIDAD -->
             <h:panelGroup rendered="#{solicitudDetalleBean.oficialPuedeFirmarPublic}">
 
+                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
+                              mode="simple"
+                              label="PDF firmado Oficial de Seguridad"
+                              allowTypes="/(\.|\/)(pdf)$/"
+                              style="max-width:260px;" />
+
+                <p:commandButton value=" Subir firmado (Oficial)"
+                                 icon="pi pi-upload"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{solicitudDetalleBean.subirFirmadoOficial}"
+                                 update="@form" />
+
                 <p:commandButton value=" Aprobar (Oficial Seguridad)"
                                  icon="pi pi-check"
                                  styleClass="ui-button-success"
@@ -212,6 +257,18 @@
             <!-- ACCIONES DEL RESPONSABLE DE ACCESOS -->
             <h:panelGroup rendered="#{solicitudDetalleBean.responsablePuedeAplicarPermisosPublic}">
 
+                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
+                              mode="simple"
+                              label="PDF firmado Responsable Accesos"
+                              allowTypes="/(\.|\/)(pdf)$/"
+                              style="max-width:260px;" />
+
+                <p:commandButton value=" Subir firmado (Responsable)"
+                                 icon="pi pi-upload"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{solicitudDetalleBean.subirFirmadoResponsable}"
+                                 update="@form" />
+
                 <p:commandButton value=" Marcar permisos aplicados"
                                  icon="pi pi-check"
                                  styleClass="ui-button-help"
@@ -221,6 +278,46 @@
             </h:panelGroup>
 
         </div>
+
+        <!-- Enlaces a PDFs ya subidos -->
+        <h:panelGroup rendered="#{solicitudDetalleBean.solicitud ne null and solicitudDetalleBean.solicitud.id ne null}">
+            <div class="pdf-links">
+                <h:panelGroup rendered="#{solicitudDetalleBean.pdfSolicitanteSubido}">
+                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_usuario.pdf"
+                                  target="_blank">
+                        PDF firmado solicitante
+                    </h:outputLink>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{solicitudDetalleBean.pdfDirectorSubido}">
+                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_director.pdf"
+                                  target="_blank">
+                        PDF firmado Director
+                    </h:outputLink>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{solicitudDetalleBean.pdfDirectorTicSubido}">
+                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_director_tic.pdf"
+                                  target="_blank">
+                        PDF firmado Director TIC
+                    </h:outputLink>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{solicitudDetalleBean.pdfOficialSubido}">
+                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_oficial_seguridad.pdf"
+                                  target="_blank">
+                        PDF firmado Oficial Seguridad
+                    </h:outputLink>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{solicitudDetalleBean.pdfResponsableSubido}">
+                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_responsable_accesos.pdf"
+                                  target="_blank">
+                        PDF firmado Responsable Accesos
+                    </h:outputLink>
+                </h:panelGroup>
+            </div>
+        </h:panelGroup>
 
         <!-- MENSAJES -->
         <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true" />
@@ -274,7 +371,10 @@
                 <th>Correo institucional</th>
                 <td>#{solicitudDetalleBean.servidorSolicitante.correo}</td>
                 <th>Teléfono / Extensión</th>
-                <td>#{solicitudDetalleBean.servidorSolicitante.telefono}</td>
+                <td>
+                    <!-- Cuando uses el atributo de teléfono:
+                         #{solicitudDetalleBean.servidorSolicitante.telefono} -->
+                </td>
             </tr>
         </table>
 
@@ -313,8 +413,9 @@
                 </td>
                 <th>Teléfono / Extensión</th>
                 <td>
-                    #{empty solicitudDetalleBean.servidorAutoriza
-                        ? '' : solicitudDetalleBean.servidorAutoriza.telefono}
+                    <!-- Cuando uses el atributo de teléfono:
+                         #{empty solicitudDetalleBean.servidorAutoriza
+                            ? '' : solicitudDetalleBean.servidorAutoriza.telefono} -->
                 </td>
             </tr>
         </table>
@@ -345,18 +446,22 @@
         <p class="small-text" style="margin-top:10px; text-align:justify;">
             Los accesos y permisos solicitados a los sistemas institucionales serán validados por la Dirección de TICs, con la 
             firma de responsabilidad correspondiente. Posteriormente, el Oficial de Seguridad de la Información firmará en 
-            señal de aprobación.</p> 
+            señal de aprobación.
+        </p> 
         <p class="small-text" style="margin-top:10px; text-align:justify;">
             El usuario autorizador es responsable de verificar que los accesos solicitados por el usuario correspondan al perfil 
             para el cual fue contratado. Asimismo, deberá controlar que el uso del sistema institucional y de la información a la 
-            que tenga acceso el usuario sea adecuado, ético y conforme con la normativa legal vigente. </p>
+            que tenga acceso el usuario sea adecuado, ético y conforme con la normativa legal vigente.
+        </p>
         <p class="small-text" style="margin-top:10px; text-align:justify;">
             Mediante el presente documento, el usuario solicitante se compromete a hacer un uso responsable y ético, 
             enmarcado en las políticas institucionales y la normativa vigente. El formulario será válido únicamente si cuenta con 
-            todas las firmas requeridas, debidamente suscritas por el solicitante y su jefe inmediato. </p>
+            todas las firmas requeridas, debidamente suscritas por el solicitante y su jefe inmediato.
+        </p>
         <p class="small-text" style="margin-top:10px; text-align:justify;">
-            Disposición técnica sobre la forma de presentación del formulario: El formulario  obligatoriamente debe 
-            ser llenado digitalmente,  es decir todas las firmas deberán ser electrónicas. </p>
+            Disposición técnica sobre la forma de presentación del formulario: El formulario obligatoriamente debe 
+            ser llenado digitalmente, es decir todas las firmas deberán ser electrónicas.
+        </p>
         
         <h4>Nota: En caso de detectarse un uso indebido de los accesos concedidos, el perfil del usuario será bloqueado de 
             forma inmediata, sin necesidad de notificación previa. </h4>
