@@ -43,7 +43,6 @@ public class SolicitudDetalleBean implements Serializable {
     private Solicitud solicitud;
 
     private SolicitudControlador solCtrl = new SolicitudControladorImpl();
-    // 🔹 Nuevo: controlador para accesos
     private AccesoUsuarioControlador accesoCtrl = new AccesoUsuarioControladorImpl();
 
     // Lista de accesos para la vista/PDF
@@ -111,12 +110,21 @@ public class SolicitudDetalleBean implements Serializable {
         if (id != null) {
             solicitud = solCtrl.buscarPorId(id);
 
-            // 🔹 En lugar de depender de solicitud.getAccesos(),
-            //     siempre consultamos desde BD la lista de accesos actualizada
+            // Accesos SIEMPRE desde BD
             if (solicitud != null && solicitud.getId() != null) {
                 accesos = accesoCtrl.listarPorSolicitud(solicitud.getId());
             } else {
                 accesos = null;
+            }
+
+            // Intentar inicializar firmas (por si el JPA lo permite)
+            try {
+                if (solicitud != null && solicitud.getFirmas() != null) {
+                    solicitud.getFirmas().size();
+                }
+            } catch (Exception e) {
+                // Si el proveedor lanza LazyInitialization, lo ignoramos aquí y
+                // simplemente devolveremos una lista vacía en getFirmasOrdenadas().
             }
         }
     }
@@ -151,7 +159,13 @@ public class SolicitudDetalleBean implements Serializable {
 
     // =====================================================
     //  HELPERS DE ROL (según CARGO)
+    //  (flexibles + caso Director TIC = Oficial Seguridad)
     // =====================================================
+
+    private String cargoActual() {
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return "";
+        return usuarioActual.getCargo().trim().toLowerCase();
+    }
 
     public boolean isSolicitanteActual() {
         if (solicitud == null || solicitud.getUsuario() == null || usuarioActual == null) {
@@ -161,23 +175,27 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     public boolean isDirectorActual() {
-        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
-        return "Director".equalsIgnoreCase(usuarioActual.getCargo().trim());
+        String c = cargoActual();
+        // Director de área (financiero, administrativo, etc.), pero NO Director TIC
+        return c.contains("director") && !c.contains("tic");
     }
 
     public boolean isDirectorTicActual() {
-        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
-        return "Director TIC".equalsIgnoreCase(usuarioActual.getCargo().trim());
+        String c = cargoActual();
+        return c.contains("director") && c.contains("tic");
     }
 
     public boolean isOficialSeguridadActual() {
-        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
-        return "Oficial Seguridad".equalsIgnoreCase(usuarioActual.getCargo().trim());
+        String c = cargoActual();
+        // Oficial de Seguridad O el mismo Director TIC actuando como Oficial
+        boolean oficialSeg = c.contains("oficial") && c.contains("seguridad");
+        boolean directorTic = c.contains("director") && c.contains("tic");
+        return oficialSeg || directorTic;
     }
 
     public boolean isResponsableAccesosActual() {
-        if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
-        return "Responsable Accesos".equalsIgnoreCase(usuarioActual.getCargo().trim());
+        String c = cargoActual();
+        return c.contains("responsable") && c.contains("accesos");
     }
 
     // =====================================================
@@ -208,6 +226,10 @@ public class SolicitudDetalleBean implements Serializable {
         return isResponsableAccesosActual() && isEstadoPendienteAplicacionAccesos();
     }
 
+    /**
+     * Controla quién puede ver el botón "Descargar / Imprimir PDF".
+     * Sólo mientras ese actor puede actuar.
+     */
     public boolean isPuedeDescargarImprimirPdf() {
         if (solicitud == null) return false;
 
@@ -289,7 +311,6 @@ public class SolicitudDetalleBean implements Serializable {
 
     // =====================================================
     //  DIRECTOR / DIRECTOR TIC / OFICIAL / RESPONSABLE
-    //  (todo igual que tu versión, no lo toco)
     // =====================================================
 
     public void enviarAlDirector() {
@@ -579,7 +600,7 @@ public class SolicitudDetalleBean implements Serializable {
         return (solicitud != null) ? solicitud.getJefeAutoriza() : null;
     }
 
-    // 🔹 Ahora los accesos vienen siempre de BD
+    // Accesos siempre desde BD
     public List<AccesoUsuario> getAccesos() {
         if (accesos == null && solicitud != null && solicitud.getId() != null) {
             accesos = accesoCtrl.listarPorSolicitud(solicitud.getId());

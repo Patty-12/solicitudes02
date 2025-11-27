@@ -2,10 +2,12 @@ package com.senadi.solicitud02.vista;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
@@ -21,24 +23,17 @@ public class SolicitudesPendientesBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** Solicitudes que requieren acción (firma / aplicación de accesos) */
-    private List<Solicitud> listaPendientes = new ArrayList<>();
-
-    /** Solicitudes ya finalizadas (PERMISOS APLICADOS) para Responsable de Accesos */
-    private List<Solicitud> listaAprobadas = new ArrayList<>();
-
-    private final SolicitudControlador solCtrl = new SolicitudControladorImpl();
+    private List<Solicitud> listaPendientes;
+    private SolicitudControlador solCtrl = new SolicitudControladorImpl();
+    private Usuario usuarioActual;
 
     @PostConstruct
     public void init() {
-        cargarPendientes();
-        cargarAprobadas();
+        usuarioActual = obtenerUsuarioLogueado();
+        listaPendientes = new ArrayList<>();
     }
 
-    /**
-     * Obtiene el usuario logueado desde loginBean.
-     */
-    private Usuario obtenerUsuarioActual() {
+    private Usuario obtenerUsuarioLogueado() {
         try {
             FacesContext fc = FacesContext.getCurrentInstance();
             LoginBean lb = fc.getApplication()
@@ -49,88 +44,88 @@ public class SolicitudesPendientesBean implements Serializable {
         }
     }
 
+    private String cargoActual() {
+        if (usuarioActual == null || usuarioActual.getCargo() == null) return "";
+        return usuarioActual.getCargo().trim().toLowerCase();
+    }
+
+    private boolean esDirector(String cargo) {
+        // Director de área (financiero, administrativo, etc.), no Director TIC
+        return cargo.contains("director") && !cargo.contains("tic");
+    }
+
+    private boolean esDirectorTic(String cargo) {
+        return cargo.contains("director") && cargo.contains("tic");
+    }
+
+    private boolean esOficialSeguridad(String cargo) {
+        return cargo.contains("oficial") && cargo.contains("seguridad");
+    }
+
+    private boolean esResponsableAccesos(String cargo) {
+        return cargo.contains("responsable") && cargo.contains("accesos");
+    }
+
     /**
-     * Carga las solicitudes pendientes según el rol/cargo del usuario.
-     * - Director            -> PENDIENTE DIRECTOR
-     * - Director TIC        -> PENDIENTE DIRECTOR TIC
-     * - Oficial Seguridad   -> PENDIENTE OFICIAL SEGURIDAD
-     * - Responsable Accesos -> PENDIENTE APLICACIÓN ACCESOS
+     * Carga la lista de solicitudes pendientes según el rol/cargo del usuario actual.
+     * Se invoca desde f:event preRenderView en pendientes.xhtml.
      */
     public void cargarPendientes() {
-        Usuario u = obtenerUsuarioActual();
-        if (u == null || u.getCargo() == null) {
+        try {
             listaPendientes = new ArrayList<>();
-            return;
-        }
 
-        String cargo = u.getCargo().trim();
-        String cargoLower = cargo.toLowerCase();
-
-        String estadoBuscado = null;
-
-        if ("director".equalsIgnoreCase(cargo)) {
-            estadoBuscado = "PENDIENTE DIRECTOR";
-        } else if (cargoLower.contains("director tic")) {
-            estadoBuscado = "PENDIENTE DIRECTOR TIC";
-        } else if (cargoLower.contains("oficial seguridad")) {
-            estadoBuscado = "PENDIENTE OFICIAL SEGURIDAD";
-        } else if (cargoLower.contains("responsable accesos")) {
-            // Debe coincidir con el estado que se usa en SolicitudDetalleBean
-            estadoBuscado = "PENDIENTE APLICACIÓN ACCESOS";
-        }
-
-        if (estadoBuscado != null) {
-            listaPendientes = solCtrl.buscarPorEstado(estadoBuscado);
-            if (listaPendientes != null && !listaPendientes.isEmpty()) {
-                listaPendientes.sort(
-                    Comparator.comparing(Solicitud::getFechaCreacion).reversed()
-                );
+            if (usuarioActual == null) {
+                return;
             }
-        } else {
+
+            String cargo = cargoActual();
+
+            // Director de área: ve las PENDIENTE DIRECTOR
+            if (esDirector(cargo)) {
+                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE DIRECTOR"));
+            }
+
+            // Director TIC: ve PENDIENTE DIRECTOR TIC y también PENDIENTE OFICIAL SEGURIDAD
+            // (porque en tu flujo el Director TIC actúa también como Oficial)
+            if (esDirectorTic(cargo)) {
+                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE DIRECTOR TIC"));
+                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE OFICIAL SEGURIDAD"));
+            }
+            // Si existe un usuario con cargo Oficial Seguridad separado
+            else if (esOficialSeguridad(cargo)) {
+                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE OFICIAL SEGURIDAD"));
+            }
+
+            // Responsable de Accesos
+            if (esResponsableAccesos(cargo)) {
+                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE RESPONSABLE ACCESOS"));
+            }
+
+            // Eliminar duplicados manteniendo orden
+            Map<Long, Solicitud> mapa = new LinkedHashMap<>();
+            for (Solicitud s : listaPendientes) {
+                if (s.getId() != null) {
+                    mapa.put(s.getId(), s);
+                }
+            }
+            listaPendientes = new ArrayList<>(mapa.values());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Error al cargar pendientes", e.getMessage()));
             listaPendientes = new ArrayList<>();
         }
     }
 
-    /**
-     * Carga las solicitudes que ya están en estado PERMISOS APLICADOS,
-     * visibles solo para el Responsable de Accesos como histórico.
-     */
-    public void cargarAprobadas() {
-        Usuario u = obtenerUsuarioActual();
-        if (u == null || u.getCargo() == null) {
-            listaAprobadas = new ArrayList<>();
-            return;
-        }
-
-        String cargoLower = u.getCargo().trim().toLowerCase();
-
-        if (cargoLower.contains("responsable accesos")) {
-            listaAprobadas = solCtrl.buscarPorEstado("PERMISOS APLICADOS");
-            if (listaAprobadas != null && !listaAprobadas.isEmpty()) {
-                listaAprobadas.sort(
-                    Comparator.comparing(Solicitud::getFechaCreacion).reversed()
-                );
-            }
-        } else {
-            listaAprobadas = new ArrayList<>();
-        }
-    }
-
-    // ===== Getters / Setters =====
+    // ================= GETTERS / SETTERS =================
 
     public List<Solicitud> getListaPendientes() {
         return listaPendientes;
     }
 
-    public void setListaPendientes(List<Solicitud> listaPendientes) {
-        this.listaPendientes = listaPendientes;
-    }
-
-    public List<Solicitud> getListaAprobadas() {
-        return listaAprobadas;
-    }
-
-    public void setListaAprobadas(List<Solicitud> listaAprobadas) {
-        this.listaAprobadas = listaAprobadas;
+    public Usuario getUsuarioActual() {
+        return usuarioActual;
     }
 }
