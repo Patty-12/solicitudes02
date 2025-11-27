@@ -23,7 +23,9 @@ import javax.faces.event.ComponentSystemEvent;
 import org.primefaces.model.file.UploadedFile;
 
 import com.senadi.solicitud02.controlador.SolicitudControlador;
+import com.senadi.solicitud02.controlador.AccesoUsuarioControlador;
 import com.senadi.solicitud02.controlador.impl.SolicitudControladorImpl;
+import com.senadi.solicitud02.controlador.impl.AccesoUsuarioControladorImpl;
 import com.senadi.solicitud02.modelo.entidades.AccesoUsuario;
 import com.senadi.solicitud02.modelo.entidades.Firma;
 import com.senadi.solicitud02.modelo.entidades.PermisoAplicacion;
@@ -41,6 +43,11 @@ public class SolicitudDetalleBean implements Serializable {
     private Solicitud solicitud;
 
     private SolicitudControlador solCtrl = new SolicitudControladorImpl();
+    // 🔹 Nuevo: controlador para accesos
+    private AccesoUsuarioControlador accesoCtrl = new AccesoUsuarioControladorImpl();
+
+    // Lista de accesos para la vista/PDF
+    private List<AccesoUsuario> accesos;
 
     // Usuario logueado
     private Usuario usuarioActual;
@@ -86,6 +93,7 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     public void cargar() {
+        // Asegurar que tengamos el id, ya sea por viewParam o por parámetro crudo
         if (id == null) {
             String param = FacesContext.getCurrentInstance()
                     .getExternalContext()
@@ -103,9 +111,12 @@ public class SolicitudDetalleBean implements Serializable {
         if (id != null) {
             solicitud = solCtrl.buscarPorId(id);
 
-            // Forzar la carga de los accesos mientras la sesión JPA sigue abierta
-            if (solicitud != null && solicitud.getAccesos() != null) {
-                solicitud.getAccesos().size();
+            // 🔹 En lugar de depender de solicitud.getAccesos(),
+            //     siempre consultamos desde BD la lista de accesos actualizada
+            if (solicitud != null && solicitud.getId() != null) {
+                accesos = accesoCtrl.listarPorSolicitud(solicitud.getId());
+            } else {
+                accesos = null;
             }
         }
     }
@@ -130,10 +141,6 @@ public class SolicitudDetalleBean implements Serializable {
         return solicitud != null && "PENDIENTE OFICIAL SEGURIDAD".equalsIgnoreCase(solicitud.getEstado());
     }
 
-    /**
-     * Aquí unificamos con la vista de pendientes:
-     * estado = "PENDIENTE RESPONSABLE ACCESOS"
-     */
     public boolean isEstadoPendienteAplicacionAccesos() {
         return solicitud != null && "PENDIENTE RESPONSABLE ACCESOS".equalsIgnoreCase(solicitud.getEstado());
     }
@@ -201,10 +208,6 @@ public class SolicitudDetalleBean implements Serializable {
         return isResponsableAccesosActual() && isEstadoPendienteAplicacionAccesos();
     }
 
-    /**
-     * Controla quién puede ver el botón "Descargar / Imprimir PDF".
-     * SOLO mientras ese actor puede actuar.
-     */
     public boolean isPuedeDescargarImprimirPdf() {
         if (solicitud == null) return false;
 
@@ -214,8 +217,6 @@ public class SolicitudDetalleBean implements Serializable {
         if (isOficialSeguridadActual() && isEstadoPendienteOficialSeguridad()) return true;
         if (isResponsableAccesosActual() && isEstadoPendienteAplicacionAccesos()) return true;
 
-        // En cualquier otro estado (RECHAZADA, ANULADA, PERMISOS APLICADOS, etc.)
-        // sólo se puede visualizar, ya no imprimir.
         return false;
     }
 
@@ -287,7 +288,8 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     // =====================================================
-    //  DIRECTOR (APROBAR / RECHAZAR)
+    //  DIRECTOR / DIRECTOR TIC / OFICIAL / RESPONSABLE
+    //  (todo igual que tu versión, no lo toco)
     // =====================================================
 
     public void enviarAlDirector() {
@@ -391,14 +393,9 @@ public class SolicitudDetalleBean implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
             addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al rechazar solicitud",
-                    e.getMessage());
+                    "Error al rechazar solicitud", e.getMessage());
         }
     }
-
-    // =====================================================
-    //  DIRECTOR TIC (APROBAR / RECHAZAR)
-    // =====================================================
 
     public void aprobarComoDirectorTic() {
         if (!isDirectorTicPuedeFirmar()) {
@@ -418,7 +415,6 @@ public class SolicitudDetalleBean implements Serializable {
             f.setFechaFirma(LocalDateTime.now());
             solicitud.getFirmas().add(f);
 
-            // Pasa al Oficial de Seguridad
             solicitud.setEstado("PENDIENTE OFICIAL SEGURIDAD");
             solCtrl.actualizar(solicitud);
 
@@ -431,8 +427,7 @@ public class SolicitudDetalleBean implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
             addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al aprobar como Director TIC",
-                    e.getMessage());
+                    "Error al aprobar como Director TIC", e.getMessage());
         }
     }
 
@@ -458,14 +453,9 @@ public class SolicitudDetalleBean implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
             addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al rechazar como Director TIC",
-                    e.getMessage());
+                    "Error al rechazar como Director TIC", e.getMessage());
         }
     }
-
-    // =====================================================
-    //  OFICIAL DE SEGURIDAD (APROBAR / RECHAZAR)
-    // =====================================================
 
     public void aprobarComoOficial() {
         if (!isOficialPuedeFirmar()) {
@@ -485,8 +475,6 @@ public class SolicitudDetalleBean implements Serializable {
             f.setFechaFirma(LocalDateTime.now());
             solicitud.getFirmas().add(f);
 
-            // Aquí unificamos con pendientes.xhtml:
-            // pasa a "PENDIENTE RESPONSABLE ACCESOS"
             solicitud.setEstado("PENDIENTE RESPONSABLE ACCESOS");
             solCtrl.actualizar(solicitud);
 
@@ -499,8 +487,7 @@ public class SolicitudDetalleBean implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
             addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al aprobar como Oficial de Seguridad",
-                    e.getMessage());
+                    "Error al aprobar como Oficial de Seguridad", e.getMessage());
         }
     }
 
@@ -526,14 +513,9 @@ public class SolicitudDetalleBean implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
             addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al rechazar como Oficial de Seguridad",
-                    e.getMessage());
+                    "Error al rechazar como Oficial de Seguridad", e.getMessage());
         }
     }
-
-    // =====================================================
-    //  RESPONSABLE DE ACCESOS (APLICAR PERMISOS)
-    // =====================================================
 
     public void marcarPermisosAplicados() {
         if (!isResponsablePuedeAplicarPermisos()) {
@@ -565,8 +547,7 @@ public class SolicitudDetalleBean implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
             addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al marcar permisos aplicados",
-                    e.getMessage());
+                    "Error al marcar permisos aplicados", e.getMessage());
         }
     }
 
@@ -590,24 +571,26 @@ public class SolicitudDetalleBean implements Serializable {
         return (dt != null) ? dt.format(fmtFechaHora) : "";
     }
 
-    // Servidor solicitante
     public Usuario getServidorSolicitante() {
         return (solicitud != null) ? solicitud.getUsuario() : null;
     }
 
-    // Servidor que autoriza (jefe inmediato)
     public Usuario getServidorAutoriza() {
         return (solicitud != null) ? solicitud.getJefeAutoriza() : null;
     }
 
-    // Accesos asociados a la solicitud (ya inicializados en cargar())
+    // 🔹 Ahora los accesos vienen siempre de BD
     public List<AccesoUsuario> getAccesos() {
-        return (solicitud != null) ? solicitud.getAccesos() : null;
+        if (accesos == null && solicitud != null && solicitud.getId() != null) {
+            accesos = accesoCtrl.listarPorSolicitud(solicitud.getId());
+        }
+        return accesos;
     }
 
     public boolean tienePermiso(PermisoAplicacion permiso) {
-        if (solicitud == null || solicitud.getAccesos() == null) return false;
-        for (AccesoUsuario au : solicitud.getAccesos()) {
+        List<AccesoUsuario> lista = getAccesos();
+        if (lista == null || permiso == null) return false;
+        for (AccesoUsuario au : lista) {
             if (au.getPermiso() != null && au.getPermiso().getId().equals(permiso.getId())) {
                 return true;
             }
