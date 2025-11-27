@@ -10,29 +10,38 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID")
     private Long id;
 
-    @Column(length = 80, nullable = false)
+    @Column(name = "NOMBRE", length = 80, nullable = false)
     private String nombre;
 
-    @Column(length = 80, nullable = false)
+    @Column(name = "APELLIDO", length = 80, nullable = false)
     private String apellido;
 
-    // NUEVO: Cédula
+    // Cédula
     @Column(name = "CEDULA", length = 20)
     private String cedula;
 
-    @Column(length = 80)
+    // NUEVO: username para login
+    @Column(name = "USERNAME", length = 50, nullable = false, unique = true)
+    private String username;
+
+    @Column(name = "CARGO", length = 80)
     private String cargo;
 
-    // NUEVO: Unidad/Gestión
+    // Unidad/Gestión
     @Column(name = "UNIDAD_GESTION", length = 120)
     private String unidadGestion;
 
-    @Column(length = 120, nullable = false, unique = true)
+    // NUEVO: teléfono
+    @Column(name = "TELEFONO", length = 20)
+    private String telefono;
+
+    @Column(name = "CORREO", length = 120, nullable = false, unique = true)
     private String correo;
 
-    @Column(length = 120, nullable = false, unique = true)
+    @Column(name = "PASSWORD", length = 120, nullable = false, unique = true)
     private String password;
 
     // Relación con Solicitud
@@ -61,11 +70,17 @@ public class Usuario {
     public String getCedula() { return cedula; }
     public void setCedula(String cedula) { this.cedula = cedula; }
 
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
     public String getCargo() { return cargo; }
     public void setCargo(String cargo) { this.cargo = cargo; }
 
     public String getUnidadGestion() { return unidadGestion; }
     public void setUnidadGestion(String unidadGestion) { this.unidadGestion = unidadGestion; }
+
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
 
     public String getCorreo() { return correo; }
     public void setCorreo(String correo) { this.correo = correo; }
@@ -88,8 +103,10 @@ public class Usuario {
                 + ", nombre=" + nombre
                 + ", apellido=" + apellido
                 + ", cedula=" + cedula
+                + ", username=" + username
                 + ", unidadGestion=" + unidadGestion
                 + ", correo=" + correo
-                + ", cargo=" + cargo + "]";
+                + ", cargo=" + cargo
+                + ", telefono=" + telefono + "]";
     }
 }

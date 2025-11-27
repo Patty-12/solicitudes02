@@ -20,17 +20,16 @@ public class LoginBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String correo;
+    // AHORA: usuario + contraseña
+    private String username;
     private String password;
     private Usuario usuario;
 
     private final UsuarioControlador usuarioCtrl = new UsuarioControladorImpl();
 
     /**
-     *  para activar/desactivar autenticación LDAP.
+     * para activar/desactivar autenticación LDAP.
      * Por defecto: false → sólo BD local.
-     * Cuando se confirme el LDAP,
-     * poner esto en true o controlarlo vía configuración. 
      */
     private boolean usarLDAP = false;
 
@@ -46,11 +45,8 @@ public class LoginBean implements Serializable {
                 // =========================
                 LDAP ldap = new LDAP();
 
-                // Si el usuario escribe el correo completo, tomamos la parte antes de '@'
-                String userLDAP = correo;
-                if (correo != null && correo.contains("@")) {
-                    userLDAP = correo.substring(0, correo.indexOf('@'));
-                }
+                // En LDAP normalmente se usa el mismo username
+                String userLDAP = username;
 
                 boolean okLDAP = ldap.validarIngresoLDAPSinrestrinccion(userLDAP, password);
 
@@ -63,12 +59,10 @@ public class LoginBean implements Serializable {
                     return null;
                 }
 
-                // Si llegó aquí, LDAP autenticó.
-                // Ahora buscamos al usuario en nuestra BD de solicitudes.
-                // Opción sencilla: buscar por correo exactamente como lo digita.
-                usuario = usuarioCtrl.autenticar(correo, password);
-                // Si en el futuro la contraseña local no coincide con la de LDAP,
-                // aquí puedes cambiar la lógica a un "buscarPorCorreo(correo)".
+                // Si LDAP autenticó, buscamos usuario en nuestra BD
+                usuario = usuarioCtrl.autenticar(username, password);
+                // Si quisieras que la BD no valide password cuando viene de LDAP,
+                // podrías usar un método tipo: usuarioCtrl.buscarPorUsername(username).
 
                 if (usuario == null) {
                     fc.addMessage(null, new FacesMessage(
@@ -83,19 +77,19 @@ public class LoginBean implements Serializable {
                 // =======================================
                 //   AUTENTICACIÓN SOLO CONTRA LA BD LOCAL
                 // =======================================
-                usuario = usuarioCtrl.autenticar(correo, password);
+                usuario = usuarioCtrl.autenticar(username, password);
 
                 if (usuario == null) {
                     fc.addMessage(null, new FacesMessage(
                             FacesMessage.SEVERITY_ERROR,
                             "Credenciales inválidas",
-                            "Verifica correo y contraseña."
+                            "Verifica usuario y contraseña."
                     ));
                     return null;
                 }
             }
 
-            // Guardar también en SessionMap para otros beans (SolicitudBean usa "usuarioLogueado")
+            // Guardar también en SessionMap para otros beans
             fc.getExternalContext().getSessionMap().put("usuarioLogueado", usuario);
 
             // Ir al home
@@ -113,7 +107,6 @@ public class LoginBean implements Serializable {
     }
 
     // ---------- Verificar sesión antes de renderizar vistas protegidas ----------
-    // Firma compatible con <f:event type="preRenderView" ...>
     public void verificarSesion(ComponentSystemEvent event) {
         FacesContext fc = FacesContext.getCurrentInstance();
 
@@ -121,7 +114,7 @@ public class LoginBean implements Serializable {
             try {
                 String ctxPath = fc.getExternalContext().getRequestContextPath();
                 fc.getExternalContext().redirect(ctxPath + "/index.xhtml");
-                fc.responseComplete(); // Evita que JSF siga renderizando
+                fc.responseComplete();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -132,14 +125,12 @@ public class LoginBean implements Serializable {
     public String logout() {
         FacesContext fc = FacesContext.getCurrentInstance();
         try {
-            // invalidar sesión
             fc.getExternalContext().invalidateSession();
 
-            // redirigir manualmente al login
             String ctxPath = fc.getExternalContext().getRequestContextPath();
             fc.getExternalContext().redirect(ctxPath + "/index.xhtml");
 
-            return null; // ya hicimos redirect
+            return null;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -148,11 +139,11 @@ public class LoginBean implements Serializable {
 
     // ---------- Getters / Setters ----------
 
-    public String getCorreo() {
-        return correo;
+    public String getUsername() {
+        return username;
     }
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {

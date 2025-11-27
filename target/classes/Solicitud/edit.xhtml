@@ -37,42 +37,62 @@
 
                 <p:separator style="margin:0.5rem 0 1rem 0;" />
 
-                <!-- DATOS DEL SERVIDOR SOLICITANTE (solo lectura) -->
-                <p:panel header="DATOS DEL SERVIDOR SOLICITANTE"
+                <!-- ============================================ -->
+                <!-- SISTEMAS INTERNOS SENADI                     -->
+                <!-- ============================================ -->
+                <p:panel header="SISTEMAS INTERNOS SENADI"
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
 
-                    <table class="tabla-datos-autoriza">
+                    <p style="font-size:13px; margin-bottom:0.5rem;">
+                        Ajuste los permisos que mantiene esta solicitud.
+                    </p>
+
+                    <h:panelGrid columns="2"
+                                 columnClasses="col-label, col-value"
+                                 style="margin-bottom:0.8rem;">
+                        <h:outputLabel for="filtroPermisos" value="Filtrar:" />
+                        <h:inputText id="filtroPermisos"
+                                     onkeyup="filtrarPermisosEdit()"
+                                     style="width:260px;"
+                                     placeholder="Escriba parte del sistema o permiso..." />
+                    </h:panelGrid>
+
+                    <table class="tabla-permisos" id="tablaPermisosEdit">
                         <thead>
                             <tr>
-                                <th>Nombres</th>
-                                <th>Apellidos</th>
+                                <th style="width:220px;">Sistema / Aplicación</th>
+                                <th>Acceso / Permiso</th>
+                                <th style="width:100px; text-align:right;">Seleccionar</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>#{solicitudBean.formulario.usuario.nombre}</td>
-                                <td>#{solicitudBean.formulario.usuario.apellido}</td>
-                            </tr>
-
-                            <tr>
-                                <td>Cargo</td>
-                                <td>Correo institucional</td>
-                            </tr>
-                            <tr>
-                                <td>#{solicitudBean.formulario.usuario.cargo}</td>
-                                <td>#{solicitudBean.formulario.usuario.correo}</td>
-                            </tr>
-
-                            <tr>
-                                <td colspan="2">Estado actual: #{solicitudBean.formulario.estado}</td>
-                            </tr>
+                            <ui:repeat value="#{solicitudBean.aplicaciones}" var="app">
+                                <ui:repeat value="#{app.permisos}" var="perm">
+                                    <tr>
+                                        <td>#{app.nombre}</td>
+                                        <td>
+                                            #{perm.nombre}
+                                            <h:outputText value=" - #{perm.descripcion}"
+                                                          rendered="#{not empty perm.descripcion}" />
+                                        </td>
+                                        <td class="perm-check-cell">
+                                            <h:selectBooleanCheckbox
+                                                    value="#{solicitudBean.permisosSeleccionados[perm.id]}" />
+                                        </td>
+                                    </tr>
+                                </ui:repeat>
+                            </ui:repeat>
                         </tbody>
                     </table>
 
                 </p:panel>
 
-                <!-- DATOS DEL SERVIDOR QUE AUTORIZA (opcional en edición) -->
+                <p:separator style="margin:0.5rem 0 1rem 0;" />
+
+                <!-- ============================================ -->
+                <!-- DATOS DEL SERVIDOR QUE AUTORIZA (edición)   -->
+                <!-- ============================================ -->
                 <p:panel header="DATOS DEL SERVIDOR QUE AUTORIZA"
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
@@ -139,55 +159,6 @@
                                 </td>
                                 <td></td>
                             </tr>
-                        </tbody>
-                    </table>
-
-                </p:panel>
-
-                <!-- SISTEMAS INTERNOS SENADI -->
-                <p:panel header="SISTEMAS INTERNOS SENADI"
-                         style="margin-bottom:1rem;"
-                         styleClass="panel-claro">
-
-                    <p style="font-size:13px; margin-bottom:0.5rem;">
-                        Ajuste los permisos que mantiene esta solicitud.
-                    </p>
-
-                    <h:panelGrid columns="2"
-                                 columnClasses="col-label, col-value"
-                                 style="margin-bottom:0.8rem;">
-                        <h:outputLabel for="filtroPermisos" value="Filtrar:" />
-                        <h:inputText id="filtroPermisos"
-                                     onkeyup="filtrarPermisosEdit()"
-                                     style="width:260px;"
-                                     placeholder="Escriba parte del sistema o permiso..." />
-                    </h:panelGrid>
-
-                    <table class="tabla-permisos" id="tablaPermisosEdit">
-                        <thead>
-                            <tr>
-                                <th style="width:220px;">Sistema / Aplicación</th>
-                                <th>Acceso / Permiso</th>
-                                <th style="width:100px; text-align:right;">Seleccionar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <ui:repeat value="#{solicitudBean.aplicaciones}" var="app">
-                                <ui:repeat value="#{app.permisos}" var="perm">
-                                    <tr>
-                                        <td>#{app.nombre}</td>
-                                        <td>
-                                            #{perm.nombre}
-                                            <h:outputText value=" - #{perm.descripcion}"
-                                                          rendered="#{not empty perm.descripcion}" />
-                                        </td>
-                                        <td class="perm-check-cell">
-                                            <h:selectBooleanCheckbox
-                                                    value="#{solicitudBean.permisosSeleccionados[perm.id]}" />
-                                        </td>
-                                    </tr>
-                                </ui:repeat>
-                            </ui:repeat>
                         </tbody>
                     </table>
 

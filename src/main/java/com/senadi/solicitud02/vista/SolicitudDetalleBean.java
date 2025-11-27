@@ -130,8 +130,12 @@ public class SolicitudDetalleBean implements Serializable {
         return solicitud != null && "PENDIENTE OFICIAL SEGURIDAD".equalsIgnoreCase(solicitud.getEstado());
     }
 
+    /**
+     * Aquí unificamos con la vista de pendientes:
+     * estado = "PENDIENTE RESPONSABLE ACCESOS"
+     */
     public boolean isEstadoPendienteAplicacionAccesos() {
-        return solicitud != null && "PENDIENTE APLICACIÓN ACCESOS".equalsIgnoreCase(solicitud.getEstado());
+        return solicitud != null && "PENDIENTE RESPONSABLE ACCESOS".equalsIgnoreCase(solicitud.getEstado());
     }
 
     public boolean isEstadoPermisosAplicados() {
@@ -199,6 +203,7 @@ public class SolicitudDetalleBean implements Serializable {
 
     /**
      * Controla quién puede ver el botón "Descargar / Imprimir PDF".
+     * SOLO mientras ese actor puede actuar.
      */
     public boolean isPuedeDescargarImprimirPdf() {
         if (solicitud == null) return false;
@@ -209,7 +214,8 @@ public class SolicitudDetalleBean implements Serializable {
         if (isOficialSeguridadActual() && isEstadoPendienteOficialSeguridad()) return true;
         if (isResponsableAccesosActual() && isEstadoPendienteAplicacionAccesos()) return true;
 
-        // En cualquier otro estado / rol, sólo visualiza, ya no descarga
+        // En cualquier otro estado (RECHAZADA, ANULADA, PERMISOS APLICADOS, etc.)
+        // sólo se puede visualizar, ya no imprimir.
         return false;
     }
 
@@ -412,6 +418,7 @@ public class SolicitudDetalleBean implements Serializable {
             f.setFechaFirma(LocalDateTime.now());
             solicitud.getFirmas().add(f);
 
+            // Pasa al Oficial de Seguridad
             solicitud.setEstado("PENDIENTE OFICIAL SEGURIDAD");
             solCtrl.actualizar(solicitud);
 
@@ -478,7 +485,9 @@ public class SolicitudDetalleBean implements Serializable {
             f.setFechaFirma(LocalDateTime.now());
             solicitud.getFirmas().add(f);
 
-            solicitud.setEstado("PENDIENTE APLICACIÓN ACCESOS");
+            // Aquí unificamos con pendientes.xhtml:
+            // pasa a "PENDIENTE RESPONSABLE ACCESOS"
+            solicitud.setEstado("PENDIENTE RESPONSABLE ACCESOS");
             solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,

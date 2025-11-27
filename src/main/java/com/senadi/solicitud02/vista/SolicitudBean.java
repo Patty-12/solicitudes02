@@ -2,7 +2,11 @@ package com.senadi.solicitud02.vista;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Comparator;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
@@ -10,9 +14,21 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 
-import com.senadi.solicitud02.controlador.*;
-import com.senadi.solicitud02.controlador.impl.*;
-import com.senadi.solicitud02.modelo.entidades.*;
+import com.senadi.solicitud02.controlador.SolicitudControlador;
+import com.senadi.solicitud02.controlador.UsuarioControlador;
+import com.senadi.solicitud02.controlador.AccesoUsuarioControlador;
+import com.senadi.solicitud02.controlador.AplicacionControlador;
+import com.senadi.solicitud02.controlador.PermisoAplicacionControlador;
+import com.senadi.solicitud02.controlador.impl.SolicitudControladorImpl;
+import com.senadi.solicitud02.controlador.impl.UsuarioControladorImpl;
+import com.senadi.solicitud02.controlador.impl.AccesoUsuarioControladorImpl;
+import com.senadi.solicitud02.controlador.impl.AplicacionControladorImpl;
+import com.senadi.solicitud02.controlador.impl.PermisoAplicacionControladorImpl;
+import com.senadi.solicitud02.modelo.entidades.Solicitud;
+import com.senadi.solicitud02.modelo.entidades.Usuario;
+import com.senadi.solicitud02.modelo.entidades.Aplicacion;
+import com.senadi.solicitud02.modelo.entidades.PermisoAplicacion;
+import com.senadi.solicitud02.modelo.entidades.AccesoUsuario;
 
 @ManagedBean(name = "solicitudBean")
 @ViewScoped
@@ -64,6 +80,7 @@ public class SolicitudBean implements Serializable {
         return (lb != null) ? lb.getUsuario() : null;
     }
 
+    /** Carga todas las aplicaciones y sus permisos, inicializando el mapa en false. */
     private void cargarAplicacionesYPermisos() {
         aplicaciones = aplicacionCtrl.listarTodos();
         permisosSeleccionados.clear();
@@ -79,26 +96,44 @@ public class SolicitudBean implements Serializable {
         }
     }
 
+    /** Marca en el mapa los permisos que ya tiene la solicitud en BD. */
     private void marcarPermisosDeSolicitud(Solicitud s) {
         cargarAplicacionesYPermisos();
-        if (s != null && s.getAccesos() != null) {
-            for (AccesoUsuario au : s.getAccesos()) {
-                if (au.getPermiso() != null) {
-                    permisosSeleccionados.put(au.getPermiso().getId(), true);
-                }
+
+        if (s == null || s.getId() == null) {
+            return;
+        }
+
+        List<AccesoUsuario> accesos = accesoCtrl.listarPorSolicitud(s.getId());
+        if (accesos == null) {
+            return;
+        }
+
+        for (AccesoUsuario au : accesos) {
+            if (au.getPermiso() != null && au.getPermiso().getId() != null) {
+                permisosSeleccionados.put(au.getPermiso().getId(), true);
             }
         }
     }
 
+    /** Elimina de BD todos los accesos asociados a la solicitud antes de re-grabarlos. */
     private void limpiarAccesosDeSolicitud(Solicitud s) {
-        if (s != null && s.getAccesos() != null) {
-            for (AccesoUsuario au : new ArrayList<>(s.getAccesos())) {
+        if (s == null || s.getId() == null) {
+            return;
+        }
+
+        List<AccesoUsuario> accesos = accesoCtrl.listarPorSolicitud(s.getId());
+        if (accesos != null) {
+            for (AccesoUsuario au : accesos) {
                 try {
                     accesoCtrl.eliminar(au.getId());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+        }
+
+        if (s.getAccesos() != null) {
             s.getAccesos().clear();
         }
     }
@@ -123,6 +158,13 @@ public class SolicitudBean implements Serializable {
             } else {
                 lista = solCtrl.buscarPorUsuarioYEstado(u.getId(), estadoFiltro);
             }
+
+            if (lista != null) {
+                lista.sort(
+                    Comparator.comparing(Solicitud::getFechaCreacion).reversed()
+                );
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             FacesContext.getCurrentInstance().addMessage(null,
@@ -140,14 +182,9 @@ public class SolicitudBean implements Serializable {
     //   NUEVA SOLICITUD
     // ==========================
 
-    /**
-     * Se invoca desde preRenderView, pero sólo debe ejecutar la inicialización
-     * la primera vez (no en postbacks ni en peticiones AJAX).
-     */
     public void prepararNuevo() {
         FacesContext fc = FacesContext.getCurrentInstance();
         if (fc != null && fc.isPostback()) {
-            // Si es postback, no reseteamos nada para no perder el jefe ni los permisos.
             return;
         }
 
@@ -192,7 +229,6 @@ public class SolicitudBean implements Serializable {
 
         formulario = s;
 
-        // Si la solicitud ya tenía jefe guardado, lo mostramos en la vista
         jefe = formulario.getJefeAutoriza();
         if (jefe != null) {
             nombreJefeBusqueda = jefe.getNombre();
@@ -249,6 +285,18 @@ public class SolicitudBean implements Serializable {
     }
 
     // ==========================
+    //   AUTOCOMPLETE DIRECTORES
+    // ==========================
+
+    public List<Usuario> completarDirectores(String query) {
+        String patron = (query != null) ? query.trim() : "";
+        if (patron.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return usuarioCtrl.buscarDirectoresPorNombreLike(patron);
+    }
+
+    // ==========================
     //   GUARDAR / ANULAR
     // ==========================
 
@@ -259,7 +307,6 @@ public class SolicitudBean implements Serializable {
                 formulario.setUsuario(usuarioLogueado);
             }
 
-            // Guardar el jefe seleccionado en la solicitud
             if (jefe != null) {
                 formulario.setJefeAutoriza(jefe);
             }
@@ -415,5 +462,14 @@ public class SolicitudBean implements Serializable {
 
     public Map<Long, Boolean> getPermisosSeleccionados() {
         return permisosSeleccionados;
+    }
+
+    public void setPermisosSeleccionados(Map<Long, Boolean> permisosSeleccionados) {
+        if (permisosSeleccionados == null) {
+            this.permisosSeleccionados = new HashMap<>();
+        } else {
+            this.permisosSeleccionados.clear();
+            this.permisosSeleccionados.putAll(permisosSeleccionados);
+        }
     }
 }

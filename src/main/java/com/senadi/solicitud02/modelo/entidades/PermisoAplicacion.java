@@ -7,6 +7,7 @@ import java.util.List;
 @Entity
 @Table(name = "permiso_aplicacion")
 public class PermisoAplicacion {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,52 +26,66 @@ public class PermisoAplicacion {
     @OneToMany(mappedBy = "permiso")
     private List<AccesoUsuario> accesos = new ArrayList<>();
 
-	public Long getId() {
-		return id;
-	}
+    // ---- Campo solo para la vista (no se persiste en BD) ----
+    @Transient
+    private boolean seleccionado;
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    // ================= GETTERS / SETTERS =================
 
-	public String getNombre() {
-		return nombre;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setNombre(String nombre) {
-		this.nombre = nombre;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getDescripcion() {
-		return descripcion;
-	}
+    public String getNombre() {
+        return nombre;
+    }
 
-	public void setDescripcion(String descripcion) {
-		this.descripcion = descripcion;
-	}
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 
-	public Aplicacion getAplicacion() {
-		return aplicacion;
-	}
+    public String getDescripcion() {
+        return descripcion;
+    }
 
-	public void setAplicacion(Aplicacion aplicacion) {
-		this.aplicacion = aplicacion;
-	}
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
 
-	public List<AccesoUsuario> getAccesos() {
-		return accesos;
-	}
+    public Aplicacion getAplicacion() {
+        return aplicacion;
+    }
 
-	public void setAccesos(List<AccesoUsuario> accesos) {
-		this.accesos = accesos;
-	}
+    public void setAplicacion(Aplicacion aplicacion) {
+        this.aplicacion = aplicacion;
+    }
 
-	@Override
-	public String toString() {
-		return "PermisoAplicacion [id=" + id + ", nombre=" + nombre + ", descripcion=" + descripcion + ", aplicacion="
-				+ aplicacion + ", accesos=" + accesos + "]";
-	}
+    public List<AccesoUsuario> getAccesos() {
+        return accesos;
+    }
 
-    
+    public void setAccesos(List<AccesoUsuario> accesos) {
+        this.accesos = accesos;
+    }
+
+    public boolean isSeleccionado() {
+        return seleccionado;
+    }
+
+    public void setSeleccionado(boolean seleccionado) {
+        this.seleccionado = seleccionado;
+    }
+
+    @Override
+    public String toString() {
+        return "PermisoAplicacion [id=" + id
+                + ", nombre=" + nombre
+                + ", descripcion=" + descripcion
+                + ", aplicacion=" + aplicacion
+                + ", accesos=" + accesos + "]";
+    }
 }
-

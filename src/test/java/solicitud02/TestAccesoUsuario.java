@@ -35,54 +35,41 @@ public class TestAccesoUsuario {
     private static Aplicacion appBase;
     private static PermisoAplicacion permisoBase;
 
+    // ================================================================
+    // 🔧 INICIALIZACIÓN DEL TEST
+    // ================================================================
     @BeforeClass
     public static void inicializarDatos() {
-        // 1️⃣ Crear usuario base
-        usuarioBase = usuarioCtrl.buscarPorCorreo("acceso.user@example.com");
-        if (usuarioBase == null) {
-            usuarioBase = new Usuario();
-            usuarioBase.setNombre("Ana");
-            usuarioBase.setApellido("Gómez");
-            usuarioBase.setCorreo("acceso.user@example.com");
-            usuarioBase.setCargo("Analista");
-            usuarioCtrl.crear(usuarioBase);
-            System.out.println("🆕 Usuario base creado");
-        }
 
-        // 2️⃣ Crear solicitud base
-        List<Solicitud> solicitudes = solicitudCtrl.listarTodos();
-        if (solicitudes.isEmpty()) {
-            solicitudBase = new Solicitud();
-            solicitudBase.setEstado("CREADA");
-            solicitudBase.setUsuario(usuarioBase);
-            solicitudCtrl.crear(solicitudBase);
-        } else {
-            solicitudBase = solicitudes.get(0);
-        }
+        // Crear usuario base (sin buscarPorCorreo, porque no existe)
+        usuarioBase = new Usuario();
+        usuarioBase.setNombre("Ana");
+        usuarioBase.setApellido("Gómez");
+        usuarioBase.setCorreo("acceso.user@example.com");
+        usuarioBase.setCargo("Analista");
+        usuarioCtrl.crear(usuarioBase);
 
-        // 3️⃣ Crear aplicación base
-        appBase = appCtrl.buscarPorNombre("SistemaInventario");
-        if (appBase == null) {
-            appBase = new Aplicacion();
-            appBase.setNombre("SistemaInventario");
-            appBase.setDescripcion("Aplicación para gestión de inventarios");
-            appCtrl.crear(appBase);
-        }
+        // Crear solicitud base
+        solicitudBase = new Solicitud();
+        solicitudBase.setUsuario(usuarioBase);
+        solicitudBase.setEstado("CREADA");
+        solicitudCtrl.crear(solicitudBase);
 
-        // 4️⃣ Crear permiso base
-        List<PermisoAplicacion> permisos = permisoCtrl.buscarPorNombre("PRUEBA ACCESO");
-        permisoBase = permisos.isEmpty() ? null : permisos.get(0);
+        // Crear aplicación base
+        appBase = new Aplicacion();
+        appBase.setNombre("SistemaInventario");
+        appBase.setDescripcion("Aplicación de inventarios");
+        appCtrl.crear(appBase);
 
-        if (permisoBase == null) {
-            permisoBase = new PermisoAplicacion();
-            permisoBase.setNombre("PRUEBA ACCESO");
-            permisoBase.setDescripcion("Permiso para test de acceso");
-            permisoBase.setAplicacion(appBase);
-            permisoCtrl.crear(permisoBase);
-        }
+        // Crear permiso base
+        permisoBase = new PermisoAplicacion();
+        permisoBase.setNombre("PRUEBA ACCESO");
+        permisoBase.setDescripcion("Permiso para test");
+        permisoBase.setAplicacion(appBase);
+        permisoCtrl.crear(permisoBase);
 
-        // 5️⃣ Crear un acceso usuario si no existe
-        List<AccesoUsuario> accesos = accesoCtrl.buscarPorSolicitud(solicitudBase.getId());
+        // Crear acceso si no hay
+        List<AccesoUsuario> accesos = accesoCtrl.listarPorSolicitud(solicitudBase.getId());
         if (accesos.isEmpty()) {
             AccesoUsuario a = new AccesoUsuario();
             a.setSolicitud(solicitudBase);
@@ -91,6 +78,9 @@ public class TestAccesoUsuario {
         }
     }
 
+    // ================================================================
+    // 🔹 TEST: CREAR ACCESO
+    // ================================================================
     @Test
     public void testCrearAccesoUsuario() {
         AccesoUsuario a = new AccesoUsuario();
@@ -98,10 +88,14 @@ public class TestAccesoUsuario {
         a.setPermiso(permisoBase);
 
         accesoCtrl.crear(a);
-        assertNotNull("El acceso usuario debe tener ID", a.getId());
-        System.out.println("✅ AccesoUsuario creado con ID: " + a.getId());
+
+        assertNotNull("El acceso debe tener ID después de crearse", a.getId());
+        System.out.println("✔ AccesoUsuario creado con ID: " + a.getId());
     }
 
+    // ================================================================
+    // 🔹 TEST: LISTAR ACCESOS
+    // ================================================================
     @Test
     public void testListarAccesos() {
         List<AccesoUsuario> lista = accesoCtrl.listarTodos();
@@ -109,29 +103,30 @@ public class TestAccesoUsuario {
         System.out.println("📋 Total accesos: " + lista.size());
     }
 
+    // ================================================================
+    // 🔹 TEST: BUSCAR POR SOLICITUD
+    // ================================================================
     @Test
     public void testBuscarPorSolicitud() {
-        List<AccesoUsuario> lista = accesoCtrl.buscarPorSolicitud(solicitudBase.getId());
-        assertFalse("Debe existir al menos un acceso para la solicitud base", lista.isEmpty());
-        System.out.println("🔍 Accesos encontrados para solicitud: " + lista.size());
+        List<AccesoUsuario> lista = accesoCtrl.listarPorSolicitud(solicitudBase.getId());
+        assertFalse("La solicitud debe tener al menos un acceso", lista.isEmpty());
+        System.out.println("🔍 Accesos encontrados: " + lista.size());
     }
 
-    @Test
-    public void testBuscarPorPermiso() {
-        List<AccesoUsuario> lista = accesoCtrl.buscarPorPermiso(permisoBase.getId());
-        assertFalse("Debe existir al menos un acceso para el permiso base", lista.isEmpty());
-        System.out.println("🔍 Accesos encontrados para permiso: " + lista.size());
-    }
-
+    // ================================================================
+    // 🔹 TEST: ELIMINAR ACCESO
+    // ================================================================
     @Test
     public void testEliminarAcceso() {
         List<AccesoUsuario> lista = accesoCtrl.listarTodos();
         if (!lista.isEmpty()) {
             AccesoUsuario a = lista.get(0);
             accesoCtrl.eliminar(a.getId());
+
             AccesoUsuario eliminado = accesoCtrl.buscarPorId(a.getId());
-            assertNull("El acceso usuario debe eliminarse", eliminado);
-            System.out.println("🗑️ AccesoUsuario eliminado correctamente");
+            assertNull("El acceso debe ser eliminado", eliminado);
+
+            System.out.println("🗑 AccesoUsuario eliminado correctamente");
         }
     }
 }

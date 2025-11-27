@@ -10,8 +10,8 @@
   <div class="login-container">
     <div class="login-box">
       <h:graphicImage library="img" name="logo.png"
-                                styleClass="sidebar-logo"
-                                alt="Logo" />
+                      styleClass="sidebar-logo"
+                      alt="Logo" />
       <h2>Ingreso al Sistema</h2>
 
       <h:form id="loginForm">
@@ -20,7 +20,7 @@
         <div class="form-group">
           <label for="usuario">Usuario</label>
           <h:inputText id="usuario"
-                       value="#{loginBean.correo}"
+                       value="#{loginBean.username}"
                        required="true"
                        requiredMessage="El usuario es obligatorio"
                        styleClass="input"/>

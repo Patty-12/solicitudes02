@@ -80,6 +80,18 @@ public class UsuarioControladorImpl implements UsuarioControlador {
     }
 
     @Override
+    public Usuario buscarPorUsername(String username) {
+        try {
+            return em.createQuery(
+                    "SELECT u FROM Usuario u WHERE u.username = :username", Usuario.class)
+                     .setParameter("username", username)
+                     .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
     public Usuario buscarPorCorreoYCargo(String correo, String cargo) {
         try {
             return em.createQuery(
@@ -134,20 +146,25 @@ public class UsuarioControladorImpl implements UsuarioControlador {
 
     @Override
     public List<Usuario> buscarPorNombreOCorreo(String texto) {
+        String patron = "%" + texto.toLowerCase() + "%";
         return em.createQuery(
-                "SELECT u FROM Usuario u WHERE u.nombre LIKE :texto OR u.correo LIKE :texto",
+                "SELECT u FROM Usuario u " +
+                "WHERE LOWER(u.nombre)   LIKE :patron " +
+                "   OR LOWER(u.correo)   LIKE :patron " +
+                "   OR LOWER(u.username) LIKE :patron",
                 Usuario.class)
-                 .setParameter("texto", "%" + texto + "%")
+                 .setParameter("patron", patron)
                  .getResultList();
     }
 
     @Override
-    public Usuario autenticar(String correo, String password) {
+    public Usuario autenticar(String username, String password) {
         try {
             return em.createQuery(
-                    "SELECT u FROM Usuario u WHERE u.correo = :correo AND u.password = :password",
+                    "SELECT u FROM Usuario u " +
+                    "WHERE u.username = :username AND u.password = :password",
                     Usuario.class)
-                     .setParameter("correo", correo)
+                     .setParameter("username", username)
                      .setParameter("password", password)
                      .getSingleResult();
         } catch (NoResultException e) {
@@ -201,4 +218,38 @@ public class UsuarioControladorImpl implements UsuarioControlador {
                  .setParameter("cargo", "Director")
                  .getResultList();
     }
+    
+    // ======================================================
+    //   MÉTODOS DE APOYO PARA ROLES / PERMISOS
+    // ======================================================
+
+    @Override
+    public boolean tieneRol(Long idUsuario, String nombreRol) {
+        if (idUsuario == null || nombreRol == null) {
+            return false;
+        }
+
+        Long total = em.createQuery(
+                "SELECT COUNT(ur) FROM UsuarioRol ur " +
+                "WHERE ur.usuario.id = :idUsuario " +
+                "AND UPPER(ur.rol.nombre) = UPPER(:rol)",
+                Long.class)
+                .setParameter("idUsuario", idUsuario)
+                .setParameter("rol", nombreRol)
+                .getSingleResult();
+
+        return total != null && total > 0;
+    }
+
+    @Override
+    public List<String> obtenerNombresRoles(Long idUsuario) {
+        return em.createQuery(
+                "SELECT DISTINCT UPPER(ur.rol.nombre) " +
+                "FROM UsuarioRol ur " +
+                "WHERE ur.usuario.id = :idUsuario",
+                String.class)
+                .setParameter("idUsuario", idUsuario)
+                .getResultList();
+    }
+
 }
