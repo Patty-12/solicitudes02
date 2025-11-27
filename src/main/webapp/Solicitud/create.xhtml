@@ -76,9 +76,7 @@
 
                 <p:separator style="margin:0.5rem 0 1rem 0;" />
 
-                <!-- ============================================ -->
-                <!-- SISTEMAS INTERNOS SENADI (TABLA ZEBRA)       -->
-                <!-- ============================================ -->
+                <!-- SISTEMAS INTERNOS SENADI (TABLA ZEBRA) -->
                 <p:panel header="SISTEMAS INTERNOS SENADI"
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
@@ -131,9 +129,7 @@
 
                 <p:separator style="margin:0.5rem 0 1rem 0;" />
 
-                <!-- ============================================ -->
-                <!-- DATOS DEL SERVIDOR QUE AUTORIZA (DIRECTOR)  -->
-                <!-- ============================================ -->
+                <!-- DATOS DEL SERVIDOR QUE AUTORIZA (DIRECTOR) -->
                 <p:panel header="DATOS DEL SERVIDOR QUE AUTORIZA"
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
@@ -155,44 +151,38 @@
                                          styleClass="ui-button-secondary btn-accion" />
                     </h:panelGrid>
 
-                    <!-- Tabla de datos del director -->
+                    <!-- Tabla de datos del director: campos frente a frente -->
                     <table class="tabla-director">
-                        <thead>
-                            <tr>
-                                <th style="width:50%;">Nombres</th>
-                                <th>Apellidos</th>
-                            </tr>
-                        </thead>
                         <tbody>
                             <tr>
-                                <td>
+                                <th style="width:20%;">Nombres</th>
+                                <td style="width:30%;">
                                     #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.nombre}
                                 </td>
-                                <td>
+                                <th style="width:20%;">Apellidos</th>
+                                <td style="width:30%;">
                                     #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.apellido}
                                 </td>
                             </tr>
                             <tr>
                                 <th>Unidad/Sección</th>
-                                <th>Cargo</th>
-                            </tr>
-                            <tr>
                                 <td>
                                     #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.unidadGestion}
                                 </td>
+                                <th>Cargo</th>
                                 <td>
                                     #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.cargo}
                                 </td>
                             </tr>
                             <tr>
                                 <th>Correo institucional</th>
-                                <th>Teléfono / Extensión</th>
-                            </tr>
-                            <tr>
                                 <td>
                                     #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.correo}
                                 </td>
-                                <td></td>
+                                <th>Teléfono / Extensión</th>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.telefono}
+                                </td>
                             </tr>
                         </tbody>
                     </table>

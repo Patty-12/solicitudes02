@@ -110,7 +110,6 @@
 
 <h:body>
 
-<!-- Parámetros y carga de la solicitud -->
 <f:metadata>
     <f:viewParam name="id" value="#{solicitudDetalleBean.id}" />
     <f:event type="preRenderView" listener="#{solicitudDetalleBean.cargar}" />
@@ -123,13 +122,10 @@
         <!-- Botonera superior -->
         <div class="top-actions">
 
-            <!-- VOLVER -->
             <h:link outcome="/Solicitud/index.xhtml" styleClass="btn-volver">
                 ← Volver
             </h:link>
 
-            <!-- DESCARGAR / IMPRIMIR PDF
-                 Sólo visible mientras el actor puede actuar sobre la solicitud -->
             <h:outputLink value="#"
                           styleClass="btn-pdf"
                           rendered="#{solicitudDetalleBean.puedeDescargarImprimirPdfPublic}"
@@ -137,7 +133,7 @@
                 Descargar / Imprimir PDF
             </h:outputLink>
 
-            <!-- ACCIONES DEL SOLICITANTE (solo estado CREADA) -->
+            <!-- ACCIONES DEL SOLICITANTE -->
             <h:panelGroup rendered="#{solicitudDetalleBean.mostrarAccionesSolicitantePublic}">
 
                 <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
@@ -263,28 +259,22 @@
         <div class="subsection-title">DATOS DEL SERVIDOR SOLICITANTE</div>
         <table class="form-main">
             <tr>
-                <th>Nombres</th>
-                <th>Apellidos</th>
-            </tr>
-            <tr>
-                <td>#{solicitudDetalleBean.servidorSolicitante.nombre}</td>
-                <td>#{solicitudDetalleBean.servidorSolicitante.apellido}</td>
+                <th style="width:20%;">Nombres</th>
+                <td style="width:30%;">#{solicitudDetalleBean.servidorSolicitante.nombre}</td>
+                <th style="width:20%;">Apellidos</th>
+                <td style="width:30%;">#{solicitudDetalleBean.servidorSolicitante.apellido}</td>
             </tr>
             <tr>
                 <th>Unidad/Sección</th>
-                <th>Cargo</th>
-            </tr>
-            <tr>
                 <td>#{solicitudDetalleBean.servidorSolicitante.unidadGestion}</td>
+                <th>Cargo</th>
                 <td>#{solicitudDetalleBean.servidorSolicitante.cargo}</td>
             </tr>
             <tr>
                 <th>Correo institucional</th>
-                <th>Teléfono / Extensión</th>
-            </tr>
-            <tr>
                 <td>#{solicitudDetalleBean.servidorSolicitante.correo}</td>
-                <td></td>
+                <th>Teléfono / Extensión</th>
+                <td>#{solicitudDetalleBean.servidorSolicitante.telefono}</td>
             </tr>
         </table>
 
@@ -292,28 +282,24 @@
         <div class="subsection-title">DATOS DEL SERVIDOR QUE AUTORIZA</div>
         <table class="form-main">
             <tr>
-                <th>Nombres</th>
-                <th>Apellidos</th>
-            </tr>
-            <tr>
-                <td>
+                <th style="width:20%;">Nombres</th>
+                <td style="width:30%;">
                     #{empty solicitudDetalleBean.servidorAutoriza
                         ? '' : solicitudDetalleBean.servidorAutoriza.nombre}
                 </td>
-                <td>
+                <th style="width:20%;">Apellidos</th>
+                <td style="width:30%;">
                     #{empty solicitudDetalleBean.servidorAutoriza
                         ? '' : solicitudDetalleBean.servidorAutoriza.apellido}
                 </td>
             </tr>
             <tr>
                 <th>Unidad/Sección</th>
-                <th>Cargo</th>
-            </tr>
-            <tr>
                 <td>
                     #{empty solicitudDetalleBean.servidorAutoriza
                         ? '' : solicitudDetalleBean.servidorAutoriza.unidadGestion}
                 </td>
+                <th>Cargo</th>
                 <td>
                     #{empty solicitudDetalleBean.servidorAutoriza
                         ? '' : solicitudDetalleBean.servidorAutoriza.cargo}
@@ -321,14 +307,15 @@
             </tr>
             <tr>
                 <th>Correo institucional</th>
-                <th>Teléfono / Extensión</th>
-            </tr>
-            <tr>
                 <td>
                     #{empty solicitudDetalleBean.servidorAutoriza
                         ? '' : solicitudDetalleBean.servidorAutoriza.correo}
                 </td>
-                <td></td>
+                <th>Teléfono / Extensión</th>
+                <td>
+                    #{empty solicitudDetalleBean.servidorAutoriza
+                        ? '' : solicitudDetalleBean.servidorAutoriza.telefono}
+                </td>
             </tr>
         </table>
 
@@ -342,7 +329,6 @@
                 <th class="checkbox-cell">X</th>
             </tr>
 
-            <!-- Usa los accesos de la solicitud ya inicializados en el bean -->
             <ui:repeat value="#{solicitudDetalleBean.accesos}" var="acc">
                 <tr>
                     <td>#{acc.permiso.aplicacion.nombre}</td>
@@ -358,22 +344,22 @@
         
         <p class="small-text" style="margin-top:10px; text-align:justify;">
             Los accesos y permisos solicitados a los sistemas institucionales serán validados por la Dirección de TICs, con la 
-			firma de responsabilidad correspondiente. Posteriormente, el Oficial de Seguridad de la Información firmará en 
-			señal de aprobación.</p> 
-		<p class="small-text" style="margin-top:10px; text-align:justify;">
-			El usuario autorizador es responsable de verificar que los accesos solicitados por el usuario correspondan al perfil 
-			para el cual fue contratado. Asimismo, deberá controlar que el uso del sistema institucional y de la información a la 
-			que tenga acceso el usuario sea adecuado, ético y conforme con la normativa legal vigente. </p>
-		<p class="small-text" style="margin-top:10px; text-align:justify;">
-			Mediante el presente documento, el usuario solicitante se compromete a hacer un uso responsable y ético, 
-			enmarcado en las políticas institucionales y la normativa vigente. El formulario será válido únicamente si cuenta con 
-			todas las firmas requeridas, debidamente suscritas por el solicitante y su jefe inmediato. </p>
-		<p class="small-text" style="margin-top:10px; text-align:justify;">
-			Disposición técnica sobre la forma de presentación del formulario: El formulario  obligatoriamente debe 
-			ser llenado digitalmente,  es decir todas las firmas deberán ser electrónicas. </p>
+            firma de responsabilidad correspondiente. Posteriormente, el Oficial de Seguridad de la Información firmará en 
+            señal de aprobación.</p> 
+        <p class="small-text" style="margin-top:10px; text-align:justify;">
+            El usuario autorizador es responsable de verificar que los accesos solicitados por el usuario correspondan al perfil 
+            para el cual fue contratado. Asimismo, deberá controlar que el uso del sistema institucional y de la información a la 
+            que tenga acceso el usuario sea adecuado, ético y conforme con la normativa legal vigente. </p>
+        <p class="small-text" style="margin-top:10px; text-align:justify;">
+            Mediante el presente documento, el usuario solicitante se compromete a hacer un uso responsable y ético, 
+            enmarcado en las políticas institucionales y la normativa vigente. El formulario será válido únicamente si cuenta con 
+            todas las firmas requeridas, debidamente suscritas por el solicitante y su jefe inmediato. </p>
+        <p class="small-text" style="margin-top:10px; text-align:justify;">
+            Disposición técnica sobre la forma de presentación del formulario: El formulario  obligatoriamente debe 
+            ser llenado digitalmente,  es decir todas las firmas deberán ser electrónicas. </p>
         
         <h4>Nota: En caso de detectarse un uso indebido de los accesos concedidos, el perfil del usuario será bloqueado de 
-			forma inmediata, sin necesidad de notificación previa. </h4>
+            forma inmediata, sin necesidad de notificación previa. </h4>
 
         <!-- FIRMAS -->
         <div class="subsection-title">FIRMAS DE RESPONSABILIDAD</div>

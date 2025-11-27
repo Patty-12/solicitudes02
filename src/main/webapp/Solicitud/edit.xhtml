@@ -16,6 +16,32 @@
 
     <ui:define name="contenido">
 
+        <!-- Estilo local para la tabla del director (similar a create.xhtml) -->
+        <style>
+            .tabla-director {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 0.5rem;
+            }
+            .tabla-director th,
+            .tabla-director td {
+                border: 1px solid #e0e0e0;
+                padding: 6px 8px;
+                text-align: left;
+            }
+            .tabla-director th {
+                background: #f5f5f5;
+                font-weight: 600;
+            }
+            .tabla-permisos th,
+            .tabla-permisos td {
+                padding: 4px 8px;
+            }
+            .perm-check-cell {
+                text-align: center;
+            }
+        </style>
+
         <h:form id="formSolicitudEdit">
 
             <p:messages id="msgs"
@@ -37,9 +63,7 @@
 
                 <p:separator style="margin:0.5rem 0 1rem 0;" />
 
-                <!-- ============================================ -->
-                <!-- SISTEMAS INTERNOS SENADI                     -->
-                <!-- ============================================ -->
+                <!-- SISTEMAS INTERNOS SENADI -->
                 <p:panel header="SISTEMAS INTERNOS SENADI"
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
@@ -90,74 +114,60 @@
 
                 <p:separator style="margin:0.5rem 0 1rem 0;" />
 
-                <!-- ============================================ -->
-                <!-- DATOS DEL SERVIDOR QUE AUTORIZA (edición)   -->
-                <!-- ============================================ -->
+                <!-- DATOS DEL SERVIDOR QUE AUTORIZA (edición) -->
                 <p:panel header="DATOS DEL SERVIDOR QUE AUTORIZA"
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
 
-                    <h:panelGrid columns="1" style="width:100%; margin-bottom:0.8rem;">
+                    <!-- Búsqueda -->
+                    <h:panelGrid columns="3"
+                                 columnClasses="col-label, col-input, col-button"
+                                 style="width:100%; margin-bottom:0.5rem;">
                         <h:outputLabel for="nombreJefe" value="Buscar Director por nombre:" />
 
-                        <h:panelGroup style="display:flex; align-items:center;">
-                            <h:inputText id="nombreJefe"
-                                         value="#{solicitudBean.nombreJefeBusqueda}"
-                                         style="width:260px;" />
+                        <h:inputText id="nombreJefe"
+                                     value="#{solicitudBean.nombreJefeBusqueda}"
+                                     style="width:100%;" />
 
-                            <p:commandButton value="Buscar"
-                                             icon="pi pi-search"
-                                             actionListener="#{solicitudBean.buscarDirectorPorNombre}"
-                                             update="formSolicitudEdit"
-                                             styleClass="ui-button-secondary btn-accion"
-                                             style="margin-left:0.5rem;" />
-                        </h:panelGroup>
+                        <p:commandButton value=" Buscar"
+                                         icon="pi pi-search"
+                                         actionListener="#{solicitudBean.buscarDirectorPorNombre}"
+                                         update="formSolicitudEdit"
+                                         styleClass="ui-button-secondary btn-accion" />
                     </h:panelGrid>
 
-                    <table class="tabla-datos-autoriza">
-                        <thead>
-                            <tr>
-                                <th style="width:50%;">Nombres</th>
-                                <th style="width:50%;">Apellidos</th>
-                            </tr>
-                        </thead>
+                    <!-- Tabla compacta como en create.xhtml -->
+                    <table class="tabla-director">
                         <tbody>
                             <tr>
-                                <td>
-                                    <h:outputText value="#{solicitudBean.jefe.nombre}"
-                                                  rendered="#{solicitudBean.jefe ne null}" />
+                                <th style="width:20%;">Nombres</th>
+                                <td style="width:30%;">
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.nombre}
                                 </td>
-                                <td>
-                                    <h:outputText value="#{solicitudBean.jefe.apellido}"
-                                                  rendered="#{solicitudBean.jefe ne null}" />
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td>Unidad/Sección</td>
-                                <td>Cargo</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <h:outputText value="#{solicitudBean.jefe.unidadGestion}"
-                                                  rendered="#{solicitudBean.jefe ne null}" />
-                                </td>
-                                <td>
-                                    <h:outputText value="#{solicitudBean.jefe.cargo}"
-                                                  rendered="#{solicitudBean.jefe ne null}" />
+                                <th style="width:20%;">Apellidos</th>
+                                <td style="width:30%;">
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.apellido}
                                 </td>
                             </tr>
-
                             <tr>
-                                <td>Correo institucional</td>
-                                <td>Teléfono / Extensión</td>
+                                <th>Unidad/Sección</th>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.unidadGestion}
+                                </td>
+                                <th>Cargo</th>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.cargo}
+                                </td>
                             </tr>
                             <tr>
+                                <th>Correo institucional</th>
                                 <td>
-                                    <h:outputText value="#{solicitudBean.jefe.correo}"
-                                                  rendered="#{solicitudBean.jefe ne null}" />
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.correo}
                                 </td>
-                                <td></td>
+                                <th>Teléfono / Extensión</th>
+                                <td>
+                                    #{empty solicitudBean.jefe ? '' : solicitudBean.jefe.telefono}
+                                </td>
                             </tr>
                         </tbody>
                     </table>
