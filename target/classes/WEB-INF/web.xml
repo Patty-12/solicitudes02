@@ -7,7 +7,7 @@
 
     <display-name>solicitud02</display-name>
 
-    <!-- Página por defecto -->
+    <!-- Página de inicio -->
     <welcome-file-list>
         <welcome-file>index.xhtml</welcome-file>
     </welcome-file-list>
@@ -19,7 +19,7 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
-    <!-- SIN /faces, solo *.xhtml -->
+    <!-- Mapeo para que JSF procese todos los .xhtml -->
     <servlet-mapping>
         <servlet-name>Faces Servlet</servlet-name>
         <url-pattern>*.xhtml</url-pattern>
@@ -27,9 +27,9 @@
 
     <!-- PrimeFaces -->
     <context-param>
-    	<param-name>primefaces.THEME</param-name>
-    	<param-value>saga</param-value>
-	</context-param>
+        <param-name>primefaces.THEME</param-name>
+        <param-value>saga</param-value>
+    </context-param>
 
     <context-param>
         <param-name>primefaces.FONT_AWESOME</param-name>

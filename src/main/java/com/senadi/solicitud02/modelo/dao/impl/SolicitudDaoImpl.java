@@ -23,7 +23,9 @@ public class SolicitudDaoImpl implements SolicitudDao {
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
@@ -38,7 +40,9 @@ public class SolicitudDaoImpl implements SolicitudDao {
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
@@ -48,28 +52,39 @@ public class SolicitudDaoImpl implements SolicitudDao {
         try {
             tx.begin();
             Solicitud ref = em.find(Solicitud.class, id);
-            if (ref != null) em.remove(ref);
+            if (ref != null) {
+                em.remove(ref);
+            }
             tx.commit();
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
     public Solicitud buscarPorId(Long id) {
         EntityManager em = JPAUtil.getEntityManager();
-        try { return em.find(Solicitud.class, id); }
-        finally { em.close(); }
+        try {
+            return em.find(Solicitud.class, id);
+        } finally {
+            em.close();
+        }
     }
 
     @Override
     public List<Solicitud> listarTodos() {
         EntityManager em = JPAUtil.getEntityManager();
         try {
-            return em.createQuery("SELECT s FROM Solicitud s ORDER BY s.id", Solicitud.class)
+            return em.createQuery(
+                        "SELECT s FROM Solicitud s ORDER BY s.id",
+                        Solicitud.class)
                      .getResultList();
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
@@ -77,10 +92,15 @@ public class SolicitudDaoImpl implements SolicitudDao {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             TypedQuery<Solicitud> q = em.createQuery(
-                "SELECT s FROM Solicitud s WHERE s.usuario.id = :u", Solicitud.class);
+                    "SELECT s FROM Solicitud s " +
+                    "WHERE s.usuario.id = :u " +
+                    "ORDER BY s.fechaCreacion",
+                    Solicitud.class);
             q.setParameter("u", idUsuario);
             return q.getResultList();
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
@@ -88,22 +108,32 @@ public class SolicitudDaoImpl implements SolicitudDao {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             TypedQuery<Solicitud> q = em.createQuery(
-                "SELECT s FROM Solicitud s WHERE s.estado = :e", Solicitud.class);
+                    "SELECT s FROM Solicitud s " +
+                    "WHERE s.estado = :e " +
+                    "ORDER BY s.fechaCreacion",
+                    Solicitud.class);
             q.setParameter("e", estado);
             return q.getResultList();
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
-    
+
     @Override
     public List<Solicitud> buscarPorUsuarioYEstado(Long idUsuario, String estado) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             TypedQuery<Solicitud> q = em.createQuery(
-                "SELECT s FROM Solicitud s WHERE s.usuario.id = :u AND s.estado = :e", Solicitud.class);
+                    "SELECT s FROM Solicitud s " +
+                    "WHERE s.usuario.id = :u AND s.estado = :e " +
+                    "ORDER BY s.fechaCreacion",
+                    Solicitud.class);
             q.setParameter("u", idUsuario);
             q.setParameter("e", estado);
             return q.getResultList();
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
@@ -111,11 +141,16 @@ public class SolicitudDaoImpl implements SolicitudDao {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             TypedQuery<Solicitud> q = em.createQuery(
-                "SELECT s FROM Solicitud s WHERE s.fechaCreacion BETWEEN :desde AND :hasta ORDER BY s.fechaCreacion", Solicitud.class);
+                    "SELECT s FROM Solicitud s " +
+                    "WHERE s.fechaCreacion BETWEEN :desde AND :hasta " +
+                    "ORDER BY s.fechaCreacion",
+                    Solicitud.class);
             q.setParameter("desde", desde);
             q.setParameter("hasta", hasta);
             return q.getResultList();
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
@@ -123,12 +158,18 @@ public class SolicitudDaoImpl implements SolicitudDao {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             TypedQuery<Solicitud> q = em.createQuery(
-                "SELECT s FROM Solicitud s WHERE s.usuario.id = :u AND s.fechaCreacion BETWEEN :desde AND :hasta", Solicitud.class);
+                    "SELECT s FROM Solicitud s " +
+                    "WHERE s.usuario.id = :u " +
+                    "AND s.fechaCreacion BETWEEN :desde AND :hasta " +
+                    "ORDER BY s.fechaCreacion",
+                    Solicitud.class);
             q.setParameter("u", idUsuario);
             q.setParameter("desde", desde);
             q.setParameter("hasta", hasta);
             return q.getResultList();
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
@@ -136,26 +177,40 @@ public class SolicitudDaoImpl implements SolicitudDao {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             TypedQuery<Solicitud> q = em.createQuery(
-                "SELECT s FROM Solicitud s WHERE s.estado = :e AND s.fechaCreacion BETWEEN :desde AND :hasta", Solicitud.class);
+                    "SELECT s FROM Solicitud s " +
+                    "WHERE s.estado = :e " +
+                    "AND s.fechaCreacion BETWEEN :desde AND :hasta " +
+                    "ORDER BY s.fechaCreacion",
+                    Solicitud.class);
             q.setParameter("e", estado);
             q.setParameter("desde", desde);
             q.setParameter("hasta", hasta);
             return q.getResultList();
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
     @Override
-    public List<Solicitud> buscarPorUsuarioEstadoYFechas(Long idUsuario, String estado, LocalDateTime desde, LocalDateTime hasta) {
+    public List<Solicitud> buscarPorUsuarioEstadoYFechas(Long idUsuario, String estado,
+                                                         LocalDateTime desde, LocalDateTime hasta) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             TypedQuery<Solicitud> q = em.createQuery(
-                "SELECT s FROM Solicitud s WHERE s.usuario.id = :u AND s.estado = :e AND s.fechaCreacion BETWEEN :desde AND :hasta", Solicitud.class);
+                    "SELECT s FROM Solicitud s " +
+                    "WHERE s.usuario.id = :u " +
+                    "AND s.estado = :e " +
+                    "AND s.fechaCreacion BETWEEN :desde AND :hasta " +
+                    "ORDER BY s.fechaCreacion",
+                    Solicitud.class);
             q.setParameter("u", idUsuario);
             q.setParameter("e", estado);
             q.setParameter("desde", desde);
             q.setParameter("hasta", hasta);
             return q.getResultList();
-        } finally { em.close(); }
+        } finally {
+            em.close();
+        }
     }
 
 }

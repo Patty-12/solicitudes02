@@ -29,6 +29,10 @@ public class Solicitud {
     @JoinColumn(name = "id_jefe_autoriza")
     private Usuario jefeAutoriza;
 
+    // URL del PDF firmado más reciente (última versión)
+    @Column(name = "url_pdf_firmado", length = 500)
+    private String urlPdfFirmado;
+
     // Solicitud -> Firma (1:N)
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Firma> firmas = new ArrayList<>();
@@ -97,6 +101,14 @@ public class Solicitud {
         this.accesos = accesos;
     }
 
+    public String getUrlPdfFirmado() {
+        return urlPdfFirmado;
+    }
+
+    public void setUrlPdfFirmado(String urlPdfFirmado) {
+        this.urlPdfFirmado = urlPdfFirmado;
+    }
+
     @Override
     public String toString() {
         return "Solicitud{" +
@@ -105,6 +117,7 @@ public class Solicitud {
                 ", estado='" + estado + '\'' +
                 ", usuario=" + usuario +
                 ", jefeAutoriza=" + jefeAutoriza +
+                ", urlPdfFirmado='" + urlPdfFirmado + '\'' +
                 ", firmas=" + firmas +
                 ", accesos=" + accesos +
                 '}';

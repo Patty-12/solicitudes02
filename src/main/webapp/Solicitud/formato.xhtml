@@ -17,7 +17,7 @@
 
         .page {
             width: 100%;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -106,13 +106,10 @@
             text-align: center;
         }
 
-        .pdf-links {
-            margin-top: 5px;
-            font-size: 10px;
-        }
-
-        .pdf-links a {
-            margin-right: 10px;
+        .file-upload-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
     </style>
 </h:head>
@@ -131,32 +128,43 @@
         <!-- Botonera superior -->
         <div class="top-actions">
 
+            <!-- Volver -->
             <h:link outcome="/Solicitud/index.xhtml" styleClass="btn-volver">
                 ← Volver
             </h:link>
 
+            <!-- Botón imprimir SOLO mientras no existe PDF aún -->
             <h:outputLink value="#"
                           styleClass="btn-pdf"
-                          rendered="#{solicitudDetalleBean.puedeDescargarImprimirPdfPublic}"
-                          onclick="window.print(); return false;">
-                Descargar / Imprimir PDF
+                          rendered="#{empty solicitudDetalleBean.urlPdfActual}">
+                Imprimir formulario
+                <f:passThroughAttribute name="onclick"
+                                        value="window.print();return false;" />
             </h:outputLink>
+
+            <!-- FileUpload clásico + botón Subir -->
+            <h:panelGroup
+                    rendered="#{solicitudDetalleBean.mostrarAccionesSolicitantePublic
+                               or solicitudDetalleBean.directorPuedeFirmarPublic
+                               or solicitudDetalleBean.directorTicPuedeFirmarPublic
+                               or solicitudDetalleBean.oficialPuedeFirmarPublic
+                               or solicitudDetalleBean.responsablePuedeAplicarPermisosPublic}">
+
+                <div class="file-upload-inline">
+                    <!-- input típico gris del navegador -->
+                    <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
+                                  mode="simple"
+                                  allowTypes="/(\.|\/)(pdf)$/"/>
+                    <!-- botón que realmente sube -->
+                    <p:commandButton value="Subir PDF firmado"
+                                     icon="pi pi-upload"
+                                     actionListener="#{solicitudDetalleBean.subirFirmado}"
+                                     update="@form"/>
+                </div>
+            </h:panelGroup>
 
             <!-- ACCIONES DEL SOLICITANTE -->
             <h:panelGroup rendered="#{solicitudDetalleBean.mostrarAccionesSolicitantePublic}">
-
-                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
-                              mode="simple"
-                              label="Seleccionar PDF firmado (Solicitante)"
-                              allowTypes="/(\.|\/)(pdf)$/"
-                              style="max-width:260px;" />
-
-                <p:commandButton value=" Subir firmado"
-                                 icon="pi pi-upload"
-                                 actionListener="#{solicitudDetalleBean.subirFirmado}"
-                                 update="@form"
-                                 styleClass="ui-button-success" />
-
                 <p:commandButton value=" Enviar al Director"
                                  icon="pi pi-send"
                                  actionListener="#{solicitudDetalleBean.enviarAlDirector}"
@@ -166,19 +174,6 @@
 
             <!-- ACCIONES DEL DIRECTOR -->
             <h:panelGroup rendered="#{solicitudDetalleBean.directorPuedeFirmarPublic}">
-
-                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
-                              mode="simple"
-                              label="PDF firmado Director"
-                              allowTypes="/(\.|\/)(pdf)$/"
-                              style="max-width:260px;" />
-
-                <p:commandButton value=" Subir firmado (Director)"
-                                 icon="pi pi-upload"
-                                 styleClass="ui-button-success"
-                                 actionListener="#{solicitudDetalleBean.subirFirmadoDirector}"
-                                 update="@form" />
-
                 <p:commandButton value=" Aprobar (Director)"
                                  icon="pi pi-check"
                                  styleClass="ui-button-success"
@@ -196,19 +191,6 @@
 
             <!-- ACCIONES DEL DIRECTOR TIC -->
             <h:panelGroup rendered="#{solicitudDetalleBean.directorTicPuedeFirmarPublic}">
-
-                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
-                              mode="simple"
-                              label="PDF firmado Director TIC"
-                              allowTypes="/(\.|\/)(pdf)$/"
-                              style="max-width:260px;" />
-
-                <p:commandButton value=" Subir firmado (Director TIC)"
-                                 icon="pi pi-upload"
-                                 styleClass="ui-button-success"
-                                 actionListener="#{solicitudDetalleBean.subirFirmadoDirectorTic}"
-                                 update="@form" />
-
                 <p:commandButton value=" Aprobar (Director TIC)"
                                  icon="pi pi-check"
                                  styleClass="ui-button-success"
@@ -226,19 +208,6 @@
 
             <!-- ACCIONES DEL OFICIAL DE SEGURIDAD -->
             <h:panelGroup rendered="#{solicitudDetalleBean.oficialPuedeFirmarPublic}">
-
-                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
-                              mode="simple"
-                              label="PDF firmado Oficial de Seguridad"
-                              allowTypes="/(\.|\/)(pdf)$/"
-                              style="max-width:260px;" />
-
-                <p:commandButton value=" Subir firmado (Oficial)"
-                                 icon="pi pi-upload"
-                                 styleClass="ui-button-success"
-                                 actionListener="#{solicitudDetalleBean.subirFirmadoOficial}"
-                                 update="@form" />
-
                 <p:commandButton value=" Aprobar (Oficial Seguridad)"
                                  icon="pi pi-check"
                                  styleClass="ui-button-success"
@@ -256,19 +225,6 @@
 
             <!-- ACCIONES DEL RESPONSABLE DE ACCESOS -->
             <h:panelGroup rendered="#{solicitudDetalleBean.responsablePuedeAplicarPermisosPublic}">
-
-                <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
-                              mode="simple"
-                              label="PDF firmado Responsable Accesos"
-                              allowTypes="/(\.|\/)(pdf)$/"
-                              style="max-width:260px;" />
-
-                <p:commandButton value=" Subir firmado (Responsable)"
-                                 icon="pi pi-upload"
-                                 styleClass="ui-button-success"
-                                 actionListener="#{solicitudDetalleBean.subirFirmadoResponsable}"
-                                 update="@form" />
-
                 <p:commandButton value=" Marcar permisos aplicados"
                                  icon="pi pi-check"
                                  styleClass="ui-button-help"
@@ -279,237 +235,205 @@
 
         </div>
 
-        <!-- Enlaces a PDFs ya subidos -->
-        <h:panelGroup rendered="#{solicitudDetalleBean.solicitud ne null and solicitudDetalleBean.solicitud.id ne null}">
-            <div class="pdf-links">
-                <h:panelGroup rendered="#{solicitudDetalleBean.pdfSolicitanteSubido}">
-                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_usuario.pdf"
-                                  target="_blank">
-                        PDF firmado solicitante
-                    </h:outputLink>
-                </h:panelGroup>
-
-                <h:panelGroup rendered="#{solicitudDetalleBean.pdfDirectorSubido}">
-                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_director.pdf"
-                                  target="_blank">
-                        PDF firmado Director
-                    </h:outputLink>
-                </h:panelGroup>
-
-                <h:panelGroup rendered="#{solicitudDetalleBean.pdfDirectorTicSubido}">
-                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_director_tic.pdf"
-                                  target="_blank">
-                        PDF firmado Director TIC
-                    </h:outputLink>
-                </h:panelGroup>
-
-                <h:panelGroup rendered="#{solicitudDetalleBean.pdfOficialSubido}">
-                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_oficial_seguridad.pdf"
-                                  target="_blank">
-                        PDF firmado Oficial Seguridad
-                    </h:outputLink>
-                </h:panelGroup>
-
-                <h:panelGroup rendered="#{solicitudDetalleBean.pdfResponsableSubido}">
-                    <h:outputLink value="#{request.contextPath}/firmas/solicitud_#{solicitudDetalleBean.solicitud.id}_firmada_responsable_accesos.pdf"
-                                  target="_blank">
-                        PDF firmado Responsable Accesos
-                    </h:outputLink>
-                </h:panelGroup>
-            </div>
-        </h:panelGroup>
-
         <!-- MENSAJES -->
         <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true" />
 
-        <!-- ENCABEZADO SIMPLE CON LOGO -->
-        <table style="width:100%; border-collapse:collapse;">
-            <tr>
-                <td style="width:25%; text-align:left;">
-                    <h:graphicImage library="img" name="logo.png"
-                                    styleClass="header-logo" alt="Logo"/>
-                </td>
-                <td style="text-align:center;">
-                    <div class="title-center">
-                        SERVICIO NACIONAL DE DERECHOS INTELECTUALES<br/>
-                        DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN<br/>
-                        FORMULARIO DE AUTORIZACIÓN A SISTEMAS Y APLICACIONES
-                    </div>
-                </td>
-                <td style="width:25%;"></td>
-            </tr>
-        </table>
+        <!-- VISTA PREVIA DEL PDF EN IFRAME (cuando exista cualquier versión) -->
+        <h:panelGroup rendered="#{not empty solicitudDetalleBean.urlPdfActual}">
+            <h3>Vista previa del formulario (PDF)</h3>
+            <iframe src="#{solicitudDetalleBean.urlPdfActual}"
+                    style="width:100%; height:800px; border:1px solid #ccc;"></iframe>
+        </h:panelGroup>
 
-        <!-- FECHA DE SOLICITUD -->
-        <table class="form-main">
-            <tr>
-                <th style="width:25%;">Fecha de solicitud</th>
-                <td>#{solicitudDetalleBean.fechaSolicitudFormateada}</td>
-            </tr>
-            <tr>
-                <th>Estado actual</th>
-                <td>#{solicitudDetalleBean.solicitud.estado}</td>
-            </tr>
-        </table>
+        <!-- ===== FORMULARIO HTML SOLO SI NO HAY NINGÚN PDF ===== -->
+        <h:panelGroup rendered="#{empty solicitudDetalleBean.urlPdfActual}">
 
-        <!-- DATOS SERVIDOR SOLICITANTE -->
-        <div class="subsection-title">DATOS DEL SERVIDOR SOLICITANTE</div>
-        <table class="form-main">
-            <tr>
-                <th style="width:20%;">Nombres</th>
-                <td style="width:30%;">#{solicitudDetalleBean.servidorSolicitante.nombre}</td>
-                <th style="width:20%;">Apellidos</th>
-                <td style="width:30%;">#{solicitudDetalleBean.servidorSolicitante.apellido}</td>
-            </tr>
-            <tr>
-                <th>Unidad/Sección</th>
-                <td>#{solicitudDetalleBean.servidorSolicitante.unidadGestion}</td>
-                <th>Cargo</th>
-                <td>#{solicitudDetalleBean.servidorSolicitante.cargo}</td>
-            </tr>
-            <tr>
-                <th>Correo institucional</th>
-                <td>#{solicitudDetalleBean.servidorSolicitante.correo}</td>
-                <th>Teléfono / Extensión</th>
-                <td>
-                    <!-- Cuando uses el atributo de teléfono:
-                         #{solicitudDetalleBean.servidorSolicitante.telefono} -->
-                </td>
-            </tr>
-        </table>
-
-        <!-- DATOS SERVIDOR QUE AUTORIZA (Director área) -->
-        <div class="subsection-title">DATOS DEL SERVIDOR QUE AUTORIZA</div>
-        <table class="form-main">
-            <tr>
-                <th style="width:20%;">Nombres</th>
-                <td style="width:30%;">
-                    #{empty solicitudDetalleBean.servidorAutoriza
-                        ? '' : solicitudDetalleBean.servidorAutoriza.nombre}
-                </td>
-                <th style="width:20%;">Apellidos</th>
-                <td style="width:30%;">
-                    #{empty solicitudDetalleBean.servidorAutoriza
-                        ? '' : solicitudDetalleBean.servidorAutoriza.apellido}
-                </td>
-            </tr>
-            <tr>
-                <th>Unidad/Sección</th>
-                <td>
-                    #{empty solicitudDetalleBean.servidorAutoriza
-                        ? '' : solicitudDetalleBean.servidorAutoriza.unidadGestion}
-                </td>
-                <th>Cargo</th>
-                <td>
-                    #{empty solicitudDetalleBean.servidorAutoriza
-                        ? '' : solicitudDetalleBean.servidorAutoriza.cargo}
-                </td>
-            </tr>
-            <tr>
-                <th>Correo institucional</th>
-                <td>
-                    #{empty solicitudDetalleBean.servidorAutoriza
-                        ? '' : solicitudDetalleBean.servidorAutoriza.correo}
-                </td>
-                <th>Teléfono / Extensión</th>
-                <td>
-                    <!-- Cuando uses el atributo de teléfono:
-                         #{empty solicitudDetalleBean.servidorAutoriza
-                            ? '' : solicitudDetalleBean.servidorAutoriza.telefono} -->
-                </td>
-            </tr>
-        </table>
-
-        <!-- SISTEMAS INTERNOS SENADI -->
-        <div class="subsection-title">SISTEMAS INTERNOS SENADI</div>
-
-        <table class="form-main">
-            <tr>
-                <th style="width:30%;">SISTEMA / APLICACIÓN</th>
-                <th>Descripción</th>
-                <th class="checkbox-cell">X</th>
-            </tr>
-
-            <ui:repeat value="#{solicitudDetalleBean.accesos}" var="acc">
+            <!-- ENCABEZADO SIMPLE CON LOGO -->
+            <table style="width:100%; border-collapse:collapse; margin-top:10px;">
                 <tr>
-                    <td>#{acc.permiso.aplicacion.nombre}</td>
-                    <td>#{acc.permiso.nombre}</td>
-                    <td class="checkbox-cell">X</td>
+                    <td style="width:25%; text-align:left;">
+                        <h:graphicImage library="img" name="logo.png"
+                                        styleClass="header-logo" alt="Logo"/>
+                    </td>
+                    <td style="text-align:center;">
+                        <div class="title-center">
+                            SERVICIO NACIONAL DE DERECHOS INTELECTUALES<br/>
+                            DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN<br/>
+                            FORMULARIO DE AUTORIZACIÓN A SISTEMAS Y APLICACIONES
+                        </div>
+                    </td>
+                    <td style="width:25%;"></td>
                 </tr>
-            </ui:repeat>
+            </table>
 
-        </table>
+            <!-- FECHA DE SOLICITUD (sin estado en el PDF) -->
+            <table class="form-main">
+                <tr>
+                    <th style="width:25%;">Fecha de solicitud</th>
+                    <td>#{solicitudDetalleBean.fechaSolicitudFormateada}</td>
+                </tr>
+            </table>
 
-        <!-- TEXTO LEGAL -->
-        <h4>VALIDACIÓN Y COMPROMISO DE USO DE ACCESOS A SISTEMAS INSTITUCIONALES – SENADI:</h4>
-        
-        <p class="small-text" style="margin-top:10px; text-align:justify;">
-            Los accesos y permisos solicitados a los sistemas institucionales serán validados por la Dirección de TICs, con la 
-            firma de responsabilidad correspondiente. Posteriormente, el Oficial de Seguridad de la Información firmará en 
-            señal de aprobación.
-        </p> 
-        <p class="small-text" style="margin-top:10px; text-align:justify;">
-            El usuario autorizador es responsable de verificar que los accesos solicitados por el usuario correspondan al perfil 
-            para el cual fue contratado. Asimismo, deberá controlar que el uso del sistema institucional y de la información a la 
-            que tenga acceso el usuario sea adecuado, ético y conforme con la normativa legal vigente.
-        </p>
-        <p class="small-text" style="margin-top:10px; text-align:justify;">
-            Mediante el presente documento, el usuario solicitante se compromete a hacer un uso responsable y ético, 
-            enmarcado en las políticas institucionales y la normativa vigente. El formulario será válido únicamente si cuenta con 
-            todas las firmas requeridas, debidamente suscritas por el solicitante y su jefe inmediato.
-        </p>
-        <p class="small-text" style="margin-top:10px; text-align:justify;">
-            Disposición técnica sobre la forma de presentación del formulario: El formulario obligatoriamente debe 
-            ser llenado digitalmente, es decir todas las firmas deberán ser electrónicas.
-        </p>
-        
-        <h4>Nota: En caso de detectarse un uso indebido de los accesos concedidos, el perfil del usuario será bloqueado de 
-            forma inmediata, sin necesidad de notificación previa. </h4>
+            <!-- DATOS SERVIDOR SOLICITANTE -->
+            <div class="subsection-title">DATOS DEL SERVIDOR SOLICITANTE</div>
+            <table class="form-main">
+                <tr>
+                    <th style="width:20%;">Nombres</th>
+                    <td style="width:30%;">#{solicitudDetalleBean.servidorSolicitante.nombre}</td>
+                    <th style="width:20%;">Apellidos</th>
+                    <td style="width:30%;">#{solicitudDetalleBean.servidorSolicitante.apellido}</td>
+                </tr>
+                <tr>
+                    <th>Unidad/Sección</th>
+                    <td>#{solicitudDetalleBean.servidorSolicitante.unidadGestion}</td>
+                    <th>Cargo</th>
+                    <td>#{solicitudDetalleBean.servidorSolicitante.cargo}</td>
+                </tr>
+                <tr>
+                    <th>Correo institucional</th>
+                    <td>#{solicitudDetalleBean.servidorSolicitante.correo}</td>
+                    <th>Teléfono / Extensión</th>
+                    <td>
+                        <!-- #{solicitudDetalleBean.servidorSolicitante.telefono} -->
+                    </td>
+                </tr>
+            </table>
 
-        <!-- FIRMAS -->
-        <div class="subsection-title">FIRMAS DE RESPONSABILIDAD</div>
-        <table class="form-main">
-            <tr>
-                <th class="center">SERVIDOR QUE SOLICITA</th>
-                <th class="center">JEFE INMEDIATO</th>
-            </tr>
-            <tr class="firma-box">
-                <td></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class="center small-text">Nombre / Firma</td>
-                <td class="center small-text">Nombre / Firma</td>
-            </tr>
-        </table>
+            <!-- DATOS SERVIDOR QUE AUTORIZA (Director área) -->
+            <div class="subsection-title">DATOS DEL SERVIDOR QUE AUTORIZA</div>
+            <table class="form-main">
+                <tr>
+                    <th style="width:20%;">Nombres</th>
+                    <td style="width:30%;">
+                        #{empty solicitudDetalleBean.servidorAutoriza
+                          ? '' : solicitudDetalleBean.servidorAutoriza.nombre}
+                    </td>
+                    <th style="width:20%;">Apellidos</th>
+                    <td style="width:30%;">
+                        #{empty solicitudDetalleBean.servidorAutoriza
+                          ? '' : solicitudDetalleBean.servidorAutoriza.apellido}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Unidad/Sección</th>
+                    <td>
+                        #{empty solicitudDetalleBean.servidorAutoriza
+                          ? '' : solicitudDetalleBean.servidorAutoriza.unidadGestion}
+                    </td>
+                    <th>Cargo</th>
+                    <td>
+                        #{empty solicitudDetalleBean.servidorAutoriza
+                          ? '' : solicitudDetalleBean.servidorAutoriza.cargo}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Correo institucional</th>
+                    <td>
+                        #{empty solicitudDetalleBean.servidorAutoriza
+                          ? '' : solicitudDetalleBean.servidorAutoriza.correo}
+                    </td>
+                    <th>Teléfono / Extensión</th>
+                    <td>
+                        <!-- #{empty solicitudDetalleBean.servidorAutoriza
+                                 ? '' : solicitudDetalleBean.servidorAutoriza.telefono} -->
+                    </td>
+                </tr>
+            </table>
 
-        <div class="subsection-title">VALIDACIÓN TÉCNICA</div>
-        <table class="form-main">
-            <tr>
-                <th class="center">DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</th>
-            </tr>
-            <tr class="firma-box">
-                <td></td>
-            </tr>
-            <tr>
-                <td class="center small-text">Nombre / Firma</td>
-            </tr>
-        </table>
+            <!-- SISTEMAS INTERNOS SENADI -->
+            <div class="subsection-title">SISTEMAS INTERNOS SENADI</div>
 
-        <div class="subsection-title">APROBACIÓN</div>
-        <table class="form-main">
-            <tr>
-                <th class="center">OFICIAL DE SEGURIDAD DE LA INFORMACIÓN</th>
-            </tr>
-            <tr class="firma-box">
-                <td></td>
-            </tr>
-            <tr>
-                <td class="center small-text">Nombre / Firma</td>
-            </tr>
-        </table>
+            <table class="form-main">
+                <tr>
+                    <th style="width:30%;">SISTEMA / APLICACIÓN</th>
+                    <th>Descripción</th>
+                    <th class="checkbox-cell">X</th>
+                </tr>
 
-        <!-- HISTORIAL DE FIRMAS -->
+                <ui:repeat value="#{solicitudDetalleBean.accesos}" var="acc">
+                    <tr>
+                        <td>#{acc.permiso.aplicacion.nombre}</td>
+                        <td>#{acc.permiso.nombre}</td>
+                        <td class="checkbox-cell">X</td>
+                    </tr>
+                </ui:repeat>
+            </table>
+
+            <!-- TEXTO LEGAL -->
+            <h4>VALIDACIÓN Y COMPROMISO DE USO DE ACCESOS A SISTEMAS INSTITUCIONALES – SENADI:</h4>
+
+            <p class="small-text" style="margin-top:10px; text-align:justify;">
+                Los accesos y permisos solicitados a los sistemas institucionales serán validados por la Dirección de TICs, con la
+                firma de responsabilidad correspondiente. Posteriormente, el Oficial de Seguridad de la Información firmará en
+                señal de aprobación.
+            </p>
+            <p class="small-text" style="margin-top:10px; text-align:justify;">
+                El usuario autorizador es responsable de verificar que los accesos solicitados por el usuario correspondan al perfil
+                para el cual fue contratado. Asimismo, deberá controlar que el uso del sistema institucional y de la información a la
+                que tenga acceso el usuario sea adecuado, ético y conforme con la normativa legal vigente.
+            </p>
+            <p class="small-text" style="margin-top:10px; text-align:justify;">
+                Mediante el presente documento, el usuario solicitante se compromete a hacer un uso responsable y ético,
+                enmarcado en las políticas institucionales y la normativa vigente. El formulario será válido únicamente si cuenta con
+                todas las firmas requeridas, debidamente suscritas por el solicitante y su jefe inmediato.
+            </p>
+            <p class="small-text" style="margin-top:10px; text-align:justify;">
+                Disposición técnica sobre la forma de presentación del formulario: El formulario obligatoriamente debe
+                ser llenado digitalmente, es decir todas las firmas deberán ser electrónicas.
+            </p>
+
+            <h4>
+                Nota: En caso de detectarse un uso indebido de los accesos concedidos, el perfil del usuario será bloqueado de
+                forma inmediata, sin necesidad de notificación previa.
+            </h4>
+
+            <!-- FIRMAS -->
+            <div class="subsection-title">FIRMAS DE RESPONSABILIDAD</div>
+            <table class="form-main">
+                <tr>
+                    <th class="center">SERVIDOR QUE SOLICITA</th>
+                    <th class="center">JEFE INMEDIATO</th>
+                </tr>
+                <tr class="firma-box">
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="center small-text">Nombre / Firma</td>
+                    <td class="center small-text">Nombre / Firma</td>
+                </tr>
+            </table>
+
+            <div class="subsection-title">VALIDACIÓN TÉCNICA</div>
+            <table class="form-main">
+                <tr>
+                    <th class="center">DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</th>
+                </tr>
+                <tr class="firma-box">
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="center small-text">Nombre / Firma</td>
+                </tr>
+            </table>
+
+            <div class="subsection-title">APROBACIÓN</div>
+            <table class="form-main">
+                <tr>
+                    <th class="center">OFICIAL DE SEGURIDAD DE LA INFORMACIÓN</th>
+                </tr>
+                <tr class="firma-box">
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="center small-text">Nombre / Firma</td>
+                </tr>
+            </table>
+
+        </h:panelGroup>
+        <!-- ===== FIN FORMULARIO HTML ===== -->
+
+        <!-- HISTORIAL DE FIRMAS (siempre visible) -->
         <div class="subsection-title">HISTORIAL DE FIRMAS</div>
 
         <p:dataTable value="#{solicitudDetalleBean.firmasOrdenadas}"

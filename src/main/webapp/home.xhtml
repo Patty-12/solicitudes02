@@ -15,18 +15,6 @@
     <!-- Contenido del panel principal -->
     <ui:define name="contenido">
 
-        <!-- Tarjeta general para todos -->
-        <div class="card">
-            <h3>Panel principal</h3>
-            <p>
-                Bienvenido al Sistema de Solicitudes de Acceso a Aplicaciones y Sistemas.
-            </p>
-            <p>
-                Utilice el menú lateral para acceder a las opciones disponibles según su rol
-                (Usuario, Director o Administrador).
-            </p>
-        </div>
-
         <!-- ===== ADMINISTRADOR: accesos rápidos ===== -->
         <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Administrador'}">
             <div class="card">
@@ -58,10 +46,9 @@
         <!-- ===== DIRECTOR: foco en solicitudes ===== -->
         <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Director'}">
             <div class="card">
-                <h3>Resumen para Director</h3>
+                <h3>Accesos rápidos - Director</h3>
                 <p>
-                    Desde este panel puede revisar y aprobar las solicitudes de acceso
-                    registradas por los usuarios de su área.
+                    Revise y apruebe las solicitudes de acceso registradas por los usuarios de su área.
                 </p>
                 <ul class="quick-links">
                     <li>
@@ -95,6 +82,31 @@
                 </ul>
             </div>
         </h:panelGroup>
+
+        <!-- Datos del usuario (membrete con zebra) -->
+        <div class="card">
+            <h3>Datos del usuario</h3>
+            <table class="user-info-table">
+                <tr>
+                    <th>Nombres</th>
+                    <td>#{loginBean.usuario.nombre}</td>
+                    <th>Apellidos</th>
+                    <td>#{loginBean.usuario.apellido}</td>
+                </tr>
+                <tr>
+                    <th>Unidad / Sección</th>
+                    <td>#{loginBean.usuario.unidadGestion}</td>
+                    <th>Cargo</th>
+                    <td>#{loginBean.usuario.cargo}</td>
+                </tr>
+                <tr>
+                    <th>Correo institucional</th>
+                    <td>#{loginBean.usuario.correo}</td>
+                    <th>Teléfono / Extensión</th>
+                    <td>#{loginBean.usuario.telefono}</td>
+                </tr>
+            </table>
+        </div>
 
     </ui:define>
 

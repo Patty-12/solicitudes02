@@ -36,42 +36,39 @@
                               styleClass="ui-button-success" />
                 </div>
 
-                <!-- FILTROS -->
-                <div class="filters" style="margin-top:1rem; margin-bottom:1rem;">
+                <!-- FILTROS EN UNA SOLA LÍNEA -->
+                <div class="solicitudes-filtros">
 
-                    <div class="form-row"
-                         style="display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;">
-
-                        <!-- Filtro por estado -->
-                        <div class="form-group">
-                            <label>Estado</label><br/>
-                            <p:selectOneMenu value="#{solicitudBean.estadoFiltro}"
-                                             style="min-width: 200px;">
-                                <f:selectItem itemLabel="Todas" itemValue="TODAS" />
-                                <f:selectItem itemLabel="CREADA" itemValue="CREADA" />
-                                <f:selectItem itemLabel="PENDIENTE DIRECTOR" itemValue="PENDIENTE DIRECTOR" />
-                                <f:selectItem itemLabel="APROBADA" itemValue="APROBADA" />
-                                <f:selectItem itemLabel="RECHAZADA" itemValue="RECHAZADA" />
-                                <f:selectItem itemLabel="ANULADA" itemValue="ANULADA" />
-                            </p:selectOneMenu>
-                        </div>
-
-                        <!-- Botones filtro -->
-                        <div class="form-group" style="display:flex; gap:0.5rem;">
-                            <p:commandButton value=" Buscar"
-                                             action="#{solicitudBean.aplicarFiltro}"
-                                             update="formSolicitudes"
-                                             icon="pi pi-search"
-                                             styleClass="ui-button-primary" />
-
-                            <p:commandButton value=" Limpiar"
-                                             action="#{solicitudBean.limpiarFiltro}"
-                                             update="formSolicitudes"
-                                             icon="pi pi-times"
-                                             styleClass="ui-button-secondary" />
-                        </div>
-
+                    <!-- Filtro por estado -->
+                    <div class="filtro-estado">
+                        <h:outputLabel for="estadoFiltro" value="Estado" />
+                        <p:selectOneMenu id="estadoFiltro"
+                                         value="#{solicitudBean.estadoFiltro}"
+                                         style="min-width: 200px;">
+                            <f:selectItem itemLabel="Todas" itemValue="TODAS" />
+                            <f:selectItem itemLabel="CREADA" itemValue="CREADA" />
+                            <f:selectItem itemLabel="PENDIENTE DIRECTOR" itemValue="PENDIENTE DIRECTOR" />
+                            <f:selectItem itemLabel="APROBADA" itemValue="APROBADA" />
+                            <f:selectItem itemLabel="RECHAZADA" itemValue="RECHAZADA" />
+                            <f:selectItem itemLabel="ANULADA" itemValue="ANULADA" />
+                        </p:selectOneMenu>
                     </div>
+
+                    <!-- Botones filtro -->
+                    <div class="filtro-botones">
+                        <p:commandButton value=" Buscar"
+                                         action="#{solicitudBean.aplicarFiltro}"
+                                         update="formSolicitudes"
+                                         icon="pi pi-search"
+                                         styleClass="ui-button-primary btn-buscar" />
+
+                        <p:commandButton value=" Limpiar"
+                                         action="#{solicitudBean.limpiarFiltro}"
+                                         update="formSolicitudes"
+                                         icon="pi pi-times"
+                                         styleClass="ui-button-secondary btn-limpiar" />
+                    </div>
+
                 </div>
 
                 <!-- TABLA PRIMEFACES -->
@@ -83,7 +80,7 @@
                              rowsPerPageTemplate="5,10,20,50"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
                              paginatorPosition="bottom"
-                             styleClass="datatable-excel"
+                             styleClass="datatable-excel tabla-solicitudes"
                              emptyMessage="No se encontraron solicitudes"
                              responsiveLayout="scroll">
 

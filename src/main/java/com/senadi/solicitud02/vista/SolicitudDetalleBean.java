@@ -20,6 +20,7 @@ import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ComponentSystemEvent;
 
+import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.file.UploadedFile;
 
 import com.senadi.solicitud02.controlador.SolicitudControlador;
@@ -45,18 +46,20 @@ public class SolicitudDetalleBean implements Serializable {
     private SolicitudControlador solCtrl = new SolicitudControladorImpl();
     private AccesoUsuarioControlador accesoCtrl = new AccesoUsuarioControladorImpl();
 
-    // Lista de accesos para la vista/PDF
+    // Accesos a permisos
     private List<AccesoUsuario> accesos;
 
     // Usuario logueado
     private Usuario usuarioActual;
 
-    // Archivo PDF firmado (se reutiliza para todos los roles)
+    // ÚNICO campo de subida: todos los roles usan esto
     private UploadedFile archivoFirmado;
 
     // Formateadores
     private DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private DateTimeFormatter fmtFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+    // ===================== CICLO DE VIDA =====================
 
     @PostConstruct
     public void init() {
@@ -77,6 +80,7 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
+    // Verificar sesión
     public void verificarSesion(ComponentSystemEvent event) {
         FacesContext fc = FacesContext.getCurrentInstance();
         if (usuarioActual == null) {
@@ -90,6 +94,7 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
+    // Cargar solicitud + accesos
     public void cargar() {
         if (id == null) {
             String param = FacesContext.getCurrentInstance()
@@ -117,7 +122,7 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     // =====================================================
-    //  HELPERS DE ESTADO
+    //  ESTADOS
     // =====================================================
 
     public boolean isEstadoCreada() {
@@ -145,7 +150,7 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     // =====================================================
-    //  HELPERS DE ROL (según CARGO)
+    //  ROLES (según CARGO)
     // =====================================================
 
     public boolean isSolicitanteActual() {
@@ -165,9 +170,20 @@ public class SolicitudDetalleBean implements Serializable {
         return "Director TIC".equalsIgnoreCase(usuarioActual.getCargo().trim());
     }
 
+    /**
+     * Oficial de Seguridad actual.
+     *
+     * HOY: el mismo Director TIC actúa también como Oficial de Seguridad,
+     * por eso se permite ambos cargos.
+     *
+     * A FUTURO: si se designa un Oficial distinto, dejar solo:
+     *   return "Oficial Seguridad".equalsIgnoreCase(cargo);
+     */
     public boolean isOficialSeguridadActual() {
         if (usuarioActual == null || usuarioActual.getCargo() == null) return false;
-        return "Oficial Seguridad".equalsIgnoreCase(usuarioActual.getCargo().trim());
+        String cargo = usuarioActual.getCargo().trim();
+        return "Oficial Seguridad".equalsIgnoreCase(cargo)
+                || "Director TIC".equalsIgnoreCase(cargo); // <-- ajustar en el futuro si se separan roles
     }
 
     public boolean isResponsableAccesosActual() {
@@ -176,7 +192,7 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     // =====================================================
-    //  FLAGS PARA LA VISTA (rendered)
+    //  FLAGS PARA LA VISTA
     // =====================================================
 
     public boolean isPuedeEnviarADirector() {
@@ -216,10 +232,10 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     // =====================================================
-    //  SUBIDA DE PDF FIRMADO (DISTINTOS ACTORES)
+    //  MANEJO DE ARCHIVOS /firmas (UN SOLO PDF FIRMADO)
     // =====================================================
 
-    private Path getFirmasBasePath() throws IOException {
+    private Path getDirectorioFirmas() throws IOException {
         String basePath = FacesContext.getCurrentInstance()
                 .getExternalContext()
                 .getRealPath("/firmas");
@@ -233,45 +249,80 @@ public class SolicitudDetalleBean implements Serializable {
         return dir;
     }
 
-    private void guardarArchivoFirmado(String nombreArchivo) throws IOException {
+    /** Nombre fijo: formulario_accesos_00000001_firmado.pdf */
+    private String buildNombreArchivoFirmado() {
         if (solicitud == null || solicitud.getId() == null) {
-            throw new IOException("Solicitud no cargada, no se puede guardar el archivo.");
+            return null;
         }
-        if (archivoFirmado == null || archivoFirmado.getFileName() == null
-                || archivoFirmado.getFileName().isEmpty()) {
+        return String.format("formulario_accesos_%08d_firmado.pdf", solicitud.getId());
+    }
+
+    private void guardarArchivo(UploadedFile file, String nombreArchivo) throws IOException {
+        if (file == null || file.getFileName() == null || file.getFileName().isEmpty()) {
             throw new IOException("Debe seleccionar un archivo PDF firmado.");
         }
 
-        try (InputStream in = archivoFirmado.getInputStream()) {
-            Path dir = getFirmasBasePath();
+        try (InputStream in = file.getInputStream()) {
+            Path dir = getDirectorioFirmas();
             Path target = dir.resolve(nombreArchivo);
             Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
-    // --- Solicitante (ya existía, pero ahora usa el helper) ---
+    // =====================================================
+    //  SUBIR PDF FIRMADO (se usa desde el listener del fileUpload)
+    // =====================================================
+
+    public void subirFirmadoListener(FileUploadEvent event) {
+        this.archivoFirmado = event.getFile();
+        subirFirmado();
+    }
+
     public void subirFirmado() {
-        if (!isSolicitanteActual()) {
-            addMessage(FacesMessage.SEVERITY_WARN,
-                    "Acción no permitida",
-                    "Sólo el solicitante puede subir el archivo firmado.");
+        if (solicitud == null || solicitud.getId() == null) {
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Solicitud no cargada",
+                    "No se pudo identificar la solicitud.");
             return;
         }
 
-        if (!isEstadoCreada()) {
+        if (archivoFirmado == null) {
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Archivo requerido",
+                    "Debe seleccionar un archivo PDF firmado.");
+            return;
+        }
+
+        // Validar que el rol/estado actual pueda subir
+        if (!((isSolicitanteActual() && isEstadoCreada())
+                || isDirectorPuedeFirmar()
+                || isDirectorTicPuedeFirmar()
+                || isOficialPuedeFirmar()
+                || isResponsablePuedeAplicarPermisos())) {
+
             addMessage(FacesMessage.SEVERITY_WARN,
                     "Acción no permitida",
-                    "Sólo se puede cargar el archivo mientras la solicitud está en estado CREADA.");
+                    "No tiene permitido subir un PDF firmado en este estado.");
             return;
         }
 
         try {
-            String fileName = "solicitud_" + solicitud.getId() + "_firmada_usuario.pdf";
-            guardarArchivoFirmado(fileName);
+            // Guardar siempre con el mismo nombre (última versión firmada)
+            String nombre = buildNombreArchivoFirmado();
+            guardarArchivo(archivoFirmado, nombre);
+
+            String ctx = FacesContext.getCurrentInstance()
+                    .getExternalContext()
+                    .getRequestContextPath();
+            String url = ctx + "/firmas/" + nombre;
+
+            // Actualizamos la URL en la entidad Solicitud
+            solicitud.setUrlPdfFirmado(url);
+            solicitud = solCtrl.actualizar(solicitud); // merge y refresco
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Archivo cargado",
-                    "El archivo firmado del solicitante se ha guardado correctamente.");
+                    "Se ha almacenado correctamente el PDF firmado.");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -281,109 +332,8 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
-    // --- Director ---
-    public void subirFirmadoDirector() {
-        if (!isDirectorPuedeFirmar()) {
-            addMessage(FacesMessage.SEVERITY_WARN,
-                    "Acción no permitida",
-                    "Sólo el Director puede subir el PDF firmado en este estado.");
-            return;
-        }
-
-        try {
-            String fileName = "solicitud_" + solicitud.getId() + "_firmada_director.pdf";
-            guardarArchivoFirmado(fileName);
-
-            addMessage(FacesMessage.SEVERITY_INFO,
-                    "Archivo cargado",
-                    "El archivo firmado por el Director se ha guardado correctamente.");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al subir archivo del Director",
-                    e.getMessage());
-        }
-    }
-
-    // --- Director TIC ---
-    public void subirFirmadoDirectorTic() {
-        if (!isDirectorTicPuedeFirmar()) {
-            addMessage(FacesMessage.SEVERITY_WARN,
-                    "Acción no permitida",
-                    "Sólo el Director TIC puede subir el PDF firmado en este estado.");
-            return;
-        }
-
-        try {
-            String fileName = "solicitud_" + solicitud.getId() + "_firmada_director_tic.pdf";
-            guardarArchivoFirmado(fileName);
-
-            addMessage(FacesMessage.SEVERITY_INFO,
-                    "Archivo cargado",
-                    "El archivo firmado por el Director TIC se ha guardado correctamente.");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al subir archivo del Director TIC",
-                    e.getMessage());
-        }
-    }
-
-    // --- Oficial de Seguridad ---
-    public void subirFirmadoOficial() {
-        if (!isOficialPuedeFirmar()) {
-            addMessage(FacesMessage.SEVERITY_WARN,
-                    "Acción no permitida",
-                    "Sólo el Oficial de Seguridad puede subir el PDF firmado en este estado.");
-            return;
-        }
-
-        try {
-            String fileName = "solicitud_" + solicitud.getId() + "_firmada_oficial_seguridad.pdf";
-            guardarArchivoFirmado(fileName);
-
-            addMessage(FacesMessage.SEVERITY_INFO,
-                    "Archivo cargado",
-                    "El archivo firmado por el Oficial de Seguridad se ha guardado correctamente.");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al subir archivo del Oficial de Seguridad",
-                    e.getMessage());
-        }
-    }
-
-    // --- Responsable de Accesos ---
-    public void subirFirmadoResponsable() {
-        if (!isResponsablePuedeAplicarPermisos()) {
-            addMessage(FacesMessage.SEVERITY_WARN,
-                    "Acción no permitida",
-                    "Sólo el Responsable de Accesos puede subir el PDF firmado en este estado.");
-            return;
-        }
-
-        try {
-            String fileName = "solicitud_" + solicitud.getId() + "_firmada_responsable_accesos.pdf";
-            guardarArchivoFirmado(fileName);
-
-            addMessage(FacesMessage.SEVERITY_INFO,
-                    "Archivo cargado",
-                    "El archivo firmado por el Responsable de Accesos se ha guardado correctamente.");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Error al subir archivo del Responsable de Accesos",
-                    e.getMessage());
-        }
-    }
-
     // =====================================================
-    //  DIRECTOR / DIRECTOR TIC / OFICIAL / RESPONSABLE
-    //  (firma lógica en BD: NO se toca flujo original)
+    //  FLUJO DE ESTADOS / FIRMAS
     // =====================================================
 
     public void enviarAlDirector() {
@@ -401,6 +351,14 @@ public class SolicitudDetalleBean implements Serializable {
             return;
         }
 
+        // Verificar que ya exista PDF firmado por el solicitante
+        if (solicitud.getUrlPdfFirmado() == null || solicitud.getUrlPdfFirmado().trim().isEmpty()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "PDF pendiente",
+                    "Antes de enviar al Director debe subir el PDF firmado por el solicitante.");
+            return;
+        }
+
         if (solicitud == null || solicitud.getId() == null) {
             addMessage(FacesMessage.SEVERITY_ERROR,
                     "Solicitud no cargada",
@@ -411,7 +369,7 @@ public class SolicitudDetalleBean implements Serializable {
         try {
             String estadoAnterior = solicitud.getEstado();
             solicitud.setEstado("PENDIENTE DIRECTOR");
-            solCtrl.actualizar(solicitud);
+            solicitud = solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Solicitud enviada",
@@ -449,7 +407,7 @@ public class SolicitudDetalleBean implements Serializable {
             solicitud.getFirmas().add(f);
 
             solicitud.setEstado("PENDIENTE DIRECTOR TIC");
-            solCtrl.actualizar(solicitud);
+            solicitud = solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Solicitud aprobada",
@@ -476,7 +434,7 @@ public class SolicitudDetalleBean implements Serializable {
         try {
             String estadoAnterior = solicitud.getEstado();
             solicitud.setEstado("RECHAZADA");
-            solCtrl.actualizar(solicitud);
+            solicitud = solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Solicitud rechazada",
@@ -510,7 +468,7 @@ public class SolicitudDetalleBean implements Serializable {
             solicitud.getFirmas().add(f);
 
             solicitud.setEstado("PENDIENTE OFICIAL SEGURIDAD");
-            solCtrl.actualizar(solicitud);
+            solicitud = solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Solicitud aprobada por Director TIC",
@@ -536,7 +494,7 @@ public class SolicitudDetalleBean implements Serializable {
         try {
             String estadoAnterior = solicitud.getEstado();
             solicitud.setEstado("RECHAZADA");
-            solCtrl.actualizar(solicitud);
+            solicitud = solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Solicitud rechazada por Director TIC",
@@ -570,7 +528,7 @@ public class SolicitudDetalleBean implements Serializable {
             solicitud.getFirmas().add(f);
 
             solicitud.setEstado("PENDIENTE RESPONSABLE ACCESOS");
-            solCtrl.actualizar(solicitud);
+            solicitud = solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Solicitud aprobada por Oficial de Seguridad",
@@ -596,7 +554,7 @@ public class SolicitudDetalleBean implements Serializable {
         try {
             String estadoAnterior = solicitud.getEstado();
             solicitud.setEstado("RECHAZADA");
-            solCtrl.actualizar(solicitud);
+            solicitud = solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Solicitud rechazada por Oficial de Seguridad",
@@ -630,7 +588,7 @@ public class SolicitudDetalleBean implements Serializable {
             solicitud.getFirmas().add(f);
 
             solicitud.setEstado("PERMISOS APLICADOS");
-            solCtrl.actualizar(solicitud);
+            solicitud = solCtrl.actualizar(solicitud);
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Permisos aplicados",
@@ -700,46 +658,14 @@ public class SolicitudDetalleBean implements Serializable {
         return lista;
     }
 
-    // --- Helpers para saber si existen PDFs firmados (para mostrar enlaces) ---
+    // ====== URL para la vista de PDF en el iframe ======
 
-    private boolean existeArchivoPdf(String nombreArchivo) {
-        try {
-            Path dir = getFirmasBasePath();
-            Path target = dir.resolve(nombreArchivo);
-            return Files.exists(target);
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    public boolean isPdfSolicitanteSubido() {
-        if (solicitud == null || solicitud.getId() == null) return false;
-        String fileName = "solicitud_" + solicitud.getId() + "_firmada_usuario.pdf";
-        return existeArchivoPdf(fileName);
-    }
-
-    public boolean isPdfDirectorSubido() {
-        if (solicitud == null || solicitud.getId() == null) return false;
-        String fileName = "solicitud_" + solicitud.getId() + "_firmada_director.pdf";
-        return existeArchivoPdf(fileName);
-    }
-
-    public boolean isPdfDirectorTicSubido() {
-        if (solicitud == null || solicitud.getId() == null) return false;
-        String fileName = "solicitud_" + solicitud.getId() + "_firmada_director_tic.pdf";
-        return existeArchivoPdf(fileName);
-    }
-
-    public boolean isPdfOficialSubido() {
-        if (solicitud == null || solicitud.getId() == null) return false;
-        String fileName = "solicitud_" + solicitud.getId() + "_firmada_oficial_seguridad.pdf";
-        return existeArchivoPdf(fileName);
-    }
-
-    public boolean isPdfResponsableSubido() {
-        if (solicitud == null || solicitud.getId() == null) return false;
-        String fileName = "solicitud_" + solicitud.getId() + "_firmada_responsable_accesos.pdf";
-        return existeArchivoPdf(fileName);
+    /**
+     * URL que usará el iframe para vista previa.
+     * Siempre muestra la última versión firmada.
+     */
+    public String getUrlPdfActual() {
+        return (solicitud != null) ? solicitud.getUrlPdfFirmado() : null;
     }
 
     // ================= GETTERS / SETTERS =================
@@ -758,7 +684,6 @@ public class SolicitudDetalleBean implements Serializable {
     public UploadedFile getArchivoFirmado() {
         return archivoFirmado;
     }
-
     public void setArchivoFirmado(UploadedFile archivoFirmado) {
         this.archivoFirmado = archivoFirmado;
     }

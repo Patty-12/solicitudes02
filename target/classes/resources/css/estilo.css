@@ -1,0 +1,498 @@
+/* ==========================================
+   ESTILO GLOBAL
+   ========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 13px;
+    background: #f3f4f6;
+    color: #111827;
+}
+
+h1, h2, h3, h4 {
+    margin-top: 0;
+    font-weight: 600;
+    color: #111827;
+}
+
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================
+   PANEL CLARO
+   ========================================== */
+.panel-claro .ui-panel-titlebar,
+.panel-claro .ui-panel-content {
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.panel-claro .ui-panel-titlebar {
+    background: #f3f4f6 !important;
+    font-weight: 600 !important;
+    padding: 6px 10px !important;
+}
+
+/* ==========================================
+   TABLA GENERAL DE SISTEMAS Y PERMISOS
+   ========================================== */
+.tabla-permisos {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.tabla-permisos th {
+    background: #e5e7eb;
+    padding: 6px;
+    font-weight: 600;
+    border: 1px solid #d1d5db;
+    color: #111827;
+    text-align: left;
+}
+
+.tabla-permisos td {
+    border: 1px solid #e5e7eb;
+    padding: 6px;
+    color: #1f2937;
+}
+
+.tabla-permisos tr:nth-child(odd) {
+    background: #fff7e6;
+}
+
+.tabla-permisos tr:nth-child(even) {
+    background: #e3f2fd;
+}
+
+/* ==========================================
+   TABLA DATOS DEL SERVIDOR QUE AUTORIZA
+   ========================================== */
+.tabla-datos-autoriza {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    border: 1px solid #d1d5db;
+}
+
+.tabla-datos-autoriza th,
+.tabla-datos-autoriza td {
+    border: 1px solid #d1d5db;
+    padding: 6px 10px;
+}
+
+.tabla-datos-autoriza th {
+    background: #e5eef8;
+    font-weight: 600;
+    text-align: left;
+}
+
+.tabla-datos-autoriza tr:nth-child(odd) td {
+    background: #fdf7e3;
+}
+
+.tabla-datos-autoriza tr:nth-child(even) td {
+    background: #f1f5fb;
+}
+
+/* ==========================================
+   DASHBOARD (PANEL PRINCIPAL)
+   ========================================== */
+
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+    background: #f3f4f6;
+}
+
+/* Sidebar fijo a la izquierda */
+.sidebar {
+    position: fixed;          /* sidebar estático */
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    color: #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 14px;
+    box-shadow: 2px 0 8px rgba(15, 23, 42, 0.25);
+    z-index: 10;
+}
+
+/* Cabecera del sidebar */
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar-header .sidebar-logo {
+    max-width: 230px;
+    margin-bottom: 6px;
+}
+
+.sidebar-header h3 {
+    font-size: 15px;
+    color: #e5e7eb;
+}
+
+/* Menú lateral centrado verticalmente */
+.sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav li {
+    margin-bottom: 6px;
+}
+
+.sidebar-nav a,
+.sidebar-nav span {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.sidebar-nav a {
+    color: #e5e7eb;
+}
+
+.sidebar-nav a:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+.sidebar-nav span {
+    font-weight: 600;
+    color: #cbd5f5;
+}
+
+/* Contenedor del botón logout al pie del sidebar */
+.sidebar-logout {
+    margin-top: auto;
+}
+
+/* Botón logout */
+.btn-logout {
+    width: 100%;
+    padding: 8px 0;
+    border: none;
+    background: #ef4444;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-logout:hover {
+    background: #dc2626;
+}
+
+/* Contenido principal: corre a la derecha del sidebar fijo */
+.main-content {
+    flex: 1;
+    padding: 20px 24px;
+    margin-left: 260px;    /* mismo ancho del sidebar */
+}
+
+/* Cabecera principal (sin logo) */
+.main-header {
+    margin-bottom: 18px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 10px;
+}
+
+.main-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.main-header p {
+    margin: 0;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+/* Tarjetas */
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.06);
+    border: 1px solid #e5e7eb;
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+/* Quick links – centrados y con color fuerte */
+.quick-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.quick-links a {
+    padding: 8px 14px;
+    border-radius: 9999px;
+    background: #2563eb;
+    border: 1px solid #1d4ed8;
+    font-size: 13px;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.quick-links a:hover {
+    background: #1d4ed8;
+}
+
+/* ==========================================
+   TABLA DATOS DEL USUARIO (MEMBRETE + ZEBRA)
+   ========================================== */
+.user-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.user-info-table th,
+.user-info-table td {
+    border: 1px solid #d1d5db;
+    padding: 6px 10px;
+}
+
+.user-info-table th {
+    background: #e5e7eb;
+    font-weight: 600;
+    text-align: left;
+}
+
+/* Zebra en las filas de datos */
+.user-info-table tr:nth-child(odd) td {
+    background: #fff7e6;
+}
+
+.user-info-table tr:nth-child(even) td {
+    background: #e3f2fd;
+}
+
+/* ==========================================
+   LOGIN – FONDO AZUL DEGRADADO
+   ========================================== */
+
+.login-body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg,
+        #dbeafe 0%,
+        #93c5fd 35%,
+        #60a5fa 60%,
+        #3b82f6 80%,
+        #1d4ed8 100%
+    );
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.login-box {
+    background: #ffffff;
+    padding: 30px 35px;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    max-width: 420px;
+    width: 100%;
+}
+
+.login-box h2 {
+    margin-top: 12px;
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Logo superior en login */
+.sidebar-logo {
+    display: block;
+    max-width: 220px;
+    margin: 0 auto 10px auto;
+}
+
+/* Campos del formulario */
+.form-group {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #374151;
+}
+
+.input {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+    background: #ffffff;
+}
+
+/* Botón de ingreso */
+.btn-login {
+    margin-top: 10px;
+    width: 100%;
+    padding: 8px 0;
+    border-radius: 6px;
+    border: none;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn-login:hover {
+    background: #1d4ed8;
+}
+
+.btn-login:active {
+    transform: scale(0.98);
+}
+
+/* ==========================================
+   FILTROS DE SOLICITUDES
+   ========================================== */
+
+.solicitudes-filtros {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap; /* por si la pantalla es pequeña */
+}
+
+.solicitudes-filtros .filtro-estado {
+    display: flex;
+    flex-direction: column;
+}
+
+.solicitudes-filtros .filtro-estado label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+/* Botones Buscar / Limpiar en la misma línea */
+.solicitudes-filtros .filtro-botones {
+    display: flex;
+    gap: 8px;
+}
+
+/* Botones Buscar / Limpiar */
+.btn-buscar,
+.btn-limpiar {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Buscar azul */
+.btn-buscar {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.btn-buscar:hover {
+    background: #1d4ed8;
+}
+
+/* Limpiar gris */
+.btn-limpiar {
+    background: #4b5563;
+    color: #ffffff;
+}
+
+.btn-limpiar:hover {
+    background: #374151;
+}
+
+/* ==========================================
+   TABLA DE SOLICITUDES – ZEBRA
+   ========================================== */
+
+.tabla-solicitudes tbody tr:nth-child(odd) {
+    background: #fff7e6;
+}
+
+.tabla-solicitudes tbody tr:nth-child(even) {
+    background: #e3f2fd;
+}
+
+.tabla-solicitudes thead th {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}

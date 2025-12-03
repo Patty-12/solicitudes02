@@ -7,7 +7,7 @@
 
 <h:head>
     <title><ui:insert name="titulo">Panel principal</ui:insert></title>
-    <h:outputStylesheet library="css" name="style.css" />
+    <h:outputStylesheet library="css" name="estilo.css" />
 </h:head>
 
 <h:body>
@@ -25,7 +25,7 @@
             <h3>Sistema de Solicitudes</h3>
         </div>
 
-        <!-- ===== MENÚ LATERAL ===== -->
+        <!-- ===== MENÚ LATERAL (CENTRADO) ===== -->
         <nav class="sidebar-nav">
             <ul id="menu">
 
@@ -71,21 +71,23 @@
             </ul>
         </nav>
 
-        <!-- BOTÓN LOGOUT -->
-        <h:form id="logoutForm">
-            <h:commandButton id="logoutBtn"
-                             value="Cerrar Sesión"
-                             action="#{loginBean.logout}"
-                             styleClass="btn-logout"
-                             ajax="false" />
-        </h:form>
+        <!-- BOTÓN LOGOUT AL PIE -->
+        <div class="sidebar-logout">
+            <h:form id="logoutForm">
+                <h:commandButton id="logoutBtn"
+                                 value="Cerrar Sesión"
+                                 action="#{loginBean.logout}"
+                                 styleClass="btn-logout"
+                                 ajax="false" />
+            </h:form>
+        </div>
 
     </aside>
 
     <!-- ===== CONTENIDO PRINCIPAL ===== -->
     <main class="main-content">
 
-        <!-- ENCABEZADO SUPERIOR -->
+        <!-- ENCABEZADO SUPERIOR (SIN LOGO) -->
         <header class="main-header">
             <h2>
                 Bienvenido,
