@@ -134,21 +134,24 @@
                          style="margin-bottom:1rem;"
                          styleClass="panel-claro">
 
-                    <!-- Fila de búsqueda -->
-                    <h:panelGrid columns="3"
-                                 columnClasses="col-label, col-input, col-button"
+                    <!-- AUTOCOMPLETE / LISTA DE DIRECTORES -->
+                    <h:panelGrid columns="2"
+                                 columnClasses="col-label, col-input"
                                  style="width:100%; margin-bottom:0.5rem;">
-                        <h:outputLabel for="nombreJefe" value="Buscar Director por nombre:" />
+                        <h:outputLabel for="director" value="Director que autoriza:" />
 
-                        <h:inputText id="nombreJefe"
-                                     value="#{solicitudBean.nombreJefeBusqueda}"
-                                     style="width:100%;" />
-
-                        <p:commandButton value=" Buscar"
-                                         icon="pi pi-search"
-                                         actionListener="#{solicitudBean.buscarDirectorPorNombre}"
-                                         update="formSolicitud"
-                                         styleClass="ui-button-secondary btn-accion" />
+                        <p:autoComplete id="director"
+                                        value="#{solicitudBean.idDirectorSeleccionado}"
+                                        completeMethod="#{solicitudBean.completarDirectores}"
+                                        var="dir"
+                                        itemLabel="#{dir.nombre} #{dir.apellido} - #{dir.unidadGestion}"
+                                        itemValue="#{dir.id}"
+                                        dropdown="true"
+                                        forceSelection="true"
+                                        cache="true"
+                                        minQueryLength="0"
+                                        autoSelection="false"
+                                        style="width:100%;" />
                     </h:panelGrid>
 
                     <!-- Tabla de datos del director: campos frente a frente -->

@@ -73,6 +73,7 @@
 
                 <!-- TABLA PRIMEFACES -->
                 <p:dataTable id="tablaSolicitudes"
+                			 style="width:100%;"
                              value="#{solicitudBean.lista}"
                              var="s"
                              paginator="true"
@@ -80,7 +81,7 @@
                              rowsPerPageTemplate="5,10,20,50"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
                              paginatorPosition="bottom"
-                             styleClass="datatable-excel tabla-solicitudes"
+                             styleClass="datatable-excel tabla-solicitudes tabla-solicitudes-compacta"
                              emptyMessage="No se encontraron solicitudes"
                              responsiveLayout="scroll">
 

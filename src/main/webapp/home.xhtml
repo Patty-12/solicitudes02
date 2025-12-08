@@ -4,86 +4,54 @@
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 template="/templates/layout.xhtml">
 
-    <!-- Verificar sesión ANTES de renderizar la vista -->
     <f:metadata>
         <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
     </f:metadata>
 
-    <!-- Título de la pestaña -->
     <ui:define name="titulo">Panel principal</ui:define>
 
-    <!-- Contenido del panel principal -->
     <ui:define name="contenido">
 
-        <!-- ===== ADMINISTRADOR: accesos rápidos ===== -->
+        <!-- ADMINISTRADOR -->
         <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Administrador'}">
             <div class="card">
                 <h3>Accesos rápidos - Administrador</h3>
-                <p>Gestione la seguridad y configuración del sistema.</p>
                 <ul class="quick-links">
-                    <li>
-                        <h:link outcome="/Usuario/index.xhtml" value="Gestión de Usuarios" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Rol/index.xhtml" value="Catálogo de Roles" />
-                    </li>
-                    <li>
-                        <h:link outcome="/UsuarioRol/index.xhtml" value="Asignación Usuario–Rol" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Aplicacion/index.xhtml" value="Gestión de Aplicaciones" />
-                    </li>
-                    <li>
-                        <h:link outcome="/PermisoAplicacion/index.xhtml" value="Permisos de Aplicaciones" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Auditoria/index.xhtml" value="Auditoría del Sistema" />
-                    </li>
+                    <li><h:link outcome="/Usuario/index.xhtml" value="Gestión de Usuarios" /></li>
+                    <li><h:link outcome="/Rol/index.xhtml" value="Catálogo de Roles" /></li>
+                    <li><h:link outcome="/UsuarioRol/index.xhtml" value="Asignación Usuario–Rol" /></li>
+                    <li><h:link outcome="/Aplicacion/index.xhtml" value="Gestión de Aplicaciones" /></li>
+                    <li><h:link outcome="/PermisoAplicacion/index.xhtml" value="Permisos de Aplicaciones" /></li>
+                    <li><h:link outcome="/Auditoria/index.xhtml" value="Auditoría del Sistema" /></li>
                 </ul>
             </div>
         </h:panelGroup>
 
-        <!-- ===== DIRECTOR: foco en solicitudes ===== -->
+        <!-- DIRECTOR -->
         <h:panelGroup rendered="#{loginBean.usuario.cargo eq 'Director'}">
             <div class="card">
                 <h3>Accesos rápidos - Director</h3>
-                <p>
-                    Revise y apruebe las solicitudes de acceso registradas por los usuarios de su área.
-                </p>
                 <ul class="quick-links">
-                    <li>
-                        <h:link outcome="/Solicitud/pendientes.xhtml" value="Solicitudes Pendientes" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Solicitud/index.xhtml" value="Todas las Solicitudes" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Auditoria/index.xhtml" value="Eventos de Auditoría" />
-                    </li>
+                    <li><h:link outcome="/Solicitud/pendientes.xhtml" value="Solicitudes Pendientes" /></li>
+                    <li><h:link outcome="/Solicitud/index.xhtml" value="Todas las Solicitudes" /></li>
+                    <li><h:link outcome="/Auditoria/index.xhtml" value="Eventos de Auditoría" /></li>
                 </ul>
             </div>
         </h:panelGroup>
 
-        <!-- ===== USUARIO NORMAL: crear y consultar solicitudes ===== -->
+        <!-- USUARIO NORMAL (no Admin, no Director) -->
         <h:panelGroup rendered="#{loginBean.usuario.cargo ne 'Administrador'
                                  and loginBean.usuario.cargo ne 'Director'}">
             <div class="card">
                 <h3>Accesos rápidos - Usuario</h3>
-                <p>
-                    Registre nuevas solicitudes de acceso y consulte el estado de las que ya ha enviado.
-                </p>
                 <ul class="quick-links">
-                    <li>
-                        <h:link outcome="/Solicitud/create.xhtml" value="Nueva Solicitud de Acceso" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Solicitud/index.xhtml" value="Mis Solicitudes" />
-                    </li>
+                    <li><h:link outcome="/Solicitud/create.xhtml" value="Nueva Solicitud" /></li>
+                    <li><h:link outcome="/Solicitud/index.xhtml" value="Mis Solicitudes" /></li>
                 </ul>
             </div>
         </h:panelGroup>
 
-        <!-- Datos del usuario (membrete con zebra) -->
+        <!-- DATOS DEL USUARIO -->
         <div class="card">
             <h3>Datos del usuario</h3>
             <table class="user-info-table">

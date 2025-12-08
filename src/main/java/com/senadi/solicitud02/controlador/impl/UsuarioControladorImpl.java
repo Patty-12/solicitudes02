@@ -171,6 +171,18 @@ public class UsuarioControladorImpl implements UsuarioControlador {
             return null;
         }
     }
+    
+    @Override
+    public List<Usuario> listarDirectores() {
+        return em.createQuery(
+                "SELECT u FROM Usuario u " +
+                "WHERE LOWER(u.cargo) LIKE :cargo " +
+                "ORDER BY u.nombre, u.apellido",
+                Usuario.class)
+                 .setParameter("cargo", "%director%")
+                 .getResultList();
+    }
+
 
     // ======================================================
     //   MÉTODOS NUEVOS PARA DIRECTORES / AUTOCOMPLETE

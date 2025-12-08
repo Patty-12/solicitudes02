@@ -40,6 +40,7 @@
 
                 <!-- TABLA DE SOLICITUDES PENDIENTES -->
                 <p:dataTable id="tablaPendientes"
+                             style="width:100%;"
                              value="#{solicitudesPendientesBean.listaPendientes}"
                              var="s"
                              paginator="true"
@@ -47,7 +48,7 @@
                              rowsPerPageTemplate="5,10,20,50"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
                              paginatorPosition="bottom"
-                             styleClass="datatable-excel"
+                             styleClass="datatable-excel tabla-solicitudes tabla-solicitudes-compacta"
                              emptyMessage="No tiene solicitudes pendientes de firma"
                              responsiveLayout="scroll">
 
@@ -66,9 +67,8 @@
 
                     <!-- Estado -->
                     <p:column headerText="Estado"
-                              sortBy="#{s.estado}"
-                              style="width:180px;">
-                        #{s.estado}
+                              sortBy="#{s.estado}">
+                        <h:outputText value="#{s.estado}" title="#{s.estado}" />
                     </p:column>
 
                     <!-- Solicitante -->
@@ -80,7 +80,7 @@
                     <!-- Correo -->
                     <p:column headerText="Correo solicitante"
                               sortBy="#{s.usuario.correo}">
-                        #{s.usuario.correo}
+                        <h:outputText value="#{s.usuario.correo}" title="#{s.usuario.correo}" />
                     </p:column>
 
                     <!-- Acciones -->

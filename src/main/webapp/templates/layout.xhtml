@@ -17,61 +17,53 @@
     <!-- ===== SIDEBAR ===== -->
     <aside class="sidebar">
 
-        <!-- LOGO Y TÍTULO -->
+        <!-- TÍTULO LATERAL SIN LOGO -->
         <div class="sidebar-header">
-            <h:graphicImage library="img" name="logo.png"
-                            styleClass="sidebar-logo"
-                            alt="Logo" />
-            <h3>Sistema de Solicitudes</h3>
+            <h3 style="font-size: 18px; font-weight: 700; line-height: 1.2;">
+                Solicitud de Permisos
+            </h3>
         </div>
 
-        <!-- ===== MENÚ LATERAL (CENTRADO) ===== -->
+        <!-- MENÚ LATERAL -->
         <nav class="sidebar-nav">
             <ul id="menu">
 
-                <!-- TODOS -->
+                <!-- OPCIONES COMUNES (TODOS LOS USUARIOS) -->
                 <li><h:link outcome="/home" value="Inicio" /></li>
                 <li><h:link outcome="/Solicitud/index" value="Solicitudes" /></li>
 
-                <!-- ===== DIRECTOR DE ÁREA ===== -->
+                <!-- RESPONSABLE DE ACCESOS -->
+                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'responsable accesos'}">
+                    <li><h:link outcome="/Solicitud/pendientesAccesos" value="Solicitudes Aprobadas" /></li>
+                    <li><h:link outcome="/Reportes/index" value="Reportes" /></li>
+                </h:panelGroup>
+
+                <!-- DIRECTOR -->
                 <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director'}">
                     <li><h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" /></li>
                     <li><h:link outcome="/Reportes/index" value="Reportes" /></li>
                 </h:panelGroup>
 
-                <!-- ===== DIRECTOR TIC ===== -->
+                <!-- DIRECTOR TIC -->
                 <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director tic'}">
                     <li><h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" /></li>
-                    <li><h:link outcome="/Reportes/index" value="Reportes" /></li>
+                    <li><h:link outcome="/Reportes/index" value="Reportes como TIC" /></li>
+                    <li><h:link outcome="/Reportes/index" value="Reportes como Oficial (temporal)" /></li>
                 </h:panelGroup>
 
-                <!-- ===== OFICIAL DE SEGURIDAD ===== -->
-                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'oficial seguridad'}">
-                    <li><h:link outcome="/Solicitud/pendientes" value="Solicitudes Pendientes" /></li>
-                </h:panelGroup>
-
-                <!-- ===== RESPONSABLE DE ACCESOS / MESA TIC ===== -->
-                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'responsable accesos'}">
-                    <li><h:link outcome="/Solicitud/pendientesAccesos" value="Permisos por aplicar" /></li>
-                </h:panelGroup>
-
-                <!-- ===== ADMINISTRADOR ===== -->
+                <!-- ADMINISTRADOR -->
                 <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'administrador'}">
-
                     <li><h:link outcome="/Usuario/index" value="Gestión de Usuarios" /></li>
-                    <li><h:link outcome="/Rol/index" value="Catálogo de Roles" /></li>
-                    <li><h:link outcome="/UsuarioRol/index" value="Asignación Usuario–Rol" /></li>
+                    <li><h:link outcome="/UsuarioRol/index" value="Asignación de Rol" /></li>
                     <li><h:link outcome="/Aplicacion/index" value="Gestión de Aplicaciones" /></li>
                     <li><h:link outcome="/PermisoAplicacion/index" value="Permisos de Aplicaciones" /></li>
                     <li><h:link outcome="/Auditoria/index" value="Auditoría del Sistema" /></li>
-                    <li><h:link outcome="/Reportes/index" value="Reportes" /></li>
-
                 </h:panelGroup>
 
             </ul>
         </nav>
 
-        <!-- BOTÓN LOGOUT AL PIE -->
+        <!-- BOTÓN CERRAR SESIÓN -->
         <div class="sidebar-logout">
             <h:form id="logoutForm">
                 <h:commandButton id="logoutBtn"
@@ -87,29 +79,35 @@
     <!-- ===== CONTENIDO PRINCIPAL ===== -->
     <main class="main-content">
 
-        <!-- ENCABEZADO SUPERIOR (SIN LOGO) -->
+        <!-- HEADER: LOGO NUEVO + BIENVENIDA -->
         <header class="main-header">
-            <h2>
-                Bienvenido,
-                #{loginBean.usuario.nombre}
-                #{loginBean.usuario.apellido}
-            </h2>
 
-            <p>
-                Correo: #{loginBean.usuario.correo}
-                <span style="margin: 0 10px;">·</span>
-                Cargo: #{loginBean.usuario.cargo}
-            </p>
+            <!-- Logo institucional nuevo -->
+            <h:graphicImage library="img"
+                            name="logo.jpeg"
+                            styleClass="main-header-logo"
+                            alt="Logo institucional" />
+
+            <!-- Texto de usuario -->
+            <div class="main-header-user">
+                <h2>
+                    Bienvenido,
+                    #{loginBean.usuario.nombre}
+                    #{loginBean.usuario.apellido}
+                </h2>
+
+                <p>
+                    Correo: #{loginBean.usuario.correo}
+                    <span style="margin: 0 10px;">·</span>
+                    Cargo: #{loginBean.usuario.cargo}
+                </p>
+            </div>
+
         </header>
 
         <!-- CONTENIDO VARIABLE -->
         <section class="content">
-            <ui:insert name="contenido">
-                <div class="card">
-                    <h3>Resumen General</h3>
-                    <p>El contenido se ajustará según el rol del usuario.</p>
-                </div>
-            </ui:insert>
+            <ui:insert name="contenido" />
         </section>
 
     </main>

@@ -55,8 +55,12 @@ public class SolicitudBean implements Serializable {
     private Long idSolicitud;
 
     // Datos del Director (Jefe inmediato)
-    private String nombreJefeBusqueda;
-    private Usuario jefe;
+    private String nombreJefeBusqueda;      // lo dejamos por compatibilidad (no se usa en la vista nueva)
+    private Usuario jefe;                   // director seleccionado (objeto)
+
+    // NUEVO: soporte para combo/autocomplete de directores
+    private List<Usuario> directores;       // cache local de directores
+    private Long idDirectorSeleccionado;    // id del director elegido en el autocomplete
 
     // Aplicaciones / permisos
     private List<Aplicacion> aplicaciones;
@@ -66,6 +70,10 @@ public class SolicitudBean implements Serializable {
     public void init() {
         formulario = new Solicitud();
         cargarAplicacionesYPermisos();
+
+        // Carga inicial de directores (los que tienen cargo "Director")
+        directores = usuarioCtrl.listarDirectores();
+
         aplicarFiltro();
     }
 
@@ -198,6 +206,7 @@ public class SolicitudBean implements Serializable {
 
         nombreJefeBusqueda = null;
         jefe = null;
+        idDirectorSeleccionado = null;
 
         cargarAplicacionesYPermisos();
     }
@@ -229,9 +238,12 @@ public class SolicitudBean implements Serializable {
 
         formulario = s;
 
+        // Director (jefe inmediato) de la solicitud
         jefe = formulario.getJefeAutoriza();
         if (jefe != null) {
-            nombreJefeBusqueda = jefe.getNombre();
+            idDirectorSeleccionado = jefe.getId();
+        } else {
+            idDirectorSeleccionado = null;
         }
 
         marcarPermisosDeSolicitud(formulario);
@@ -241,6 +253,10 @@ public class SolicitudBean implements Serializable {
     //   DIRECTOR (JEFE)
     // ==========================
 
+    /**
+     * Método antiguo de búsqueda por nombre (ya casi no se usa en la vista,
+     * pero se mantiene por compatibilidad).
+     */
     public void buscarDirectorPorNombre() {
         if (nombreJefeBusqueda == null || nombreJefeBusqueda.trim().isEmpty()) {
             FacesContext.getCurrentInstance().addMessage(null,
@@ -260,6 +276,7 @@ public class SolicitudBean implements Serializable {
                                  "Director no encontrado",
                                  "No se encontraron usuarios con ese nombre."));
             jefe = null;
+            idDirectorSeleccionado = null;
             return;
         }
 
@@ -277,6 +294,7 @@ public class SolicitudBean implements Serializable {
         }
 
         jefe = candidatoDirector;
+        idDirectorSeleccionado = jefe.getId();
 
         FacesContext.getCurrentInstance().addMessage(null,
             new FacesMessage(FacesMessage.SEVERITY_INFO,
@@ -288,10 +306,15 @@ public class SolicitudBean implements Serializable {
     //   AUTOCOMPLETE DIRECTORES
     // ==========================
 
+    /**
+     * Devuelve la lista de directores que coinciden con el texto digitado.
+     * Se usa en el p:autoComplete del formulario.
+     */
     public List<Usuario> completarDirectores(String query) {
-        String patron = (query != null) ? query.trim() : "";
+        String patron = (query != null) ? query.trim().toLowerCase() : "";
         if (patron.isEmpty()) {
-            return Collections.emptyList();
+            // Si no escribe nada, se podría mostrar toda la lista (o vacía según prefieras)
+            return directores != null ? directores : Collections.emptyList();
         }
         return usuarioCtrl.buscarDirectoresPorNombreLike(patron);
     }
@@ -307,8 +330,31 @@ public class SolicitudBean implements Serializable {
                 formulario.setUsuario(usuarioLogueado);
             }
 
-            if (jefe != null) {
-                formulario.setJefeAutoriza(jefe);
+            // Resolver director (jefe) a partir del id seleccionado, si aún no está cargado
+            if ((jefe == null || jefe.getId() == null) && idDirectorSeleccionado != null) {
+                jefe = usuarioCtrl.buscarPorId(idDirectorSeleccionado);
+            }
+
+            // Validar que exista director seleccionado
+            if (jefe == null || jefe.getId() == null) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                     "Director requerido",
+                                     "Debe seleccionar un Director que autoriza la solicitud."));
+                return null;
+            }
+            formulario.setJefeAutoriza(jefe);
+
+            // Validar que exista al menos un permiso seleccionado
+            boolean hayPermisoSeleccionado = permisosSeleccionados.values().stream()
+                    .anyMatch(Boolean.TRUE::equals);
+
+            if (!hayPermisoSeleccionado) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                     "Permisos requeridos",
+                                     "Debe seleccionar al menos un permiso de acceso."));
+                return null;
             }
 
             boolean nueva = (formulario.getId() == null);
@@ -454,6 +500,9 @@ public class SolicitudBean implements Serializable {
 
     public void setJefe(Usuario jefe) {
         this.jefe = jefe;
+        if (jefe != null) {
+            this.idDirectorSeleccionado = jefe.getId();
+        }
     }
 
     public List<Aplicacion> getAplicaciones() {
@@ -470,6 +519,24 @@ public class SolicitudBean implements Serializable {
         } else {
             this.permisosSeleccionados.clear();
             this.permisosSeleccionados.putAll(permisosSeleccionados);
+        }
+    }
+
+    public List<Usuario> getDirectores() {
+        return directores;
+    }
+
+    public Long getIdDirectorSeleccionado() {
+        return idDirectorSeleccionado;
+    }
+
+    public void setIdDirectorSeleccionado(Long idDirectorSeleccionado) {
+        this.idDirectorSeleccionado = idDirectorSeleccionado;
+        // Cada vez que cambia el id, actualizamos el objeto jefe
+        if (idDirectorSeleccionado != null) {
+            this.jefe = usuarioCtrl.buscarPorId(idDirectorSeleccionado);
+        } else {
+            this.jefe = null;
         }
     }
 }

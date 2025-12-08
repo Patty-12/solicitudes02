@@ -43,5 +43,12 @@ public interface UsuarioControlador {
     boolean tieneRol(Long idUsuario, String nombreRol);
 
     List<String> obtenerNombresRoles(Long idUsuario);
+    
+    /**
+     * Lista todos los usuarios cuyo cargo corresponde a un Director
+     * (incluye Director, Director TIC, Director de ...).
+     */
+    List<Usuario> listarDirectores();
+
 
 }

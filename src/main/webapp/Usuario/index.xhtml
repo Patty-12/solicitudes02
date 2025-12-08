@@ -2,6 +2,7 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
                 template="/templates/layout.xhtml">
 
     <f:metadata>
@@ -11,71 +12,93 @@
     <ui:define name="titulo">Gestión de Usuarios</ui:define>
 
     <ui:define name="contenido">
+
         <h:form id="formLista">
 
             <div class="card">
-                <div class="card-header">
+
+                <!-- ENCABEZADO -->
+                <div class="card-header"
+                     style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>Usuarios</h3>
 
-                    <h:link outcome="/Usuario/create.xhtml"
-                            value="Nuevo Usuario"
-                            styleClass="btn-primary" />
+                    <p:button value=" Nuevo Usuario"
+                              icon="pi pi-user-plus"
+                              outcome="/Usuario/create.xhtml"
+                              styleClass="ui-button-success" />
                 </div>
 
-                <h:messages globalOnly="true" style="color:red;" />
+                <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true" />
 
-                <h:dataTable value="#{usuarioBean.lista}"
+                <!-- TABLA DE USUARIOS -->
+                <p:dataTable id="tablaUsuarios"
+                             value="#{usuarioBean.lista}"
                              var="u"
-                             styleClass="table table-striped"
-                             headerClass="table-header"
-                             rowClasses="table-row">
+                             paginator="true"
+                             rows="10"
+                             rowsPerPageTemplate="5,10,20,50"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
+                             paginatorPosition="bottom"
+                             styleClass="datatable-excel tabla-solicitudes tabla-solicitudes-compacta"
+                             emptyMessage="No existen usuarios registrados"
+                             style="width:100%;"
+                             responsiveLayout="scroll">
 
-                    <h:column>
-                        <f:facet name="header">ID</f:facet>
+                    <!-- ID -->
+                    <p:column headerText="ID" sortBy="#{u.id}" style="width:80px; text-align:center;">
                         #{u.id}
-                    </h:column>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Nombre</f:facet>
+                    <!-- Nombre -->
+                    <p:column headerText="Nombre" sortBy="#{u.nombre}">
                         #{u.nombre}
-                    </h:column>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Apellido</f:facet>
+                    <!-- Apellido -->
+                    <p:column headerText="Apellido" sortBy="#{u.apellido}">
                         #{u.apellido}
-                    </h:column>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Correo</f:facet>
-                        #{u.correo}
-                    </h:column>
+                    <!-- Correo -->
+                    <p:column headerText="Correo" sortBy="#{u.correo}">
+                        <h:outputText value="#{u.correo}" title="#{u.correo}" />
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Cargo</f:facet>
+                    <!-- Cargo -->
+                    <p:column headerText="Cargo" sortBy="#{u.cargo}">
                         #{u.cargo}
-                    </h:column>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Acciones</f:facet>
+                    <!-- ACCIONES -->
+                    <p:column headerText="Acciones" style="width:150px; text-align:center;">
 
-                        <h:link value="Editar"
-                                outcome="/Usuario/edit.xhtml">
+                        <!-- Editar -->
+                        <p:button icon="pi pi-pencil"
+                                  outcome="/Usuario/edit.xhtml"
+                                  title="Editar usuario"
+                                  styleClass="ui-button-warning btn-accion">
                             <f:param name="id" value="#{u.id}" />
-                        </h:link>
+                        </p:button>
 
-                        <h:commandLink value="Eliminar"
-                                       action="#{usuarioBean.eliminar}"
-                                       onclick="return confirm('¿Eliminar el usuario seleccionado?');">
+                        <!-- Eliminar -->
+                        <p:commandButton icon="pi pi-trash"
+                                         title="Eliminar usuario"
+                                         styleClass="ui-button-danger btn-accion"
+                                         action="#{usuarioBean.eliminar}"
+                                         update="formLista"
+                                         onclick="return confirm('¿Eliminar el usuario seleccionado?');">
                             <f:setPropertyActionListener
                                     target="#{usuarioBean.usuarioSeleccionado}"
                                     value="#{u}" />
-                        </h:commandLink>
-                    </h:column>
+                        </p:commandButton>
+                    </p:column>
 
-                </h:dataTable>
+                </p:dataTable>
+
             </div>
 
         </h:form>
+
     </ui:define>
 
 </ui:composition>
