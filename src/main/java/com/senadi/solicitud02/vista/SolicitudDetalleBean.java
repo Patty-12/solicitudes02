@@ -449,7 +449,22 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
+    // ========= DIRECTOR TIC: dos caminos =========
+
+    /**
+     * Método de compatibilidad: mantiene el comportamiento antiguo.
+     * Hoy equivale a "aprobar y enviar al Oficial de Seguridad".
+     */
     public void aprobarComoDirectorTic() {
+        aprobarComoDirectorTicEnviarOficial();
+    }
+
+    /**
+     * CAMINO 1:
+     * Director TIC aprueba y envía la solicitud al Oficial de Seguridad.
+     * Estado: PENDIENTE DIRECTOR TIC -> PENDIENTE OFICIAL SEGURIDAD
+     */
+    public void aprobarComoDirectorTicEnviarOficial() {
         if (!isDirectorTicPuedeFirmar()) {
             addMessage(FacesMessage.SEVERITY_WARN,
                     "Acción no permitida",
@@ -482,6 +497,48 @@ public class SolicitudDetalleBean implements Serializable {
                     "Error al aprobar como Director TIC", e.getMessage());
         }
     }
+
+    /**
+     * CAMINO 2:
+     * Director TIC aprueba y NO usa Oficial de Seguridad.
+     * Pasa directamente al Responsable de Accesos.
+     * Estado: PENDIENTE DIRECTOR TIC -> PENDIENTE RESPONSABLE ACCESOS
+     */
+    public void aprobarComoDirectorTicSinOficial() {
+        if (!isDirectorTicPuedeFirmar()) {
+            addMessage(FacesMessage.SEVERITY_WARN,
+                    "Acción no permitida",
+                    "Sólo el Director TIC puede aprobar una solicitud en estado PENDIENTE DIRECTOR TIC.");
+            return;
+        }
+
+        try {
+            String estadoAnterior = solicitud.getEstado();
+
+            Firma f = new Firma();
+            f.setSolicitud(solicitud);
+            f.setDescripcion("Validada técnicamente por Director TIC (sin Oficial de Seguridad): "
+                    + usuarioActual.getNombre() + " " + usuarioActual.getApellido());
+            f.setFechaFirma(LocalDateTime.now());
+            solicitud.getFirmas().add(f);
+
+            solicitud.setEstado("PENDIENTE RESPONSABLE ACCESOS");
+            solicitud = solCtrl.actualizar(solicitud);
+
+            addMessage(FacesMessage.SEVERITY_INFO,
+                    "Solicitud aprobada por Director TIC",
+                    "La solicitud ha sido enviada directamente al Responsable de Accesos.");
+
+            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Error al aprobar como Director TIC (sin Oficial)", e.getMessage());
+        }
+    }
+
+    // ========= FIN DIRECTOR TIC =========
 
     public void rechazarComoDirectorTic() {
         if (!isDirectorTicPuedeFirmar()) {
@@ -571,8 +628,7 @@ public class SolicitudDetalleBean implements Serializable {
 
     /**
      * Responsable de Accesos marca los permisos como aplicados.
-     * Deja el estado final en "APLICADO PERMISOS", igual que la vista
-     * de "Permisos por aplicar", para que siempre salga en Reportes.
+     * Estado final: "APLICADO PERMISOS".
      */
     public void marcarPermisosAplicados() {
         if (!isResponsablePuedeAplicarPermisos()) {

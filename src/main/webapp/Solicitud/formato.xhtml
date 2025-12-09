@@ -193,12 +193,22 @@
 
                 <!-- ACCIONES DEL DIRECTOR TIC -->
                 <h:panelGroup rendered="#{solicitudDetalleBean.directorTicPuedeFirmarPublic}">
-                    <p:commandButton value=" Aprobar (Director TIC)"
+
+                    <!-- Camino 1: Director TIC aprueba y envía al Oficial de Seguridad -->
+                    <p:commandButton value="Aprobar y enviar a Oficial de Seguridad"
                                      icon="pi pi-check"
                                      styleClass="ui-button-success"
-                                     actionListener="#{solicitudDetalleBean.aprobarComoDirectorTic}"
+                                     actionListener="#{solicitudDetalleBean.aprobarComoDirectorTicEnviarOficial}"
                                      update="@form"
-                                     onclick="return confirm('¿Aprobar la solicitud como Director TIC?');" />
+                                     onclick="return confirm('¿Aprobar la solicitud como Director TIC y enviarla al Oficial de Seguridad?');" />
+
+                    <!-- Camino 2: Director TIC termina flujo técnico y pasa directo a Responsable de Accesos -->
+                    <p:commandButton value="Aprobar y enviar a Responsable de Accesos"
+                                     icon="pi pi-arrow-right-arrow-left"
+                                     styleClass="ui-button-info"
+                                     actionListener="#{solicitudDetalleBean.aprobarComoDirectorTicSinOficial}"
+                                     update="@form"
+                                     onclick="return confirm('¿Aprobar la solicitud como Director TIC y enviarla directamente al Responsable de Accesos (sin pasar por Oficial de Seguridad)?');" />
 
                     <p:commandButton value=" Rechazar (Director TIC)"
                                      icon="pi pi-times"
