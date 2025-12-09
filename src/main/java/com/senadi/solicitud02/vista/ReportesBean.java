@@ -226,7 +226,9 @@ public class ReportesBean implements Serializable {
                             || "PENDIENTE OFICIAL SEGURIDAD".equals(est)
                             || "PENDIENTE RESPONSABLE ACCESOS".equals(est)
                             || "APROBADA".equals(est)
-                            || "RECHAZADA".equals(est)) {
+                            || "RECHAZADA".equals(est)
+                            || "APLICADO PERMISOS".equals(est)
+                            || "PERMISOS APLICADOS".equals(est)) {
                         listaBase.add(s);
                     }
                     continue;
@@ -239,7 +241,9 @@ public class ReportesBean implements Serializable {
                     if ("PENDIENTE OFICIAL SEGURIDAD".equals(est)
                             || "PENDIENTE RESPONSABLE ACCESOS".equals(est)
                             || "APROBADA".equals(est)
-                            || "RECHAZADA".equals(est)) {
+                            || "RECHAZADA".equals(est)
+                            || "APLICADO PERMISOS".equals(est)
+                            || "PERMISOS APLICADOS".equals(est)) {
                         listaBase.add(s);
                     }
                     continue;
@@ -249,8 +253,10 @@ public class ReportesBean implements Serializable {
                 // RESPONSABLE DE ACCESOS
                 // =========================
                 if (modoResponsableAccesos) {
-                    // En reportes SOLO ver lo que ya fue aplicado
-                    if ("APLICADO PERMISOS".equals(est)) {
+                    // Aquí SOLO mostramos las solicitudes en las que YA
+                    // se aplicaron los permisos en sistemas reales.
+                    if ("APLICADO PERMISOS".equals(est)
+                            || "PERMISOS APLICADOS".equals(est)) {
                         listaBase.add(s);
                     }
                 }
@@ -340,9 +346,10 @@ public class ReportesBean implements Serializable {
     // =====================================================
 
     /**
-     * Devuelve una descripción amigable de estado para TODOS los roles:
+     * Devuelve una descripción amigable de estado:
      * - "Rechazada"  cuando el estado real es RECHAZADA.
-     * - "Firmada y aprobada"   para cualquier otro estado distinto de ANULADA.
+     * - "Permisos aplicados" para los estados finales del Responsable de Accesos.
+     * - "Firmada y aprobada" para el resto de estados válidos.
      */
     public String descripcionEstado(String estado) {
         if (estado == null) {
@@ -353,6 +360,11 @@ public class ReportesBean implements Serializable {
 
         if ("RECHAZADA".equals(est)) {
             return "Rechazada";
+        }
+
+        if ("APLICADO PERMISOS".equals(est)
+                || "PERMISOS APLICADOS".equals(est)) {
+            return "Permisos aplicados";
         }
 
         return "Firmada y aprobada";

@@ -36,7 +36,7 @@
                 <h:panelGroup rendered="#{reportesBean.modoDirectorTic}">
                     <p style="margin-top:4px; font-size:13px;">
                         Vista de solicitudes que se encuentran en etapas relacionadas con la
-                        <strong>Dirección TIC</strong> (pendientes o aprobadas/rechazadas).
+                        <strong>Dirección TIC</strong> (pendientes, aprobadas o con permisos aplicados).
                         Puede filtrar por nombre/apellido del solicitante y por rango de fechas de creación.
                     </p>
                 </h:panelGroup>
@@ -53,11 +53,10 @@
 
                 <h:panelGroup rendered="#{reportesBean.modoResponsableAccesos}">
                     <p style="margin-top:4px; font-size:13px;">
-                        Se muestran las solicitudes en las que usted ya
-                        ha <strong>aplicado los permisos</strong> en los sistemas reales
-                        (estado interno <strong>APLICADO PERMISOS</strong>).
-                        Las solicitudes que todavía están pendientes de aplicación
-                        se gestionan desde la pantalla <strong>Permisos por aplicar</strong>.
+                        Solicitudes que han llegado a la etapa de
+                        <strong>Responsable de Accesos</strong>, incluyendo las
+                        <strong>pendientes de aplicar permisos</strong> y las que ya fueron
+                        <strong>marcadas como permisos aplicados</strong>.
                         Puede filtrar por nombre/apellido del solicitante y por rango de fechas.
                     </p>
                 </h:panelGroup>
@@ -143,13 +142,27 @@
 
                     <p:column headerText="Estado"
                               sortBy="#{s.estado}"
-                              style="width:36%;">
+                              style="width:20%;">
                         <h:outputText value="#{reportesBean.descripcionEstado(s.estado)}" />
+                    </p:column>
+
+                    <!-- NUEVA COLUMNA: PDF FIRMADO (solo Responsable de Accesos) -->
+                    <p:column headerText="Formulario firmado"
+                              style="width:18%; text-align:center;"
+                              rendered="#{reportesBean.modoResponsableAccesos}">
+                        <h:panelGroup rendered="#{not empty s.urlPdfFirmado}">
+                            <h:outputLink value="#{s.urlPdfFirmado}" target="_blank">
+                                Ver PDF
+                            </h:outputLink>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{empty s.urlPdfFirmado}">
+                            <h:outputText value="Sin archivo" />
+                        </h:panelGroup>
                     </p:column>
 
                     <p:column headerText="Usuario solicitante"
                               sortBy="#{s.usuario.nombre}"
-                              style="width:40%;">
+                              style="width:38%;">
                         #{s.usuario.nombre} #{s.usuario.apellido}
                     </p:column>
 
