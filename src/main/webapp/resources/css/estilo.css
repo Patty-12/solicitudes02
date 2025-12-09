@@ -655,3 +655,41 @@ a:hover {
     text-overflow: ellipsis;
 }
 
+/* ==========================================
+   REPORTES – FILTROS Y TABLA
+   ========================================== */
+
+.reportes-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 10px 0 14px 0;
+    align-items: flex-end;
+}
+
+.reportes-filtros .campo-texto,
+.reportes-filtros .campo-fecha {
+    display: flex;
+    flex-direction: column;
+    min-width: 210px;
+}
+
+.reportes-filtros label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+/* Botones de filtro más pequeños que los de otras pantallas */
+.reportes-filtros .btn-buscar,
+.reportes-filtros .btn-limpiar {
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+/* Alineación de los botones de filtro */
+.reportes-filtros .filtro-botones {
+    display: flex;
+    gap: 8px;
+}
+

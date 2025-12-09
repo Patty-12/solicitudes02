@@ -128,99 +128,103 @@
         <!-- Botonera superior -->
         <div class="top-actions">
 
-            <!-- Volver -->
-            <h:link outcome="/Solicitud/index.xhtml" styleClass="btn-volver">
-                ← Volver
-            </h:link>
+            <!-- TODO EXCEPTO RESPONSABLE DE ACCESOS -->
+            <h:panelGroup rendered="#{not solicitudDetalleBean.responsablePuedeAplicarPermisosPublic}">
 
-            <!-- Botón imprimir SOLO mientras no existe PDF aún -->
-            <h:outputLink value="#"
-                          styleClass="btn-pdf"
-                          rendered="#{empty solicitudDetalleBean.urlPdfActual}">
-                Imprimir formulario
-                <f:passThroughAttribute name="onclick"
-                                        value="window.print();return false;" />
-            </h:outputLink>
+                <!-- Volver -->
+                <h:link outcome="/Solicitud/index.xhtml" styleClass="btn-volver">
+                    ← Volver
+                </h:link>
 
-            <!-- FileUpload clásico + botón Subir -->
-            <h:panelGroup
-                    rendered="#{solicitudDetalleBean.mostrarAccionesSolicitantePublic
-                               or solicitudDetalleBean.directorPuedeFirmarPublic
-                               or solicitudDetalleBean.directorTicPuedeFirmarPublic
-                               or solicitudDetalleBean.oficialPuedeFirmarPublic
-                               or solicitudDetalleBean.responsablePuedeAplicarPermisosPublic}">
+                <!-- Botón imprimir SOLO mientras no existe PDF aún -->
+                <h:outputLink value="#"
+                              styleClass="btn-pdf"
+                              rendered="#{empty solicitudDetalleBean.urlPdfActual}">
+                    Imprimir formulario
+                    <f:passThroughAttribute name="onclick"
+                                            value="window.print();return false;" />
+                </h:outputLink>
 
-                <div class="file-upload-inline">
-                    <!-- input típico gris del navegador -->
-                    <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
-                                  mode="simple"
-                                  allowTypes="/(\.|\/)(pdf)$/"/>
-                    <!-- botón que realmente sube -->
-                    <p:commandButton value="Subir PDF firmado"
-                                     icon="pi pi-upload"
-                                     actionListener="#{solicitudDetalleBean.subirFirmado}"
-                                     update="@form"/>
-                </div>
-            </h:panelGroup>
+                <!-- FileUpload clásico + botón Subir -->
+                <h:panelGroup
+                        rendered="#{solicitudDetalleBean.mostrarAccionesSolicitantePublic
+                                   or solicitudDetalleBean.directorPuedeFirmarPublic
+                                   or solicitudDetalleBean.directorTicPuedeFirmarPublic
+                                   or solicitudDetalleBean.oficialPuedeFirmarPublic}">
 
-            <!-- ACCIONES DEL SOLICITANTE -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.mostrarAccionesSolicitantePublic}">
-                <p:commandButton value=" Enviar al Director"
-                                 icon="pi pi-send"
-                                 actionListener="#{solicitudDetalleBean.enviarAlDirector}"
-                                 update="@form"
-                                 styleClass="ui-button-primary" />
-            </h:panelGroup>
+                    <div class="file-upload-inline">
+                        <!-- input típico gris del navegador -->
+                        <p:fileUpload value="#{solicitudDetalleBean.archivoFirmado}"
+                                      mode="simple"
+                                      allowTypes="/(\.|\/)(pdf)$/"/>
+                        <!-- botón que realmente sube -->
+                        <p:commandButton value="Subir PDF firmado"
+                                         icon="pi pi-upload"
+                                         actionListener="#{solicitudDetalleBean.subirFirmado}"
+                                         update="@form"/>
+                    </div>
+                </h:panelGroup>
 
-            <!-- ACCIONES DEL DIRECTOR -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.directorPuedeFirmarPublic}">
-                <p:commandButton value=" Aprobar (Director)"
-                                 icon="pi pi-check"
-                                 styleClass="ui-button-success"
-                                 actionListener="#{solicitudDetalleBean.aprobarComoDirector}"
-                                 update="@form"
-                                 onclick="return confirm('¿Aprobar la solicitud como Director?');" />
+                <!-- ACCIONES DEL SOLICITANTE -->
+                <h:panelGroup rendered="#{solicitudDetalleBean.mostrarAccionesSolicitantePublic}">
+                    <p:commandButton value=" Enviar al Director"
+                                     icon="pi pi-send"
+                                     actionListener="#{solicitudDetalleBean.enviarAlDirector}"
+                                     update="@form"
+                                     styleClass="ui-button-primary" />
+                </h:panelGroup>
 
-                <p:commandButton value=" Rechazar (Director)"
-                                 icon="pi pi-times"
-                                 styleClass="ui-button-danger"
-                                 actionListener="#{solicitudDetalleBean.rechazarComoDirector}"
-                                 update="@form"
-                                 onclick="return confirm('¿Rechazar la solicitud como Director?');" />
-            </h:panelGroup>
+                <!-- ACCIONES DEL DIRECTOR -->
+                <h:panelGroup rendered="#{solicitudDetalleBean.directorPuedeFirmarPublic}">
+                    <p:commandButton value=" Aprobar (Director)"
+                                     icon="pi pi-check"
+                                     styleClass="ui-button-success"
+                                     actionListener="#{solicitudDetalleBean.aprobarComoDirector}"
+                                     update="@form"
+                                     onclick="return confirm('¿Aprobar la solicitud como Director?');" />
 
-            <!-- ACCIONES DEL DIRECTOR TIC -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.directorTicPuedeFirmarPublic}">
-                <p:commandButton value=" Aprobar (Director TIC)"
-                                 icon="pi pi-check"
-                                 styleClass="ui-button-success"
-                                 actionListener="#{solicitudDetalleBean.aprobarComoDirectorTic}"
-                                 update="@form"
-                                 onclick="return confirm('¿Aprobar la solicitud como Director TIC?');" />
+                    <p:commandButton value=" Rechazar (Director)"
+                                     icon="pi pi-times"
+                                     styleClass="ui-button-danger"
+                                     actionListener="#{solicitudDetalleBean.rechazarComoDirector}"
+                                     update="@form"
+                                     onclick="return confirm('¿Rechazar la solicitud como Director?');" />
+                </h:panelGroup>
 
-                <p:commandButton value=" Rechazar (Director TIC)"
-                                 icon="pi pi-times"
-                                 styleClass="ui-button-danger"
-                                 actionListener="#{solicitudDetalleBean.rechazarComoDirectorTic}"
-                                 update="@form"
-                                 onclick="return confirm('¿Rechazar la solicitud como Director TIC?');" />
-            </h:panelGroup>
+                <!-- ACCIONES DEL DIRECTOR TIC -->
+                <h:panelGroup rendered="#{solicitudDetalleBean.directorTicPuedeFirmarPublic}">
+                    <p:commandButton value=" Aprobar (Director TIC)"
+                                     icon="pi pi-check"
+                                     styleClass="ui-button-success"
+                                     actionListener="#{solicitudDetalleBean.aprobarComoDirectorTic}"
+                                     update="@form"
+                                     onclick="return confirm('¿Aprobar la solicitud como Director TIC?');" />
 
-            <!-- ACCIONES DEL OFICIAL DE SEGURIDAD -->
-            <h:panelGroup rendered="#{solicitudDetalleBean.oficialPuedeFirmarPublic}">
-                <p:commandButton value=" Aprobar (Oficial Seguridad)"
-                                 icon="pi pi-check"
-                                 styleClass="ui-button-success"
-                                 actionListener="#{solicitudDetalleBean.aprobarComoOficial}"
-                                 update="@form"
-                                 onclick="return confirm('¿Aprobar la solicitud como Oficial de Seguridad?');" />
+                    <p:commandButton value=" Rechazar (Director TIC)"
+                                     icon="pi pi-times"
+                                     styleClass="ui-button-danger"
+                                     actionListener="#{solicitudDetalleBean.rechazarComoDirectorTic}"
+                                     update="@form"
+                                     onclick="return confirm('¿Rechazar la solicitud como Director TIC?');" />
+                </h:panelGroup>
 
-                <p:commandButton value=" Rechazar (Oficial Seguridad)"
-                                 icon="pi pi-times"
-                                 styleClass="ui-button-danger"
-                                 actionListener="#{solicitudDetalleBean.rechazarComoOficial}"
-                                 update="@form"
-                                 onclick="return confirm('¿Rechazar la solicitud como Oficial de Seguridad?');" />
+                <!-- ACCIONES DEL OFICIAL DE SEGURIDAD -->
+                <h:panelGroup rendered="#{solicitudDetalleBean.oficialPuedeFirmarPublic}">
+                    <p:commandButton value=" Aprobar (Oficial Seguridad)"
+                                     icon="pi pi-check"
+                                     styleClass="ui-button-success"
+                                     actionListener="#{solicitudDetalleBean.aprobarComoOficial}"
+                                     update="@form"
+                                     onclick="return confirm('¿Aprobar la solicitud como Oficial de Seguridad?');" />
+
+                    <p:commandButton value=" Rechazar (Oficial Seguridad)"
+                                     icon="pi pi-times"
+                                     styleClass="ui-button-danger"
+                                     actionListener="#{solicitudDetalleBean.rechazarComoOficial}"
+                                     update="@form"
+                                     onclick="return confirm('¿Rechazar la solicitud como Oficial de Seguridad?');" />
+                </h:panelGroup>
+
             </h:panelGroup>
 
             <!-- ACCIONES DEL RESPONSABLE DE ACCESOS -->

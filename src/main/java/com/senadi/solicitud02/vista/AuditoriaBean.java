@@ -62,6 +62,13 @@ public class AuditoriaBean implements Serializable {
     }
 
     /**
+     * Usado por Auditoria/index.xhtml como log solo lectura.
+     */
+    public void cargarRegistros() {
+        listar();
+    }
+
+    /**
      * Cargar una auditoría específica para edición (usado por <f:viewAction>).
      */
     public String cargarAuditoria() {
@@ -89,6 +96,7 @@ public class AuditoriaBean implements Serializable {
 
     /**
      * Crear o actualizar una entrada de auditoría.
+     * (En el nuevo enfoque como log, normalmente no se usará desde la UI).
      */
     public String guardar() {
         try {
@@ -124,11 +132,12 @@ public class AuditoriaBean implements Serializable {
                             "Error al guardar",
                             e.getMessage()));
         }
-        return null; // por ahora se queda en la misma vista
+        return null;
     }
 
     /**
      * Eliminar el registro seleccionado.
+     * (En el nuevo enfoque de log, no debería exponerse en la UI).
      */
     public String eliminar() {
         if (auditoriaSeleccionada != null && auditoriaSeleccionada.getId() != null) {

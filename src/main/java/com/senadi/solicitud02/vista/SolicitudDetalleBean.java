@@ -146,7 +146,7 @@ public class SolicitudDetalleBean implements Serializable {
     }
 
     public boolean isEstadoPermisosAplicados() {
-        return solicitud != null && "PERMISOS APLICADOS".equalsIgnoreCase(solicitud.getEstado());
+        return solicitud != null && "APLICADO PERMISOS".equalsIgnoreCase(solicitud.getEstado());
     }
 
     // =====================================================
@@ -569,6 +569,11 @@ public class SolicitudDetalleBean implements Serializable {
         }
     }
 
+    /**
+     * Responsable de Accesos marca los permisos como aplicados.
+     * Deja el estado final en "APLICADO PERMISOS", igual que la vista
+     * de "Permisos por aplicar", para que siempre salga en Reportes.
+     */
     public void marcarPermisosAplicados() {
         if (!isResponsablePuedeAplicarPermisos()) {
             addMessage(FacesMessage.SEVERITY_WARN,
@@ -578,23 +583,56 @@ public class SolicitudDetalleBean implements Serializable {
         }
 
         try {
-            String estadoAnterior = solicitud.getEstado();
+            if (solicitud == null || solicitud.getId() == null) {
+                addMessage(FacesMessage.SEVERITY_ERROR,
+                        "Solicitud no cargada",
+                        "No se pudo identificar la solicitud.");
+                return;
+            }
 
+            // Refrescar desde BD
+            Solicitud sDb = solCtrl.buscarPorId(solicitud.getId());
+            if (sDb == null) {
+                addMessage(FacesMessage.SEVERITY_ERROR,
+                        "Solicitud no encontrada",
+                        "La solicitud ya no existe en la base de datos.");
+                return;
+            }
+
+            String estadoAnterior = (sDb.getEstado() != null)
+                    ? sDb.getEstado().toUpperCase()
+                    : "";
+
+            // Sólo permitir si viene de PENDIENTE RESPONSABLE ACCESOS o APROBADA
+            if (!"PENDIENTE RESPONSABLE ACCESOS".equals(estadoAnterior)
+                    && !"APROBADA".equals(estadoAnterior)) {
+
+                addMessage(FacesMessage.SEVERITY_WARN,
+                        "No permitido",
+                        "Sólo se pueden marcar como aplicados los permisos de solicitudes aprobadas y pendientes de aplicación.");
+                return;
+            }
+
+            // Registrar firma
             Firma f = new Firma();
-            f.setSolicitud(solicitud);
+            f.setSolicitud(sDb);
             f.setDescripcion("Permisos aplicados en sistemas reales por Responsable de Accesos: "
                     + usuarioActual.getNombre() + " " + usuarioActual.getApellido());
             f.setFechaFirma(LocalDateTime.now());
-            solicitud.getFirmas().add(f);
+            sDb.getFirmas().add(f);
 
-            solicitud.setEstado("PERMISOS APLICADOS");
-            solicitud = solCtrl.actualizar(solicitud);
+            // Estado final unificado
+            sDb.setEstado("APLICADO PERMISOS");
+
+            // Guardar y sincronizar con el bean
+            sDb = solCtrl.actualizar(sDb);
+            this.solicitud = sDb;
 
             addMessage(FacesMessage.SEVERITY_INFO,
                     "Permisos aplicados",
-                    "La solicitud ha sido marcada como PERMISOS APLICADOS.");
+                    "La solicitud ha sido marcada como APLICADO PERMISOS.");
 
-            NotificacionService.notificarCambioEstado(solicitud, estadoAnterior);
+            NotificacionService.notificarCambioEstado(sDb, estadoAnterior);
 
         } catch (Exception e) {
             e.printStackTrace();

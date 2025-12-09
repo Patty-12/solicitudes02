@@ -1,0 +1,163 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/templates/layout.xhtml">
+
+    <f:metadata>
+        <!-- Verifica sesión -->
+        <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+        <!-- Parámetro para distinguir TIC / OFICIAL, etc. -->
+        <f:viewParam name="tipo" value="#{reportesBean.tipoReporte}" />
+        <!-- Inicializa la pantalla de reportes -->
+        <f:viewAction action="#{reportesBean.prepararPantalla}" />
+    </f:metadata>
+
+    <ui:define name="titulo">Reportes</ui:define>
+
+    <ui:define name="contenido">
+        <h:form id="formReportes">
+
+            <div class="card">
+                <h3>Reportes – #{reportesBean.tituloSeccion}</h3>
+
+                <!-- Descripción según rol -->
+                <h:panelGroup rendered="#{reportesBean.modoDirector}">
+                    <p style="margin-top:4px; font-size:13px;">
+                        Se muestran únicamente las solicitudes en las que usted consta como
+                        <strong>Director que autorizó</strong> la gestión de acceso.
+                        No se incluyen solicitudes anuladas ni las que aún están en estado
+                        <strong>PENDIENTE DIRECTOR</strong>. Puede filtrar por nombre/apellido
+                        del solicitante y por rango de fechas de creación.
+                    </p>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{reportesBean.modoDirectorTic}">
+                    <p style="margin-top:4px; font-size:13px;">
+                        Vista de solicitudes que se encuentran en etapas relacionadas con la
+                        <strong>Dirección TIC</strong> (pendientes o aprobadas/rechazadas).
+                        Puede filtrar por nombre/apellido del solicitante y por rango de fechas de creación.
+                    </p>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{reportesBean.modoOficialSeguridad}">
+                    <p style="margin-top:4px; font-size:13px;">
+                        Vista de solicitudes en las que interviene el
+                        <strong>Oficial de Seguridad de la Información</strong>.
+                        Incluye solicitudes pendientes de revisión de seguridad,
+                        en tránsito al Responsable de Accesos y las ya aprobadas o rechazadas.
+                        Puede filtrar por nombre/apellido del solicitante y por fechas.
+                    </p>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{reportesBean.modoResponsableAccesos}">
+                    <p style="margin-top:4px; font-size:13px;">
+                        Se muestran las solicitudes en las que usted ya
+                        ha <strong>aplicado los permisos</strong> en los sistemas reales
+                        (estado interno <strong>APLICADO PERMISOS</strong>).
+                        Las solicitudes que todavía están pendientes de aplicación
+                        se gestionan desde la pantalla <strong>Permisos por aplicar</strong>.
+                        Puede filtrar por nombre/apellido del solicitante y por rango de fechas.
+                    </p>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{reportesBean.modoAdmin}">
+                    <p style="margin-top:4px; font-size:13px;">
+                        Todas las solicitudes del sistema (salvo anuladas). Puede filtrar por
+                        nombre/apellido del solicitante y por rango de fechas de creación.
+                    </p>
+                </h:panelGroup>
+
+                <!-- FILTROS COMUNES A TODOS LOS ROLES -->
+                <div class="reportes-filtros">
+                    <div class="campo-texto">
+                        <label for="nombreFiltro">Nombre / Apellido</label>
+                        <h:inputText id="nombreFiltro"
+                                     value="#{reportesBean.nombreFiltro}"
+                                     styleClass="input"
+                                     maxlength="100"
+                                     placeholder="Ej: Juan, Pérez" />
+                    </div>
+
+                    <div class="campo-fecha">
+                        <label for="fechaDesde">Desde fecha</label>
+                        <p:calendar id="fechaDesde"
+                                    value="#{reportesBean.fechaDesde}"
+                                    pattern="yyyy-MM-dd"
+                                    navigator="true"
+                                    showIcon="true"
+                                    inputStyleClass="input" />
+                    </div>
+
+                    <div class="campo-fecha">
+                        <label for="fechaHasta">Hasta fecha</label>
+                        <p:calendar id="fechaHasta"
+                                    value="#{reportesBean.fechaHasta}"
+                                    pattern="yyyy-MM-dd"
+                                    navigator="true"
+                                    showIcon="true"
+                                    inputStyleClass="input" />
+                    </div>
+
+                    <div class="filtro-botones">
+                        <p:commandButton value="Buscar"
+                                         icon="pi pi-search"
+                                         action="#{reportesBean.buscar}"
+                                         update="formReportes"
+                                         styleClass="ui-button-primary btn-buscar" />
+
+                        <p:commandButton value="Limpiar"
+                                         icon="pi pi-times"
+                                         action="#{reportesBean.limpiar}"
+                                         update="formReportes"
+                                         styleClass="ui-button-secondary btn-limpiar" />
+                    </div>
+                </div>
+
+                <!-- TABLA DE RESULTADOS -->
+                <p:dataTable id="tablaReportes"
+                             value="#{reportesBean.lista}"
+                             var="s"
+                             paginator="true"
+                             rows="10"
+                             rowsPerPageTemplate="5,10,20,50"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
+                             paginatorPosition="bottom"
+                             styleClass="datatable-excel tabla-solicitudes tabla-solicitudes-compacta"
+                             emptyMessage="No se encontraron solicitudes para los criterios indicados"
+                             responsiveLayout="scroll"
+                             style="width:100%; table-layout:fixed;">
+
+                    <p:column headerText="ID"
+                              sortBy="#{s.id}"
+                              style="width:6%; text-align:center;">
+                        #{s.id}
+                    </p:column>
+
+                    <p:column headerText="Fecha creación"
+                              sortBy="#{s.fechaCreacion}"
+                              style="width:18%;">
+                        <h:outputText value="#{s.fechaCreacion}" />
+                    </p:column>
+
+                    <p:column headerText="Estado"
+                              sortBy="#{s.estado}"
+                              style="width:36%;">
+                        <h:outputText value="#{reportesBean.descripcionEstado(s.estado)}" />
+                    </p:column>
+
+                    <p:column headerText="Usuario solicitante"
+                              sortBy="#{s.usuario.nombre}"
+                              style="width:40%;">
+                        #{s.usuario.nombre} #{s.usuario.apellido}
+                    </p:column>
+
+                </p:dataTable>
+
+            </div>
+
+        </h:form>
+    </ui:define>
+
+</ui:composition>

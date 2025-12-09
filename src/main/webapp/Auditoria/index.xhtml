@@ -2,96 +2,81 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
                 template="/templates/layout.xhtml">
 
     <f:metadata>
         <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+        <f:event type="preRenderView" listener="#{auditoriaBean.cargarRegistros}" />
     </f:metadata>
 
     <ui:define name="titulo">Auditoría del Sistema</ui:define>
 
     <ui:define name="contenido">
-        <h:form id="formLista">
+
+        <h:form id="formAuditoria">
 
             <div class="card">
-                <div class="card-header">
-                    <h3>Registros de Auditoría</h3>
+                <h3>Auditoría del Sistema</h3>
 
-                    <h:link outcome="/Auditoria/create.xhtml"
-                            value="Nuevo Registro"
-                            styleClass="btn-primary" />
-                </div>
+                <p style="font-size:13px;">
+                    Registro de eventos generados por las operaciones del sistema
+                    (creación, actualización, aprobación, anulación, aplicación de accesos, etc.).
+                    La información es de <strong>solo lectura</strong>.
+                </p>
 
-                <h:messages globalOnly="true" style="color:red;" />
+                <p:messages id="msgs"
+                            showDetail="true"
+                            closable="true"
+                            autoUpdate="true" />
 
-                <h:dataTable value="#{auditoriaBean.lista}"
+                <p:dataTable id="tablaAuditoria"
+                             value="#{auditoriaBean.lista}"
                              var="a"
-                             styleClass="table table-striped"
-                             headerClass="table-header"
-                             rowClasses="table-row">
+                             paginator="true"
+                             rows="10"
+                             rowsPerPageTemplate="5,10,20,50"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
+                             paginatorPosition="bottom"
+                             style="width:100%;"
+                             styleClass="datatable-excel tabla-solicitudes tabla-solicitudes-compacta"
+                             emptyMessage="No existen eventos de auditoría registrados"
+                             responsiveLayout="scroll">
 
-                    <h:column>
-                        <f:facet name="header">ID</f:facet>
-                        #{a.id}
-                    </h:column>
-
-                    <h:column>
-                        <f:facet name="header">Usuario</f:facet>
-                        #{a.usuario.nombre} #{a.usuario.apellido}
-                    </h:column>
-
-                    <h:column>
-                        <f:facet name="header">Correo</f:facet>
-                        #{a.usuario.correo}
-                    </h:column>
-
-                    <h:column>
-                        <f:facet name="header">Acción</f:facet>
-                        #{a.accion}
-                    </h:column>
-
-                    <h:column>
-                        <f:facet name="header">Entidad</f:facet>
-                        #{a.entidad}
-                    </h:column>
-
-                    <h:column>
-                        <f:facet name="header">ID Entidad</f:facet>
-                        #{a.entidadId}
-                    </h:column>
-
-                    <h:column>
-                        <f:facet name="header">Fecha evento</f:facet>
-                        <!-- LocalDateTime directo -->
+                    <p:column headerText="Fecha evento" sortBy="#{a.fechaEvento}">
                         <h:outputText value="#{a.fechaEvento}" />
-                    </h:column>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Detalle</f:facet>
-                        #{a.detalle}
-                    </h:column>
+                    <p:column headerText="Usuario" sortBy="#{a.usuario}">
+                        #{a.usuario}
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Acciones</f:facet>
+                    <p:column headerText="Correo">
+                        <h:outputText value="#{a.correo}" title="#{a.correo}" />
+                    </p:column>
 
-                        <h:link value="Editar"
-                                outcome="/Auditoria/edit.xhtml">
-                            <f:param name="id" value="#{a.id}" />
-                        </h:link>
+                    <p:column headerText="Acción" sortBy="#{a.accion}">
+                        #{a.accion}
+                    </p:column>
 
-                        <h:commandLink value="Eliminar"
-                                       action="#{auditoriaBean.eliminar}"
-                                       onclick="return confirm('¿Eliminar este registro de auditoría?');">
-                            <f:setPropertyActionListener
-                                    target="#{auditoriaBean.auditoriaSeleccionada}"
-                                    value="#{a}" />
-                        </h:commandLink>
-                    </h:column>
+                    <p:column headerText="Entidad" sortBy="#{a.entidad}">
+                        #{a.entidad}
+                    </p:column>
 
-                </h:dataTable>
+                    <p:column headerText="ID Entidad" sortBy="#{a.idEntidad}">
+                        #{a.idEntidad}
+                    </p:column>
+
+                    <p:column headerText="Detalle">
+                        <h:outputText value="#{a.detalle}" title="#{a.detalle}" />
+                    </p:column>
+
+                </p:dataTable>
+
             </div>
 
         </h:form>
+
     </ui:define>
 
 </ui:composition>
