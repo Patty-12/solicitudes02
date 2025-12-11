@@ -2,12 +2,14 @@ package com.senadi.solicitud02.vista;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
+import javax.faces.event.AjaxBehaviorEvent;
 
 import com.senadi.solicitud02.controlador.UsuarioControlador;
 import com.senadi.solicitud02.controlador.impl.UsuarioControladorImpl;
@@ -21,17 +23,30 @@ public class UsuarioBean implements Serializable {
 
     private UsuarioControlador usuarioCtrl = new UsuarioControladorImpl();
 
+    // Lista completa desde BD
     private List<Usuario> lista;
+    // Lista filtrada que se muestra en la tabla
+    private List<Usuario> listaFiltrada;
+
+    // Campo de filtro (texto libre)
+    private String filtro;
+
     private Usuario formulario;
     private Usuario usuarioSeleccionado;
 
-    // Para editar por ?id=XX
+    // Para editar por ?id=XX (no se usa en la vista actual, pero se mantiene)
     private Long idUsuario;
 
     @PostConstruct
     public void init() {
         listar();
         formulario = new Usuario();
+        // Al inicio, la lista filtrada es toda la lista
+        if (lista != null) {
+            listaFiltrada = new ArrayList<>(lista);
+        } else {
+            listaFiltrada = new ArrayList<>();
+        }
     }
 
     public void listar() {
@@ -56,7 +71,7 @@ public class UsuarioBean implements Serializable {
     }
 
     // ====== GUARDAR (crear / actualizar) ======
-    // Firma correcta para action="#{usuarioBean.guardar}"
+    // Se mantiene por compatibilidad, aunque en la vista actual no se usa.
     public String guardar() {
         try {
             boolean esNuevo = (formulario.getId() == null);
@@ -68,6 +83,9 @@ public class UsuarioBean implements Serializable {
             }
 
             listar();
+            // Actualizar lista filtrada también
+            aplicarFiltro();
+
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO,
                             "Éxito",
@@ -82,12 +100,13 @@ public class UsuarioBean implements Serializable {
     }
 
     // ====== ELIMINAR ======
-    // Firma correcta para action="#{usuarioBean.eliminar}"
+    // Se mantiene por compatibilidad, aunque en la vista actual no se usa.
     public String eliminar() {
         if (usuarioSeleccionado != null && usuarioSeleccionado.getId() != null) {
             try {
                 usuarioCtrl.eliminar(usuarioSeleccionado.getId());
                 listar();
+                aplicarFiltro();
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_INFO,
                                 "Eliminado",
@@ -106,6 +125,52 @@ public class UsuarioBean implements Serializable {
         formulario = new Usuario();
     }
 
+    // ==========================
+    // FILTRO RÁPIDO
+    // ==========================
+
+    /**
+     * Versión sin parámetros, se puede invocar desde EL o internamente.
+     */
+    public void aplicarFiltro() {
+        if (lista == null) {
+            listaFiltrada = new ArrayList<>();
+            return;
+        }
+
+        String texto = (filtro != null) ? filtro.trim().toLowerCase() : "";
+
+        // Si no hay texto, se muestra todo
+        if (texto.isEmpty()) {
+            listaFiltrada = new ArrayList<>(lista);
+            return;
+        }
+
+        List<Usuario> resultado = new ArrayList<>();
+        for (Usuario u : lista) {
+            if (u == null) continue;
+
+            String nombre = (u.getNombre() != null) ? u.getNombre().toLowerCase() : "";
+            String apellido = (u.getApellido() != null) ? u.getApellido().toLowerCase() : "";
+            String correo = (u.getCorreo() != null) ? u.getCorreo().toLowerCase() : "";
+
+            if (nombre.contains(texto)
+                    || apellido.contains(texto)
+                    || correo.contains(texto)) {
+                resultado.add(u);
+            }
+        }
+
+        listaFiltrada = resultado;
+    }
+
+    /**
+     * Versión compatible con <p:ajax listener="...">.
+     */
+    public void aplicarFiltro(AjaxBehaviorEvent event) {
+        aplicarFiltro();
+    }
+
     // ====== GETTERS / SETTERS ======
 
     public List<Usuario> getLista() {
@@ -114,6 +179,22 @@ public class UsuarioBean implements Serializable {
 
     public void setLista(List<Usuario> lista) {
         this.lista = lista;
+    }
+
+    public List<Usuario> getListaFiltrada() {
+        return listaFiltrada;
+    }
+
+    public void setListaFiltrada(List<Usuario> listaFiltrada) {
+        this.listaFiltrada = listaFiltrada;
+    }
+
+    public String getFiltro() {
+        return filtro;
+    }
+
+    public void setFiltro(String filtro) {
+        this.filtro = filtro;
     }
 
     public Usuario getFormulario() {

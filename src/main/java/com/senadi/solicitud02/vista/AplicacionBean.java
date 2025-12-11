@@ -90,7 +90,7 @@ public class AplicacionBean implements Serializable {
         }
     }
 
-    /** Usado en index.xhtml */
+    /** Usado en index.xhtml (lo podemos dejar por si algún día se usa de nuevo) */
     public String eliminar() {
         if (aplicacionSeleccionada == null || aplicacionSeleccionada.getId() == null) {
             return null;
@@ -114,6 +114,11 @@ public class AplicacionBean implements Serializable {
             );
         }
         return null;  // mantenerse en el listado
+    }
+
+    /** Dummy para evitar PropertyNotFoundException si existe alguna EL "#{aplicacionBean.eliminar}" como propiedad. */
+    public Object getEliminar() {
+        return null;
     }
 
     /** Se llama desde edit.xhtml */

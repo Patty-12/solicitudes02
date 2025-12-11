@@ -2,6 +2,7 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
                 template="/templates/layout.xhtml">
 
     <f:metadata>
@@ -16,18 +17,20 @@
         <h:form id="formEditar">
 
             <div class="card">
-                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+                <div class="card-header"
+                     style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
                     <h3 style="margin:0;">Editar Aplicación</h3>
 
-                    <!-- Atajo para ver permisos de esta aplicación -->
-                    <h:link value="Ver permisos de esta aplicación"
-                            outcome="/PermisoAplicacion/index.xhtml"
-                            styleClass="btn-secondary">
+                    <!-- Permisos solo de esta aplicación -->
+                    <p:button value="Permisos de esta aplicación"
+                              icon="pi pi-list"
+                              outcome="/PermisoAplicacion/index.xhtml"
+                              styleClass="ui-button-secondary">
                         <f:param name="idAplicacion" value="#{aplicacionBean.formulario.id}" />
-                    </h:link>
+                    </p:button>
                 </div>
 
-                <h:messages globalOnly="true" style="color:red;" />
+                <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true" />
 
                 <div class="form-row">
                     <div class="form-group">
@@ -64,14 +67,19 @@
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <h:commandButton value="Actualizar"
+                <div class="form-actions" style="margin-top:10px; display:flex; gap:8px;">
+                    <!-- Actualizar: sin Ajax para que respete el return del bean -->
+                    <p:commandButton value="Actualizar"
+                                     icon="pi pi-save"
                                      action="#{aplicacionBean.guardar}"
-                                     styleClass="btn-primary" />
+                                     ajax="false"
+                                     styleClass="ui-button-primary" />
 
-                    <h:button value="Regresar"
+                    <!-- Regresar -->
+                    <p:button value="Regresar"
+                              icon="pi pi-arrow-left"
                               outcome="/Aplicacion/index.xhtml?faces-redirect=true"
-                              styleClass="btn-secondary" />
+                              styleClass="ui-button-secondary" />
                 </div>
             </div>
 

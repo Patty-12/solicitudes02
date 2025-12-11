@@ -6,6 +6,8 @@
 
     <f:metadata>
         <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+        <!-- Si venimos desde Gestión de Aplicaciones (solo para mostrar nombre, etc.) -->
+        <f:viewParam name="idAplicacion" value="#{permisoAplicacionBean.idAplicacionFiltro}" />
     </f:metadata>
 
     <ui:define name="titulo">Nuevo Permiso de Aplicación</ui:define>
@@ -55,11 +57,12 @@
                     </div>
                 </div>
 
-                <div class="form-actions">
+                <div class="form-actions" style="margin-top:10px; display:flex; gap:8px;">
                     <h:commandButton value="Guardar"
                                      action="#{permisoAplicacionBean.guardar}"
                                      styleClass="btn-primary" />
 
+                    <!-- Sin f:param para evitar NPE si no hay idAplicacionFiltro -->
                     <h:button value="Cancelar"
                               outcome="/PermisoAplicacion/index.xhtml?faces-redirect=true"
                               styleClass="btn-secondary" />

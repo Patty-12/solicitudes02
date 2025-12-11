@@ -2,7 +2,10 @@ package com.senadi.solicitud02.modelo.entidades;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Entity
@@ -107,6 +110,37 @@ public class Solicitud {
 
     public void setUrlPdfFirmado(String urlPdfFirmado) {
         this.urlPdfFirmado = urlPdfFirmado;
+    }
+
+    // =======================
+    // Helpers para reportes
+    // =======================
+
+    private static final DateTimeFormatter FMT_ULTIMA_FIRMA =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+    /**
+     * Fecha/hora de la última firma registrada en la solicitud,
+     * formateada para mostrarse en la tabla de reportes.
+     */
+    public String getUltimaFirmaFecha() {
+        if (firmas == null || firmas.isEmpty()) {
+            return "";
+        }
+        Firma ultima = Collections.max(firmas, Comparator.comparing(Firma::getFechaFirma));
+        LocalDateTime dt = ultima.getFechaFirma();
+        return (dt != null) ? dt.format(FMT_ULTIMA_FIRMA) : "";
+    }
+
+    /**
+     * Descripción de la última firma registrada.
+     */
+    public String getUltimaFirmaDescripcion() {
+        if (firmas == null || firmas.isEmpty()) {
+            return "Sin firmas registradas";
+        }
+        Firma ultima = Collections.max(firmas, Comparator.comparing(Firma::getFechaFirma));
+        return (ultima.getDescripcion() != null) ? ultima.getDescripcion() : "";
     }
 
     @Override

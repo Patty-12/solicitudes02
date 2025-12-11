@@ -54,7 +54,7 @@
                 <h:panelGroup rendered="#{reportesBean.modoResponsableAccesos}">
                     <p style="margin-top:4px; font-size:13px;">
                         Solicitudes que han llegado a la etapa de
-                        <strong>Responsable de Accesos</strong>, todasvlas que ya fueron
+                        <strong>Responsable de Accesos</strong>, es decir, aquellas que ya fueron
                         <strong>marcadas como permisos aplicados</strong>.
                         Puede filtrar por nombre/apellido del solicitante y por rango de fechas.
                     </p>
@@ -135,19 +135,29 @@
 
                     <p:column headerText="Fecha creación"
                               sortBy="#{s.fechaCreacion}"
-                              style="width:18%;">
+                              style="width:16%;">
                         <h:outputText value="#{s.fechaCreacion}" />
                     </p:column>
 
                     <p:column headerText="Estado"
                               sortBy="#{s.estado}"
-                              style="width:20%;">
+                              style="width:18%;">
                         <h:outputText value="#{reportesBean.descripcionEstado(s.estado)}" />
                     </p:column>
 
-                    <!-- NUEVA COLUMNA: PDF FIRMADO (solo Responsable de Accesos) -->
+                    <!-- Nueva columna: última firma / acción -->
+                    <p:column headerText="Última firma / acción"
+                              style="width:26%;">
+                        <h:outputText value="#{s.ultimaFirmaFecha}" />
+                        <br />
+                        <span style="font-size:11px;">
+                            #{s.ultimaFirmaDescripcion}
+                        </span>
+                    </p:column>
+
+                    <!-- Columna: PDF firmado (solo Responsable de Accesos) -->
                     <p:column headerText="Formulario firmado"
-                              style="width:18%; text-align:center;"
+                              style="width:14%; text-align:center;"
                               rendered="#{reportesBean.modoResponsableAccesos}">
                         <h:panelGroup rendered="#{not empty s.urlPdfFirmado}">
                             <h:outputLink value="#{s.urlPdfFirmado}" target="_blank">
@@ -161,7 +171,7 @@
 
                     <p:column headerText="Usuario solicitante"
                               sortBy="#{s.usuario.nombre}"
-                              style="width:38%;">
+                              style="width:20%;">
                         #{s.usuario.nombre} #{s.usuario.apellido}
                     </p:column>
 

@@ -2,6 +2,7 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
                 template="/templates/layout.xhtml">
 
     <f:metadata>
@@ -14,83 +15,103 @@
         <h:form id="formLista">
 
             <div class="card">
-                <div class="card-header">
+
+                <!-- ENCABEZADO -->
+                <div class="card-header"
+                     style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>Aplicaciones</h3>
 
-                    <h:link outcome="/Aplicacion/create.xhtml"
-                            value="Nueva Aplicación"
-                            styleClass="btn-primary" />
+                    <p:button value=" Nueva aplicación"
+                              icon="pi pi-plus"
+                              outcome="/Aplicacion/create.xhtml"
+                              styleClass="ui-button-primary" />
                 </div>
 
-                <!-- FILTRO POR NOMBRE -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Filtrar por nombre:</label>
-                        <h:inputText value="#{aplicacionBean.filtroNombre}"
-                                     styleClass="input">
-                            <f:ajax render="tablaApps" />
-                        </h:inputText>
-                    </div>
+                <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true" />
+
+                <!-- FILTRO POR NOMBRE (listaFiltrada en el bean) -->
+                <div style="margin:10px 0; width:300px;">
+                    <label for="filtroNombre" style="font-size:12px; font-weight:600;">
+                        Filtrar por nombre
+                    </label>
+                    <p:inputText id="filtroNombre"
+                                 value="#{aplicacionBean.filtroNombre}"
+                                 style="width:100%;"
+                                 placeholder="Escriba el nombre..."
+                                 onkeypress="if (event.keyCode == 13) { return false; }">
+                        <!-- Filtrar mientras se escribe -->
+                        <p:ajax event="keyup"
+                                process="@this"
+                                update="tablaApps" />
+                    </p:inputText>
                 </div>
 
-                <h:messages globalOnly="true" style="color:red;" />
-
-                <h:dataTable id="tablaApps"
+                <!-- TABLA PRIMEFACES -->
+                <p:dataTable id="tablaApps"
+                             widgetVar="tablaAppsWidget"
                              value="#{aplicacionBean.listaFiltrada}"
                              var="a"
-                             styleClass="table table-striped table-bordered"
-                             headerClass="table-header"
-                             rowClasses="row-par,row-impar">
+                             paginator="true"
+                             rows="10"
+                             rowsPerPageTemplate="5,10,20,50"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
+                             paginatorPosition="bottom"
+                             styleClass="datatable-excel tabla-solicitudes tabla-solicitudes-compacta"
+                             emptyMessage="No existen aplicaciones registradas"
+                             responsiveLayout="scroll">
 
-                    <h:column>
-                        <f:facet name="header">ID</f:facet>
+                    <!-- ID -->
+                    <p:column headerText="ID"
+                              sortBy="#{a.id}"
+                              style="width:6%; text-align:center;">
                         #{a.id}
-                    </h:column>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Nombre</f:facet>
+                    <!-- Nombre -->
+                    <p:column headerText="Nombre"
+                              sortBy="#{a.nombre}">
                         #{a.nombre}
-                    </h:column>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Descripción</f:facet>
+                    <!-- Descripción -->
+                    <p:column headerText="Descripción"
+                              sortBy="#{a.descripcion}">
                         #{a.descripcion}
-                    </h:column>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Fecha creación</f:facet>
+                    <!-- Fecha creación -->
+                    <p:column headerText="Fecha creación"
+                              sortBy="#{a.fechaCreacion}">
                         <h:outputText value="#{a.fechaCreacion}" />
-                    </h:column>
+                    </p:column>
 
-                    <!-- Botón para ver permisos de la aplicación -->
-                    <h:column>
-                        <f:facet name="header">Permisos</f:facet>
-                        <h:link value="Ver permisos"
-                                outcome="/PermisoAplicacion/index.xhtml">
+                    <!-- Permisos -->
+                    <p:column headerText="Permisos"
+                              style="width:15%; text-align:center;">
+                        <p:button value="Ver permisos"
+                                  icon="pi pi-list"
+                                  outcome="/PermisoAplicacion/index.xhtml"
+                                  styleClass="ui-button-secondary btn-accion">
                             <f:param name="idAplicacion" value="#{a.id}" />
-                        </h:link>
-                    </h:column>
+                        </p:button>
+                    </p:column>
 
-                    <h:column>
-                        <f:facet name="header">Acciones</f:facet>
+                    <!-- Acciones (solo editar) -->
+                    <p:column headerText="Acciones"
+                              style="width:15%; text-align:center;">
 
-                        <h:link value="Editar"
-                                outcome="/Aplicacion/edit.xhtml">
+                        <p:button icon="pi pi-pencil"
+                                  outcome="/Aplicacion/edit.xhtml"
+                                  title="Editar aplicación"
+                                  styleClass="ui-button-info btn-accion">
                             <f:param name="id" value="#{a.id}" />
-                        </h:link>
+                        </p:button>
 
+                        <!-- IMPORTANTE: no hay ningún botón eliminar aquí,
+                             ni comentarios con #{aplicacionBean.eliminar} -->
+                    </p:column>
 
-
-                        <h:commandLink value="Eliminar"
-                                       action="#{aplicacionBean.eliminar}"
-                                       onclick="return confirm('¿Eliminar la aplicación seleccionada?');">
-                            <f:setPropertyActionListener
-                                    target="#{aplicacionBean.aplicacionSeleccionada}"
-                                    value="#{a}" />
-                        </h:commandLink>
-                    </h:column>
-
-                </h:dataTable>
+                </p:dataTable>
             </div>
 
         </h:form>

@@ -17,12 +17,16 @@
         <h:form id="formAuditoria">
 
             <div class="card">
-                <h3>Auditoría del Sistema</h3>
+                <div class="card-header"
+                     style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0;">Auditoría del Sistema</h3>
+                </div>
 
-                <p style="font-size:13px;">
+                <p style="font-size:13px; margin-top:8px;">
                     Registro de eventos generados por las operaciones del sistema
                     (creación, actualización, aprobación, anulación, aplicación de accesos, etc.).
                     La información es de <strong>solo lectura</strong>.
+                    Utilice los filtros en los encabezados de las columnas para buscar.
                 </p>
 
                 <p:messages id="msgs"
@@ -33,6 +37,7 @@
                 <p:dataTable id="tablaAuditoria"
                              value="#{auditoriaBean.lista}"
                              var="a"
+                             widgetVar="tablaAuditoriaWidget"
                              paginator="true"
                              rows="10"
                              rowsPerPageTemplate="5,10,20,50"
@@ -43,31 +48,87 @@
                              emptyMessage="No existen eventos de auditoría registrados"
                              responsiveLayout="scroll">
 
-                    <p:column headerText="Fecha evento" sortBy="#{a.fechaEvento}">
+                    <!-- FECHA EVENTO -->
+                    <p:column headerText="Fecha evento"
+                              sortBy="#{a.fechaEvento}"
+                              filterBy="#{a.fechaEvento}"
+                              filterMatchMode="contains">
+                        <f:facet name="filter">
+                            <p:inputText style="width:100%; font-size:11px;"
+                                         onkeyup="PF('tablaAuditoriaWidget').filter()" />
+                        </f:facet>
                         <h:outputText value="#{a.fechaEvento}" />
                     </p:column>
 
-                    <p:column headerText="Usuario" sortBy="#{a.usuario}">
+                    <!-- USUARIO -->
+                    <p:column headerText="Usuario"
+                              sortBy="#{a.usuario}"
+                              filterBy="#{a.usuario}"
+                              filterMatchMode="contains">
+                        <f:facet name="filter">
+                            <p:inputText style="width:100%; font-size:11px;"
+                                         onkeyup="PF('tablaAuditoriaWidget').filter()" />
+                        </f:facet>
                         #{a.usuario}
                     </p:column>
 
-                    <p:column headerText="Correo">
+                    <!-- CORREO -->
+                    <p:column headerText="Correo"
+                              sortBy="#{a.correo}"
+                              filterBy="#{a.correo}"
+                              filterMatchMode="contains">
+                        <f:facet name="filter">
+                            <p:inputText style="width:100%; font-size:11px;"
+                                         onkeyup="PF('tablaAuditoriaWidget').filter()" />
+                        </f:facet>
                         <h:outputText value="#{a.correo}" title="#{a.correo}" />
                     </p:column>
 
-                    <p:column headerText="Acción" sortBy="#{a.accion}">
+                    <!-- ACCIÓN -->
+                    <p:column headerText="Acción"
+                              sortBy="#{a.accion}"
+                              filterBy="#{a.accion}"
+                              filterMatchMode="contains">
+                        <f:facet name="filter">
+                            <p:inputText style="width:100%; font-size:11px;"
+                                         onkeyup="PF('tablaAuditoriaWidget').filter()" />
+                        </f:facet>
                         #{a.accion}
                     </p:column>
 
-                    <p:column headerText="Entidad" sortBy="#{a.entidad}">
+                    <!-- ENTIDAD -->
+                    <p:column headerText="Entidad"
+                              sortBy="#{a.entidad}"
+                              filterBy="#{a.entidad}"
+                              filterMatchMode="contains">
+                        <f:facet name="filter">
+                            <p:inputText style="width:100%; font-size:11px;"
+                                         onkeyup="PF('tablaAuditoriaWidget').filter()" />
+                        </f:facet>
                         #{a.entidad}
                     </p:column>
 
-                    <p:column headerText="ID Entidad" sortBy="#{a.idEntidad}">
+                    <!-- ID ENTIDAD -->
+                    <p:column headerText="ID Entidad"
+                              sortBy="#{a.idEntidad}"
+                              filterBy="#{a.idEntidad}"
+                              filterMatchMode="contains"
+                              style="width:8%; text-align:center;">
+                        <f:facet name="filter">
+                            <p:inputText style="width:100%; font-size:11px;"
+                                         onkeyup="PF('tablaAuditoriaWidget').filter()" />
+                        </f:facet>
                         #{a.idEntidad}
                     </p:column>
 
-                    <p:column headerText="Detalle">
+                    <!-- DETALLE -->
+                    <p:column headerText="Detalle"
+                              filterBy="#{a.detalle}"
+                              filterMatchMode="contains">
+                        <f:facet name="filter">
+                            <p:inputText style="width:100%; font-size:11px;"
+                                         onkeyup="PF('tablaAuditoriaWidget').filter()" />
+                        </f:facet>
                         <h:outputText value="#{a.detalle}" title="#{a.detalle}" />
                     </p:column>
 

@@ -280,7 +280,7 @@
                 </tr>
             </table>
 
-            <!-- FECHA DE SOLICITUD (sin estado en el PDF) -->
+            <!-- FECHA DE SOLICITUD -->
             <table class="form-main">
                 <tr>
                     <th style="width:25%;">Fecha de solicitud</th>
@@ -308,7 +308,7 @@
                     <td>#{solicitudDetalleBean.servidorSolicitante.correo}</td>
                     <th>Teléfono / Extensión</th>
                     <td>
-                        <!-- #{solicitudDetalleBean.servidorSolicitante.telefono} -->
+                         #{solicitudDetalleBean.servidorSolicitante.telefono}
                     </td>
                 </tr>
             </table>
@@ -348,8 +348,8 @@
                     </td>
                     <th>Teléfono / Extensión</th>
                     <td>
-                        <!-- #{empty solicitudDetalleBean.servidorAutoriza
-                                 ? '' : solicitudDetalleBean.servidorAutoriza.telefono} -->
+                         #{empty solicitudDetalleBean.servidorAutoriza
+                                 ? '' : solicitudDetalleBean.servidorAutoriza.telefono}
                     </td>
                 </tr>
             </table>

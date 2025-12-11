@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "usuario_rol",
        uniqueConstraints = @UniqueConstraint(columnNames = {"id_usuario","id_rol"}))
 public class UsuarioRol {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,44 +23,46 @@ public class UsuarioRol {
     @Column(name = "fecha_asignacion", nullable = false)
     private LocalDateTime fechaAsignacion = LocalDateTime.now();
 
-	public Long getId() {
-		return id;
-	}
+    // ================== GETTERS / SETTERS ==================
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public Usuario getUsuario() {
-		return usuario;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setUsuario(Usuario usuario) {
-		this.usuario = usuario;
-	}
+    public Usuario getUsuario() {
+        return usuario;
+    }
 
-	public Rol getRol() {
-		return rol;
-	}
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 
-	public void setRol(Rol rol) {
-		this.rol = rol;
-	}
+    public Rol getRol() {
+        return rol;
+    }
 
-	public LocalDateTime getFechaAsignacion() {
-		return fechaAsignacion;
-	}
+    public void setRol(Rol rol) {
+        this.rol = rol;
+    }
 
-	public void setFechaAsignacion(LocalDateTime fechaAsignacion) {
-		this.fechaAsignacion = fechaAsignacion;
-	}
+    public LocalDateTime getFechaAsignacion() {
+        return fechaAsignacion;
+    }
 
-	@Override
-	public String toString() {
-		return "UsuarioRol [id=" + id + ", usuario=" + usuario + ", rol=" + rol + ", fechaAsignacion=" + fechaAsignacion
-				+ "]";
-	}
+    public void setFechaAsignacion(LocalDateTime fechaAsignacion) {
+        this.fechaAsignacion = fechaAsignacion;
+    }
 
-    
+    @Override
+    public String toString() {
+        return "UsuarioRol [id=" + id
+                + ", usuario=" + usuario
+                + ", rol=" + rol
+                + ", fechaAsignacion=" + fechaAsignacion
+                + "]";
+    }
 }
-

@@ -12,10 +12,8 @@ import javax.faces.context.FacesContext;
 
 import com.senadi.solicitud02.controlador.AuditoriaControlador;
 import com.senadi.solicitud02.controlador.UsuarioControlador;
-
 import com.senadi.solicitud02.controlador.impl.AuditoriaControladorImpl;
 import com.senadi.solicitud02.controlador.impl.UsuarioControladorImpl;
-
 import com.senadi.solicitud02.modelo.entidades.Auditoria;
 import com.senadi.solicitud02.modelo.entidades.Usuario;
 
@@ -28,19 +26,17 @@ public class AuditoriaBean implements Serializable {
     private AuditoriaControlador auditoriaCtrl = new AuditoriaControladorImpl();
     private UsuarioControlador usuarioCtrl = new UsuarioControladorImpl();
 
-    // Listado principal
+    // Listado principal (para el index.xhtml)
     private List<Auditoria> lista;
 
-    // Formulario (crear/editar)
+    // Formulario (poco usado en el enfoque de log)
     private Auditoria formulario;
 
     // Registro seleccionado para eliminar
     private Auditoria auditoriaSeleccionada;
 
-    // Listado de usuarios para el combo
+    // Usuarios para combos (si en algún momento se edita desde UI)
     private List<Usuario> usuarios;
-
-    // ID de usuario seleccionado
     private Long idUsuarioSeleccionado;
 
     // Para editar por ?id=XX
@@ -68,9 +64,8 @@ public class AuditoriaBean implements Serializable {
         listar();
     }
 
-    /**
-     * Cargar una auditoría específica para edición (usado por <f:viewAction>).
-     */
+    // ===== CRUD opcional (no se exponen en la UI de auditoría) =====
+
     public String cargarAuditoria() {
         if (idAuditoria != null) {
             Auditoria a = auditoriaCtrl.buscarPorId(idAuditoria);
@@ -85,22 +80,17 @@ public class AuditoriaBean implements Serializable {
                 cargarUsuarios();
             } else {
                 FacesContext.getCurrentInstance().addMessage(
-                        null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                "Registro no encontrado",
-                                "La auditoría solicitada no existe."));
+                    null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Registro no encontrado",
+                            "La auditoría solicitada no existe."));
             }
         }
         return null;
     }
 
-    /**
-     * Crear o actualizar una entrada de auditoría.
-     * (En el nuevo enfoque como log, normalmente no se usará desde la UI).
-     */
     public String guardar() {
         try {
-            // Resolver usuario
             if (idUsuarioSeleccionado != null) {
                 Usuario u = usuarioCtrl.buscarPorId(idUsuarioSeleccionado);
                 formulario.setUsuario(u);
@@ -121,40 +111,36 @@ public class AuditoriaBean implements Serializable {
 
             listar();
             FacesContext.getCurrentInstance().addMessage(
-                    null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO,
-                            "Éxito",
-                            "Registro de auditoría guardado correctamente."));
+                null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO,
+                        "Éxito",
+                        "Registro de auditoría guardado correctamente."));
         } catch (Exception e) {
             FacesContext.getCurrentInstance().addMessage(
-                    null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Error al guardar",
-                            e.getMessage()));
+                null,
+                new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Error al guardar",
+                        e.getMessage()));
         }
         return null;
     }
 
-    /**
-     * Eliminar el registro seleccionado.
-     * (En el nuevo enfoque de log, no debería exponerse en la UI).
-     */
     public String eliminar() {
         if (auditoriaSeleccionada != null && auditoriaSeleccionada.getId() != null) {
             try {
                 auditoriaCtrl.eliminar(auditoriaSeleccionada.getId());
                 listar();
                 FacesContext.getCurrentInstance().addMessage(
-                        null,
-                        new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                "Eliminado",
-                                "El registro de auditoría ha sido eliminado."));
+                    null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO,
+                            "Eliminado",
+                            "El registro de auditoría ha sido eliminado."));
             } catch (Exception e) {
                 FacesContext.getCurrentInstance().addMessage(
-                        null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                "Error al eliminar",
-                                e.getMessage()));
+                    null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Error al eliminar",
+                            e.getMessage()));
             }
         }
         return null;

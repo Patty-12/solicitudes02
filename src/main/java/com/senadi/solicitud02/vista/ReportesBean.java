@@ -2,8 +2,12 @@ package com.senadi.solicitud02.vista;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -15,6 +19,7 @@ import javax.faces.context.FacesContext;
 
 import com.senadi.solicitud02.controlador.SolicitudControlador;
 import com.senadi.solicitud02.controlador.impl.SolicitudControladorImpl;
+import com.senadi.solicitud02.modelo.entidades.Firma;
 import com.senadi.solicitud02.modelo.entidades.Solicitud;
 import com.senadi.solicitud02.modelo.entidades.Usuario;
 
@@ -50,6 +55,9 @@ public class ReportesBean implements Serializable {
 
     // Parámetro de URL para forzar perspectiva (tic / oficial)
     private String tipoReporte;
+
+    // Formateador para fecha/hora de la última firma
+    private DateTimeFormatter fmtFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     // =====================================================
     // CICLO DE VIDA
@@ -186,6 +194,9 @@ public class ReportesBean implements Serializable {
                     continue;
                 }
 
+                boolean tieneFirmaDirectorTic = contieneFirmaConTexto(s, "Director TIC");
+                boolean tieneFirmaOficial = contieneFirmaConTexto(s, "Oficial de Seguridad");
+
                 // =========================
                 // ADMINISTRADOR
                 // =========================
@@ -222,13 +233,16 @@ public class ReportesBean implements Serializable {
                 // DIRECTOR TIC
                 // =========================
                 if (modoDirectorTic) {
-                    if ("PENDIENTE DIRECTOR TIC".equals(est)
-                            || "PENDIENTE OFICIAL SEGURIDAD".equals(est)
-                            || "PENDIENTE RESPONSABLE ACCESOS".equals(est)
-                            || "APROBADA".equals(est)
-                            || "RECHAZADA".equals(est)
-                            || "APLICADO PERMISOS".equals(est)
-                            || "PERMISOS APLICADOS".equals(est)) {
+                    // Sólo solicitudes en las que YA intervino el Director TIC
+                    // (tienen una firma con "Director TIC") y que están después
+                    // de su intervención.
+                    if (tieneFirmaDirectorTic &&
+                            ("PENDIENTE OFICIAL SEGURIDAD".equals(est)
+                             || "PENDIENTE RESPONSABLE ACCESOS".equals(est)
+                             || "APROBADA".equals(est)
+                             || "RECHAZADA".equals(est)
+                             || "APLICADO PERMISOS".equals(est)
+                             || "PERMISOS APLICADOS".equals(est))) {
                         listaBase.add(s);
                     }
                     continue;
@@ -238,12 +252,15 @@ public class ReportesBean implements Serializable {
                 // OFICIAL DE SEGURIDAD
                 // =========================
                 if (modoOficialSeguridad) {
-                    if ("PENDIENTE OFICIAL SEGURIDAD".equals(est)
-                            || "PENDIENTE RESPONSABLE ACCESOS".equals(est)
-                            || "APROBADA".equals(est)
-                            || "RECHAZADA".equals(est)
-                            || "APLICADO PERMISOS".equals(est)
-                            || "PERMISOS APLICADOS".equals(est)) {
+                    // Sólo solicitudes en las que YA intervino el Oficial
+                    // (firma con "Oficial de Seguridad") y que están después
+                    // de esa aprobación.
+                    if (tieneFirmaOficial &&
+                            ("PENDIENTE RESPONSABLE ACCESOS".equals(est)
+                             || "APROBADA".equals(est)
+                             || "RECHAZADA".equals(est)
+                             || "APLICADO PERMISOS".equals(est)
+                             || "PERMISOS APLICADOS".equals(est))) {
                         listaBase.add(s);
                     }
                     continue;
@@ -270,6 +287,25 @@ public class ReportesBean implements Serializable {
                             "Error al cargar reportes",
                             e.getMessage()));
         }
+    }
+
+    /**
+     * Verifica si la solicitud tiene alguna firma cuya descripción
+     * contenga cierto texto (por ejemplo, "Director TIC" o
+     * "Oficial de Seguridad").
+     */
+    private boolean contieneFirmaConTexto(Solicitud s, String texto) {
+        if (s == null || s.getFirmas() == null || texto == null) {
+            return false;
+        }
+        String t = texto.toLowerCase();
+        for (Firma f : s.getFirmas()) {
+            if (f != null && f.getDescripcion() != null
+                    && f.getDescripcion().toLowerCase().contains(t)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // =====================================================
@@ -368,6 +404,27 @@ public class ReportesBean implements Serializable {
         }
 
         return "Firmada y aprobada";
+    }
+
+    // =====================================================
+    //  INFORMACIÓN DE ÚLTIMA FIRMA PARA LOS REPORTES
+    // =====================================================
+
+    public String ultimaFirmaFecha(Solicitud s) {
+        if (s == null || s.getFirmas() == null || s.getFirmas().isEmpty()) {
+            return "";
+        }
+        Firma ultima = Collections.max(s.getFirmas(), Comparator.comparing(Firma::getFechaFirma));
+        LocalDateTime dt = ultima.getFechaFirma();
+        return (dt != null) ? dt.format(fmtFechaHora) : "";
+    }
+
+    public String ultimaFirmaDescripcion(Solicitud s) {
+        if (s == null || s.getFirmas() == null || s.getFirmas().isEmpty()) {
+            return "Sin firmas registradas";
+        }
+        Firma ultima = Collections.max(s.getFirmas(), Comparator.comparing(Firma::getFechaFirma));
+        return (ultima.getDescripcion() != null) ? ultima.getDescripcion() : "";
     }
 
     // =====================================================

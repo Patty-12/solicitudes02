@@ -12,7 +12,6 @@
     <ui:define name="titulo">Gestión de Usuarios</ui:define>
 
     <ui:define name="contenido">
-
         <h:form id="formLista">
 
             <div class="card">
@@ -20,59 +19,80 @@
                 <!-- ENCABEZADO -->
                 <div class="card-header"
                      style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>Usuarios</h3>
+                    <h3>Usuarios registrados</h3>
 
+                    <!-- CÓDIGO ORIGINAL PARA AGREGAR USUARIOS DESHABILITADO (SOLO CONSULTA) -->
+                    <!--
                     <p:button value=" Nuevo Usuario"
                               icon="pi pi-user-plus"
                               outcome="/Usuario/create.xhtml"
                               styleClass="ui-button-success" />
+                    -->
                 </div>
 
-                <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true" />
+                <!-- FILTRO RÁPIDO -->
+                <div style="margin-bottom:10px; width:300px;">
+                    <p:inputText value="#{usuarioBean.filtro}"
+                                 placeholder="Buscar por nombre, apellido o correo"
+                                 styleClass="input"
+                                 style="width:100%;">
+                        <p:ajax event="keyup"
+                                update="tablaUsuarios"
+                                listener="#{usuarioBean.aplicarFiltro}" />
+                    </p:inputText>
+                </div>
 
-                <!-- TABLA DE USUARIOS -->
+                <!-- TABLA DE USUARIOS (SOLO LECTURA) -->
                 <p:dataTable id="tablaUsuarios"
-                             value="#{usuarioBean.lista}"
+                             widgetVar="tablaUsuariosWidget"
+                             value="#{usuarioBean.listaFiltrada}"
                              var="u"
                              paginator="true"
-                             rows="10"
+                             rows="15"
                              rowsPerPageTemplate="5,10,20,50"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
                              paginatorPosition="bottom"
-                             styleClass="datatable-excel tabla-solicitudes tabla-solicitudes-compacta"
                              emptyMessage="No existen usuarios registrados"
-                             style="width:100%;"
-                             responsiveLayout="scroll">
+                             responsiveLayout="scroll"
+                             styleClass="datatable-excel tabla-solicitudes tabla-solicitudes-compacta"
+                             style="width:100%;">
 
                     <!-- ID -->
-                    <p:column headerText="ID" sortBy="#{u.id}" style="width:80px; text-align:center;">
+                    <p:column headerText="ID"
+                              sortBy="#{u.id}"
+                              style="width:70px; text-align:center;">
                         #{u.id}
                     </p:column>
 
                     <!-- Nombre -->
-                    <p:column headerText="Nombre" sortBy="#{u.nombre}">
+                    <p:column headerText="Nombre"
+                              sortBy="#{u.nombre}">
                         #{u.nombre}
                     </p:column>
 
                     <!-- Apellido -->
-                    <p:column headerText="Apellido" sortBy="#{u.apellido}">
+                    <p:column headerText="Apellido"
+                              sortBy="#{u.apellido}">
                         #{u.apellido}
                     </p:column>
 
                     <!-- Correo -->
-                    <p:column headerText="Correo" sortBy="#{u.correo}">
+                    <p:column headerText="Correo"
+                              sortBy="#{u.correo}">
                         <h:outputText value="#{u.correo}" title="#{u.correo}" />
                     </p:column>
 
                     <!-- Cargo -->
-                    <p:column headerText="Cargo" sortBy="#{u.cargo}">
+                    <p:column headerText="Cargo"
+                              sortBy="#{u.cargo}">
                         #{u.cargo}
                     </p:column>
 
-                    <!-- ACCIONES -->
-                    <p:column headerText="Acciones" style="width:150px; text-align:center;">
+                    <!-- COLUMNA DE ACCIONES DESHABILITADA (SOLO CONSULTA) -->
+                    <!--
+                    <p:column headerText="Acciones"
+                              style="width:150px; text-align:center;">
 
-                        <!-- Editar -->
                         <p:button icon="pi pi-pencil"
                                   outcome="/Usuario/edit.xhtml"
                                   title="Editar usuario"
@@ -80,7 +100,6 @@
                             <f:param name="id" value="#{u.id}" />
                         </p:button>
 
-                        <!-- Eliminar -->
                         <p:commandButton icon="pi pi-trash"
                                          title="Eliminar usuario"
                                          styleClass="ui-button-danger btn-accion"
@@ -92,13 +111,13 @@
                                     value="#{u}" />
                         </p:commandButton>
                     </p:column>
+                    -->
 
                 </p:dataTable>
 
             </div>
 
         </h:form>
-
     </ui:define>
 
 </ui:composition>

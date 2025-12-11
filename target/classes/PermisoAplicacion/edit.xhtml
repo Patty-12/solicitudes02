@@ -6,6 +6,7 @@
 
     <f:metadata>
         <f:event type="preRenderView" listener="#{loginBean.verificarSesion}" />
+        <!-- Solo necesitamos el ID del permiso -->
         <f:viewParam name="id" value="#{permisoAplicacionBean.idPermisoAplicacion}" />
         <f:viewAction action="#{permisoAplicacionBean.cargarPermisoAplicacion}" />
     </f:metadata>
@@ -64,11 +65,12 @@
                     </div>
                 </div>
 
-                <div class="form-actions">
+                <div class="form-actions" style="margin-top:10px; display:flex; gap:8px;">
                     <h:commandButton value="Actualizar"
                                      action="#{permisoAplicacionBean.guardar}"
                                      styleClass="btn-primary" />
 
+                    <!-- Sin parámetros, sin EL; no puede generar null -->
                     <h:button value="Regresar"
                               outcome="/PermisoAplicacion/index.xhtml?faces-redirect=true"
                               styleClass="btn-secondary" />

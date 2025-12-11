@@ -38,7 +38,7 @@ public class UsuarioRolBean implements Serializable {
     // Formulario (crear/editar)
     private UsuarioRol formulario;
 
-    // Registro seleccionado para eliminar
+    // Registro seleccionado (para una futura eliminación lógica si se desea)
     private UsuarioRol usuarioRolSeleccionado;
 
     // Listas de apoyo (combos)
@@ -98,20 +98,23 @@ public class UsuarioRolBean implements Serializable {
 
     /**
      * Crear o actualizar una asignación Usuario–Rol.
+     * Además, sincroniza el campo CARGO del usuario con el nombre del rol.
      */
     public String guardar() {
         try {
             // Resolver usuario
+            Usuario u = null;
             if (idUsuarioSeleccionado != null) {
-                Usuario u = usuarioCtrl.buscarPorId(idUsuarioSeleccionado);
+                u = usuarioCtrl.buscarPorId(idUsuarioSeleccionado);
                 formulario.setUsuario(u);
             } else {
                 formulario.setUsuario(null);
             }
 
             // Resolver rol
+            Rol r = null;
             if (idRolSeleccionado != null) {
-                Rol r = rolCtrl.buscarPorId(idRolSeleccionado);
+                r = rolCtrl.buscarPorId(idRolSeleccionado);
                 formulario.setRol(r);
             } else {
                 formulario.setRol(null);
@@ -128,43 +131,42 @@ public class UsuarioRolBean implements Serializable {
                 usuarioRolCtrl.actualizar(formulario);
             }
 
+            // ==============================
+            // SINCRONIZAR CARGO DEL USUARIO
+            // ==============================
+            if (u != null && r != null) {
+                // Cargo institucional = nombre del rol
+                u.setCargo(r.getNombre());
+                usuarioCtrl.actualizar(u);
+            }
+
             listar();
+
             FacesContext.getCurrentInstance().addMessage(
                     null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO,
                             "Éxito",
                             "Asignación Usuario–Rol guardada correctamente."));
+
+            // Volver al listado
+            return "/UsuarioRol/index.xhtml?faces-redirect=true";
+
         } catch (Exception e) {
             FacesContext.getCurrentInstance().addMessage(
                     null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
                             "Error al guardar",
                             e.getMessage()));
+            return null;
         }
-        return null; // por ahora se queda en la misma vista
     }
 
     /**
-     * Eliminar la asignación seleccionada.
+     * Método de eliminación mantenido por compatibilidad, pero sin uso actual.
+     * Si en el futuro se requiere una baja lógica se puede implementar aquí.
      */
     public String eliminar() {
-        if (usuarioRolSeleccionado != null && usuarioRolSeleccionado.getId() != null) {
-            try {
-                usuarioRolCtrl.eliminar(usuarioRolSeleccionado.getId());
-                listar();
-                FacesContext.getCurrentInstance().addMessage(
-                        null,
-                        new FacesMessage(FacesMessage.SEVERITY_INFO,
-                                "Eliminado",
-                                "La asignación ha sido eliminada."));
-            } catch (Exception e) {
-                FacesContext.getCurrentInstance().addMessage(
-                        null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                "Error al eliminar",
-                                e.getMessage()));
-            }
-        }
+        // Actualmente no se elimina por requerimientos de auditoría.
         return null;
     }
 

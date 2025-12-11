@@ -86,7 +86,6 @@ a:hover {
 
 /* ==========================================
    TABLA GENERAL DE SISTEMAS Y PERMISOS
-   (LETRA LIGERAMENTE MÁS PEQUEÑA)
    ========================================== */
 .tabla-permisos {
     width: 100%;
@@ -127,7 +126,7 @@ a:hover {
 .tabla-datos-autoriza {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px; /* ligeramente más pequeña */
+    font-size: 12px;
     border: 1px solid #d1d5db;
 }
 
@@ -268,7 +267,7 @@ a:hover {
 .main-header {
     border-bottom: 1px solid #e5e7eb;
 
-    /* Espaciado mejorado para que no se pegue al primer card */
+
     padding-top: 12px;
     padding-bottom: 24px;
     margin-bottom: 32px;
@@ -281,7 +280,7 @@ a:hover {
 
 /* Logo institucional dentro del header */
 .main-header-logo {
-    max-height: 70px;  /* tamaño moderado */
+    max-height: 70px; 
     width: auto;
     display: block;
 }
@@ -336,7 +335,7 @@ a:hover {
     margin-bottom: 16px;
 }
 
-/* Quick links – centrados y con color fuerte */
+/* Quick links – centrados y con color */
 .quick-links {
     list-style: none;
     padding: 0;
@@ -360,7 +359,7 @@ a:hover {
 .quick-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px; /* Separación limpia entre botones */
+    gap: 12px; /* Separación limpia entre botones :v */
 }
 
 .quick-links a {
@@ -388,7 +387,7 @@ a:hover {
 .user-info-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px; /* bajamos a 12px para mejor lectura con Barlow */
+    font-size: 12px; 
     margin-top: 8px;
 }
 
@@ -526,7 +525,7 @@ a:hover {
     align-items: flex-end;
     gap: 12px;
     margin-bottom: 12px;
-    flex-wrap: wrap; /* por si la pantalla es pequeña */
+    flex-wrap: wrap; /* por si la pantalla es pequeña xd */
 }
 
 .solicitudes-filtros .filtro-estado {
