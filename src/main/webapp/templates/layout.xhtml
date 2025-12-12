@@ -6,7 +6,16 @@
       xmlns:fn="http://java.sun.com/jsp/jstl/functions">
 
 <h:head>
-    <title><ui:insert name="titulo">Panel principal</ui:insert></title>
+    <title><ui:insert name="titulo"> SIAAS</ui:insert></title>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/png"
+          href="#{resource['img/favicon.png']}" />
+
+    <link rel="shortcut icon" type="image/x-icon"
+          href="#{resource['img/iepi.ico']}" />
+
+    <!-- ===== ESTILOS ===== -->
     <h:outputStylesheet library="css" name="estilo.css" />
 </h:head>
 
@@ -28,7 +37,7 @@
         <nav class="sidebar-nav">
             <ul id="menu">
 
-                <!-- OPCIONES COMUNES (TODOS LOS USUARIOS) -->
+                <!-- OPCIONES COMUNES -->
                 <li><h:link outcome="/home" value="Inicio" /></li>
                 <li><h:link outcome="/Solicitud/index" value="Solicitudes" /></li>
 
@@ -56,22 +65,18 @@
                     </li>
                 </h:panelGroup>
 
-                <!-- DIRECTOR TIC (que hoy también actúa como Oficial de Seguridad) -->
+                <!-- DIRECTOR TIC -->
                 <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director tic'}">
                     <li>
                         <h:link outcome="/Solicitud/pendientes"
                                 value="Solicitudes Pendientes" />
                     </li>
-
-                    <!-- Reportes vista Dirección TIC -->
                     <li>
                         <h:link outcome="/Reportes/index"
                                 value="Reportes Dirección TIC">
                             <f:param name="tipo" value="tic" />
                         </h:link>
                     </li>
-
-                    <!-- Reportes vista Oficial de Seguridad (misma persona, otra perspectiva) -->
                     <li>
                         <h:link outcome="/Reportes/index"
                                 value="Reportes Oficial Seguridad">
@@ -87,13 +92,12 @@
                     <li><h:link outcome="/Aplicacion/index" value="Gestión de Aplicaciones" /></li>
                     <li><h:link outcome="/PermisoAplicacion/index" value="Permisos de Aplicaciones" /></li>
                     <li><h:link outcome="/Auditoria/index" value="Auditoría del Sistema" /></li>
-              <!--  <li><h:link outcome="/Reportes/index" value="Reportes del Sistema" /></li>  -->
                 </h:panelGroup>
 
             </ul>
         </nav>
 
-        <!-- BOTÓN CERRAR SESIÓN -->
+        <!-- CERRAR SESIÓN -->
         <div class="sidebar-logout">
             <h:form id="logoutForm">
                 <h:commandButton id="logoutBtn"
@@ -109,16 +113,13 @@
     <!-- ===== CONTENIDO PRINCIPAL ===== -->
     <main class="main-content">
 
-        <!-- HEADER: LOGO NUEVO + BIENVENIDA -->
         <header class="main-header">
 
-            <!-- Logo institucional nuevo -->
             <h:graphicImage library="img"
                             name="logo.jpeg"
                             styleClass="main-header-logo"
                             alt="Logo institucional" />
 
-            <!-- Texto de usuario -->
             <div class="main-header-user">
                 <h2>
                     Bienvenido,
@@ -135,7 +136,6 @@
 
         </header>
 
-        <!-- CONTENIDO VARIABLE -->
         <section class="content">
             <ui:insert name="contenido" />
         </section>
