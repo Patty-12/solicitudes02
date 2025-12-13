@@ -11,7 +11,6 @@
     <!-- ===== FAVICON ===== -->
     <link rel="icon" type="image/png"
           href="#{resource['img/favicon.png']}" />
-
     <link rel="shortcut icon" type="image/x-icon"
           href="#{resource['img/iepi.ico']}" />
 
@@ -21,128 +20,164 @@
 
 <h:body>
 
-<div class="dashboard">
+    <!-- ruta actual real -->
+    <ui:param name="path" value="#{request.servletPath}" />
 
-    <!-- ===== SIDEBAR ===== -->
-    <aside class="sidebar">
+    <div class="dashboard">
 
-        <!-- TÍTULO LATERAL SIN LOGO -->
-        <div class="sidebar-header">
-            <h3 style="font-size: 18px; font-weight: 700; line-height: 1.2;">
-                Solicitud de Permisos
-            </h3>
-        </div>
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar">
 
-        <!-- MENÚ LATERAL -->
-        <nav class="sidebar-nav">
-            <ul id="menu">
-
-                <!-- OPCIONES COMUNES -->
-                <li><h:link outcome="/home" value="Inicio" /></li>
-                <li><h:link outcome="/Solicitud/index" value="Solicitudes" /></li>
-
-                <!-- RESPONSABLE DE ACCESOS -->
-                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'responsable accesos'}">
-                    <li>
-                        <h:link outcome="/Solicitud/pendientesAccesos"
-                                value="Solicitudes por aplicar" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Reportes/index"
-                                value="Reportes de accesos aplicados" />
-                    </li>
-                </h:panelGroup>
-
-                <!-- DIRECTOR -->
-                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director'}">
-                    <li>
-                        <h:link outcome="/Solicitud/pendientes"
-                                value="Solicitudes Pendientes" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Reportes/index"
-                                value="Reportes" />
-                    </li>
-                </h:panelGroup>
-
-                <!-- DIRECTOR TIC -->
-                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director tic'}">
-                    <li>
-                        <h:link outcome="/Solicitud/pendientes"
-                                value="Solicitudes Pendientes" />
-                    </li>
-                    <li>
-                        <h:link outcome="/Reportes/index"
-                                value="Reportes Dirección TIC">
-                            <f:param name="tipo" value="tic" />
-                        </h:link>
-                    </li>
-                    <li>
-                        <h:link outcome="/Reportes/index"
-                                value="Reportes Oficial Seguridad">
-                            <f:param name="tipo" value="oficial" />
-                        </h:link>
-                    </li>
-                </h:panelGroup>
-
-                <!-- ADMINISTRADOR -->
-                <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'administrador'}">
-                    <li><h:link outcome="/Usuario/index" value="Gestión de Usuarios" /></li>
-                    <li><h:link outcome="/UsuarioRol/index" value="Asignación de Rol" /></li>
-                    <li><h:link outcome="/Aplicacion/index" value="Gestión de Aplicaciones" /></li>
-                    <li><h:link outcome="/PermisoAplicacion/index" value="Permisos de Aplicaciones" /></li>
-                    <li><h:link outcome="/Auditoria/index" value="Auditoría del Sistema" /></li>
-                </h:panelGroup>
-
-            </ul>
-        </nav>
-
-        <!-- CERRAR SESIÓN -->
-        <div class="sidebar-logout">
-            <h:form id="logoutForm">
-                <h:commandButton id="logoutBtn"
-                                 value="Cerrar Sesión"
-                                 action="#{loginBean.logout}"
-                                 styleClass="btn-logout"
-                                 ajax="false" />
-            </h:form>
-        </div>
-
-    </aside>
-
-    <!-- ===== CONTENIDO PRINCIPAL ===== -->
-    <main class="main-content">
-
-        <header class="main-header">
-
-            <h:graphicImage library="img"
-                            name="logo.jpeg"
-                            styleClass="main-header-logo"
-                            alt="Logo institucional" />
-
-            <div class="main-header-user">
-                <h2>
-                    Bienvenido,
-                    #{loginBean.usuario.nombre}
-                    #{loginBean.usuario.apellido}
-                </h2>
-
-                <p>
-                    Correo: #{loginBean.usuario.correo}
-                    <span style="margin: 0 10px;">·</span>
-                    Cargo: #{loginBean.usuario.cargo}
-                </p>
+            <div class="sidebar-header">
+                <h3 style="font-size: 18px; font-weight: 700; line-height: 1.2;">
+                    Solicitud de Permisos
+                </h3>
             </div>
 
-        </header>
+            <nav class="sidebar-nav">
+                <ul id="menu">
 
-        <section class="content">
-            <ui:insert name="contenido" />
-        </section>
+                    <!-- OPCIONES COMUNES -->
+                    <li>
+                        <h:link outcome="/home" value="Inicio"
+                                styleClass="#{path eq '/home.xhtml' ? 'active' : ''}" />
+                    </li>
 
-    </main>
+                    <li>
+                        <h:link outcome="/Solicitud/index" value="Solicitudes"
+                                styleClass="#{fn:contains(path, '/Solicitud/') ? 'active' : ''}" />
+                    </li>
 
-</div>
+                    <!-- RESPONSABLE DE ACCESOS -->
+                    <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'responsable accesos'}">
+                        <li>
+                            <h:link outcome="/Solicitud/pendientesAccesos"
+                                    value="Solicitudes por aplicar"
+                                    styleClass="#{fn:contains(path, '/Solicitud/pendientesAccesos') ? 'active' : ''}" />
+                        </li>
+
+                        <li>
+                            <h:link outcome="/Reportes/index"
+                                    value="Reportes de accesos aplicados"
+                                    styleClass="#{fn:contains(path, '/Reportes/') ? 'active' : ''}" />
+                        </li>
+                    </h:panelGroup>
+
+                    <!-- DIRECTOR -->
+                    <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director'}">
+                        <li>
+                            <h:link outcome="/Solicitud/pendientes"
+                                    value="Solicitudes Pendientes"
+                                    styleClass="#{fn:contains(path, '/Solicitud/pendientes') ? 'active' : ''}" />
+                        </li>
+
+                        <li>
+                            <h:link outcome="/Reportes/index"
+                                    value="Reportes"
+                                    styleClass="#{fn:contains(path, '/Reportes/') ? 'active' : ''}" />
+                        </li>
+                    </h:panelGroup>
+
+                    <!-- DIRECTOR TIC -->
+                    <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director tic'}">
+                        <li>
+                            <h:link outcome="/Solicitud/pendientes"
+                                    value="Solicitudes Pendientes"
+                                    styleClass="#{fn:contains(path, '/Solicitud/pendientes') ? 'active' : ''}" />
+                        </li>
+
+                        <li>
+                            <h:link outcome="/Reportes/index"
+                                    value="Reportes Dirección TIC"
+                                    styleClass="#{(fn:contains(path, '/Reportes/') and param.tipo eq 'tic') ? 'active' : ''}">
+                                <f:param name="tipo" value="tic" />
+                            </h:link>
+                        </li>
+
+                        <li>
+                            <h:link outcome="/Reportes/index"
+                                    value="Reportes Oficial Seguridad"
+                                    styleClass="#{(fn:contains(path, '/Reportes/') and param.tipo eq 'oficial') ? 'active' : ''}">
+                                <f:param name="tipo" value="oficial" />
+                            </h:link>
+                        </li>
+                    </h:panelGroup>
+
+                    <!-- ADMINISTRADOR -->
+                    <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'administrador'}">
+                        <li>
+                            <h:link outcome="/Usuario/index" value="Gestión de Usuarios"
+                                    styleClass="#{fn:contains(path, '/Usuario/') ? 'active' : ''}" />
+                        </li>
+
+                        <li>
+                            <h:link outcome="/UsuarioRol/index" value="Asignación de Rol"
+                                    styleClass="#{fn:contains(path, '/UsuarioRol/') ? 'active' : ''}" />
+                        </li>
+
+                        <li>
+                            <h:link outcome="/Aplicacion/index" value="Gestión de Aplicaciones"
+                                    styleClass="#{fn:contains(path, '/Aplicacion/') ? 'active' : ''}" />
+                        </li>
+
+                        <li>
+                            <h:link outcome="/PermisoAplicacion/index" value="Permisos de Aplicaciones"
+                                    styleClass="#{fn:contains(path, '/PermisoAplicacion/') ? 'active' : ''}" />
+                        </li>
+
+                        <li>
+                            <h:link outcome="/Auditoria/index" value="Auditoría del Sistema"
+                                    styleClass="#{fn:contains(path, '/Auditoria/') ? 'active' : ''}" />
+                        </li>
+                    </h:panelGroup>
+
+                </ul>
+            </nav>
+
+            <!-- CERRAR SESIÓN -->
+            <div class="sidebar-logout">
+                <h:form id="logoutForm">
+                    <h:commandButton id="logoutBtn"
+                                     value="Cerrar Sesión"
+                                     action="#{loginBean.logout}"
+                                     styleClass="btn-logout"
+                                     ajax="false" />
+                </h:form>
+            </div>
+
+        </aside>
+
+        <!-- ===== CONTENIDO PRINCIPAL ===== -->
+        <main class="main-content">
+
+            <header class="main-header">
+                <h:graphicImage library="img"
+                                name="logo.jpeg"
+                                styleClass="main-header-logo"
+                                alt="Logo institucional" />
+
+                <div class="main-header-user">
+                    <h2>
+                        Bienvenido,
+                        #{loginBean.usuario.nombre}
+                        #{loginBean.usuario.apellido}
+                    </h2>
+
+                    <p>
+                        Correo: #{loginBean.usuario.correo}
+                        <span style="margin: 0 10px;">·</span>
+                        Cargo: #{loginBean.usuario.cargo}
+                    </p>
+                </div>
+            </header>
+
+            <section class="content">
+                <ui:insert name="contenido" />
+            </section>
+
+        </main>
+
+    </div>
 
 </h:body>
 </html>

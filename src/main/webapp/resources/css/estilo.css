@@ -1,6 +1,7 @@
-/* ==========================================
-   FUENTES INSTITUCIONALES - BARLOW CONDENSED
-   ========================================== */
+/* =========================================================
+   1) FUENTES INSTITUCIONALES (Barlow Condensed)
+   ========================================================= */
+
 @font-face {
     font-family: 'BarlowCondensed';
     src: url('../fonts/BarlowCondensed-Thin.ttf') format('truetype');
@@ -36,9 +37,9 @@
     font-style: italic;
 }
 
-/* ==========================================
-   ESTILO GLOBAL
-   ========================================== */
+/* =========================================================
+   2) ESTILO GLOBAL (cosas base del sistema)
+   ========================================================= */
 
 * {
     box-sizing: border-box;
@@ -68,9 +69,10 @@ a:hover {
     text-decoration: underline;
 }
 
-/* ==========================================
-   PANEL CLARO
-   ========================================== */
+/* =========================================================
+   3) COMPONENTES PRIMEFACES (Panel claro)
+   ========================================================= */
+
 .panel-claro .ui-panel-titlebar,
 .panel-claro .ui-panel-content {
     background: #ffffff !important;
@@ -84,13 +86,15 @@ a:hover {
     padding: 6px 10px !important;
 }
 
-/* ==========================================
-   TABLA GENERAL DE SISTEMAS Y PERMISOS
-   ========================================== */
+/* =========================================================
+   4) TABLAS GENERALES (permisos / servidor / usuario)
+   ========================================================= */
+
+/* Tabla general de sistemas y permisos */
 .tabla-permisos {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px; /* antes 13px, para que no se vea tan grande */
+    font-size: 12px;
     background: #ffffff;
     border: 1px solid #d1d5db;
     border-radius: 6px;
@@ -112,17 +116,10 @@ a:hover {
     color: #1f2937;
 }
 
-.tabla-permisos tr:nth-child(odd) {
-    background: #fff7e6;
-}
+.tabla-permisos tr:nth-child(odd) { background: #fff7e6; }
+.tabla-permisos tr:nth-child(even) { background: #e3f2fd; }
 
-.tabla-permisos tr:nth-child(even) {
-    background: #e3f2fd;
-}
-
-/* ==========================================
-   TABLA DATOS DEL SERVIDOR QUE AUTORIZA
-   ========================================== */
+/* Tabla datos del servidor que autoriza */
 .tabla-datos-autoriza {
     width: 100%;
     border-collapse: collapse;
@@ -142,17 +139,35 @@ a:hover {
     text-align: left;
 }
 
-.tabla-datos-autoriza tr:nth-child(odd) td {
-    background: #fdf7e3;
+.tabla-datos-autoriza tr:nth-child(odd) td { background: #fdf7e3; }
+.tabla-datos-autoriza tr:nth-child(even) td { background: #f1f5fb; }
+
+/* Tabla datos del usuario (membrete + zebra) */
+.user-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 8px;
 }
 
-.tabla-datos-autoriza tr:nth-child(even) td {
-    background: #f1f5fb;
+.user-info-table th,
+.user-info-table td {
+    border: 1px solid #d1d5db;
+    padding: 6px 10px;
 }
 
-/* ==========================================
-   DASHBOARD (PANEL PRINCIPAL)
-   ========================================== */
+.user-info-table th {
+    background: #e5e7eb;
+    font-weight: 600;
+    text-align: left;
+}
+
+.user-info-table tr:nth-child(odd) td { background: #fff7e6; }
+.user-info-table tr:nth-child(even) td { background: #e3f2fd; }
+
+/* =========================================================
+   5) DASHBOARD (sidebar + header + cards)
+   ========================================================= */
 
 .dashboard {
     display: flex;
@@ -162,7 +177,7 @@ a:hover {
 
 /* Sidebar fijo a la izquierda */
 .sidebar {
-    position: fixed;          /* sidebar estático */
+    position: fixed;
     top: 0;
     left: 0;
     height: 100vh;
@@ -192,12 +207,12 @@ a:hover {
     color: #e5e7eb;
 }
 
-/* Menú lateral centrado verticalmente */
+/* Menú lateral */
 .sidebar-nav {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: center; /* si lo quieres arriba, cambia a flex-start */
 }
 
 .sidebar-nav ul {
@@ -210,20 +225,23 @@ a:hover {
     margin-bottom: 6px;
 }
 
+/* IMPORTANTE: hacemos que el <a> ocupe todo el ancho (para que el active pinte bonito) */
 .sidebar-nav a,
 .sidebar-nav span {
     display: block;
     padding: 8px 10px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 13px;
 }
 
 .sidebar-nav a {
     color: #e5e7eb;
+    text-decoration: none;
 }
 
+/* Hover */
 .sidebar-nav a:hover {
-    background: #1d4ed8;
+    background: rgba(255, 255, 255, 0.12);
     color: #ffffff;
 }
 
@@ -232,7 +250,14 @@ a:hover {
     color: #cbd5f5;
 }
 
-/* Contenedor del botón logout al pie del sidebar */
+/* ✅ ACTIVO */
+.sidebar-nav a.active {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* Contenedor del botón logout al pie */
 .sidebar-logout {
     margin-top: auto;
 }
@@ -254,20 +279,16 @@ a:hover {
     background: #dc2626;
 }
 
-/* Contenido principal: corre a la derecha del sidebar fijo */
+/* Contenido principal (corre a la derecha del sidebar fijo) */
 .main-content {
     flex: 1;
     padding: 20px 24px;
-    margin-left: 260px;    /* mismo ancho del sidebar */
+    margin-left: 260px;
 }
 
-/* ==========================================
-   CABECERA PRINCIPAL (HEADER SUPERIOR)
-   ========================================== */
+/* Header superior */
 .main-header {
     border-bottom: 1px solid #e5e7eb;
-
-
     padding-top: 12px;
     padding-bottom: 24px;
     margin-bottom: 32px;
@@ -278,14 +299,16 @@ a:hover {
     gap: 24px;
 }
 
-/* Logo institucional dentro del header */
 .main-header-logo {
-    max-height: 70px; 
+    max-height: 70px;
     width: auto;
     display: block;
 }
 
-/* Bloque de datos del usuario en el header */
+.main-header-user {
+    text-align: right;
+}
+
 .main-header-user h2 {
     margin: 0;
     font-size: 22px;
@@ -298,11 +321,7 @@ a:hover {
     color: #4b5563;
 }
 
-.main-header-user {
-    text-align: right;
-}
-
-/* Responsivo para pantallas pequeñas */
+/* Responsivo header */
 @media (max-width: 768px) {
     .main-header {
         flex-direction: column;
@@ -315,7 +334,7 @@ a:hover {
     }
 }
 
-/* Tarjetas */
+/* Cards */
 .content {
     display: flex;
     flex-direction: column;
@@ -335,93 +354,49 @@ a:hover {
     margin-bottom: 16px;
 }
 
-/* Quick links – centrados y con color */
+/* Quick links (limpio, sin duplicar) */
 .quick-links {
     list-style: none;
     padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    justify-content: flex-start;
     margin-top: 14px;
-}
 
-.quick-links a {
-    padding: 8px 14px;
-    border-radius: 9999px;
-    background: #2563eb;
-    border: 1px solid #1d4ed8;
-    font-size: 13px;
-    color: #ffffff;
-    font-weight: 500;
-}
-
-.quick-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px; /* Separación limpia entre botones :v */
+    gap: 12px; /* separación limpia */
+    justify-content: flex-start;
 }
 
 .quick-links a {
-    display: inline-flex;       /* evita que el texto de distintos tamaños cambie la altura */
-    align-items: center;        /* centra verticalmente el texto */
-    justify-content: center;    /* centra horizontalmente el texto */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
     padding: 10px 18px;
     border-radius: 9999px;
     background: #2563eb;
     color: #fff;
+
     font-size: 14px;
     font-weight: 600;
     border: 1px solid #1d4ed8;
 }
 
-
-
 .quick-links a:hover {
     background: #1d4ed8;
 }
 
-/* ==========================================
-   TABLA DATOS DEL USUARIO (MEMBRETE + ZEBRA)
-   ========================================== */
-.user-info-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px; 
-    margin-top: 8px;
-}
-
-.user-info-table th,
-.user-info-table td {
-    border: 1px solid #d1d5db;
-    padding: 6px 10px;
-}
-
-.user-info-table th {
-    background: #e5e7eb;
-    font-weight: 600;
-    text-align: left;
-}
-
-/* Zebra en las filas de datos */
-.user-info-table tr:nth-child(odd) td {
-    background: #fff7e6;
-}
-
-.user-info-table tr:nth-child(even) td {
-    background: #e3f2fd;
-}
-
-/* ==========================================
-   LOGIN – FONDO AZUL DEGRADADO
-   ========================================== */
+/* =========================================================
+   6) LOGIN (fondo degradado + caja)
+   ========================================================= */
 
 .login-body {
     margin: 0;
     min-height: 100vh;
+
     display: flex;
     justify-content: center;
     align-items: center;
+
     background: linear-gradient(135deg,
         #dbeafe 0%,
         #93c5fd 35%,
@@ -429,6 +404,7 @@ a:hover {
         #3b82f6 80%,
         #1d4ed8 100%
     );
+
     font-family: 'BarlowCondensed', "Segoe UI", Arial, sans-serif;
 }
 
@@ -456,14 +432,14 @@ a:hover {
     color: #111827;
 }
 
-/* Logo superior en login */
+/* Logo superior en login (si lo usas con esa clase) */
 .sidebar-logo {
     display: block;
     max-width: 220px;
     margin: 0 auto 10px auto;
 }
 
-/* Campos del formulario */
+/* Form login */
 .form-group {
     margin-bottom: 15px;
     display: flex;
@@ -493,7 +469,6 @@ a:hover {
     background: #ffffff;
 }
 
-/* Botón de ingreso */
 .btn-login {
     margin-top: 10px;
     width: 100%;
@@ -516,10 +491,11 @@ a:hover {
     transform: scale(0.98);
 }
 
-/* ==========================================
-   FILTROS DE SOLICITUDES
-   ========================================== */
+/* =========================================================
+   7) SOLICITUDES (filtros + tablas)
+   ========================================================= */
 
+/* Filtros */
 .solicitudes-filtros {
     display: flex;
     align-items: flex-end;
@@ -539,7 +515,6 @@ a:hover {
     margin-bottom: 4px;
 }
 
-/* Botones Buscar / Limpiar en la misma línea */
 .solicitudes-filtros .filtro-botones {
     display: flex;
     gap: 8px;
@@ -556,7 +531,6 @@ a:hover {
     cursor: pointer;
 }
 
-/* Buscar azul */
 .btn-buscar {
     background: #2563eb;
     color: #ffffff;
@@ -566,7 +540,6 @@ a:hover {
     background: #1d4ed8;
 }
 
-/* Limpiar gris */
 .btn-limpiar {
     background: #4b5563;
     color: #ffffff;
@@ -576,32 +549,22 @@ a:hover {
     background: #374151;
 }
 
-/* ==========================================
-   TABLA DE SOLICITUDES – ZEBRA
-   ========================================== */
-
-.tabla-solicitudes tbody tr:nth-child(odd) {
-    background: #fff7e6;
-}
-
-.tabla-solicitudes tbody tr:nth-child(even) {
-    background: #e3f2fd;
-}
+/* Zebra tabla solicitudes (si usas tabla HTML normal) */
+.tabla-solicitudes tbody tr:nth-child(odd) { background: #fff7e6; }
+.tabla-solicitudes tbody tr:nth-child(even) { background: #e3f2fd; }
 
 .tabla-solicitudes thead th {
     background: #f9fafb;
     border-bottom: 1px solid #e5e7eb;
-    font-size: 12px; /* encabezados ligeramente más pequeños */
+    font-size: 12px;
 }
 
-/* ======================================================
-   TABLA DE SOLICITUDES — COMPACTA Y PROPORCIONAL
-   ====================================================== */
+/* PrimeFaces DataTable compacta */
 .tabla-solicitudes-compacta .ui-datatable-data td,
 .tabla-solicitudes-compacta .ui-datatable-data span,
 .tabla-solicitudes-compacta .ui-datatable-data {
-    font-size: 11.5px !important; /* Tamaño real proporcional */
-    line-height: 1.25 !important; /* Reduce el alto */
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
 }
 
 .tabla-solicitudes-compacta .ui-datatable-header,
@@ -614,20 +577,14 @@ a:hover {
     padding: 6px 6px !important;
 }
 
-/* Reduce el padding general para compactar cada fila */
 .tabla-solicitudes-compacta .ui-datatable-data > tr > td {
     padding: 4px 6px !important;
 }
 
-/* Ajuste en botones dentro de la tabla para que no se vean desproporcionados */
 .tabla-solicitudes-compacta .btn-accion {
     transform: scale(0.85);
     margin-right: 2px;
 }
-
-/* ======================================================
-   TABLA DE SOLICITUDES — FORZAR ANCHO COMPLETO
-   ====================================================== */
 
 .tabla-solicitudes-compacta,
 .tabla-solicitudes-compacta .ui-datatable,
@@ -636,17 +593,11 @@ a:hover {
     width: 100% !important;
 }
 
-/* ======================================================
-   TABLA SOLICITUDES — DISTRIBUCIÓN EQUILIBRADA DE COLUMNAS
-   ====================================================== */
-
-/* Obliga a que TODAS las columnas crezcan de forma proporcional */
 .tabla-solicitudes-compacta table {
     table-layout: fixed !important;
     width: 100% !important;
 }
 
-/* Evita que el contenido largo (como "PENDIENTE RESPONSABLE ACCESOS") rompa la tabla */
 .tabla-solicitudes-compacta td,
 .tabla-solicitudes-compacta th {
     white-space: nowrap;
@@ -654,9 +605,9 @@ a:hover {
     text-overflow: ellipsis;
 }
 
-/* ==========================================
-   REPORTES – FILTROS Y TABLA
-   ========================================== */
+/* =========================================================
+   8) REPORTES (filtros)
+   ========================================================= */
 
 .reportes-filtros {
     display: flex;
@@ -679,16 +630,56 @@ a:hover {
     margin-bottom: 3px;
 }
 
-/* Botones de filtro más pequeños que los de otras pantallas */
 .reportes-filtros .btn-buscar,
 .reportes-filtros .btn-limpiar {
     padding: 4px 12px;
     font-size: 12px;
 }
 
-/* Alineación de los botones de filtro */
 .reportes-filtros .filtro-botones {
     display: flex;
     gap: 8px;
 }
+
+/* para que se note clarito dónde estoy */
+.sidebar-nav a.active{
+    background: rgba(255,255,255,0.18);
+    color: #ffffff;
+    font-weight: 700;
+    border-left: 4px solid #60a5fa;
+    padding-left: 10px;
+}
+
+/* ========= MENU ACTIVO (FIX) ========= */
+
+/* normal */
+.sidebar-nav a{
+    display: block;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: #e5e7eb;
+}
+
+/* hover (ya lo tienes, lo dejo por claridad) */
+.sidebar-nav a:hover{
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+/* ACTIVO: se queda marcado aunque no haya hover */
+.sidebar-nav a.active{
+    background: rgba(255,255,255,0.18) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+
+    border-left: 4px solid #60a5fa;
+    padding-left: 10px; /* compensa el borde */
+}
+
+/* opcional: si el link activo está dentro de li, evita que el li lo “aplane” */
+.sidebar-nav li{
+    background: transparent;
+}
+
+
 

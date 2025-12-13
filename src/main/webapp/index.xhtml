@@ -8,7 +8,6 @@
     <!--  FAVICON  -->
     <link rel="icon" type="image/png"
           href="#{resource['img/favicon.png']}" />
-
     <link rel="shortcut icon" type="image/x-icon"
           href="#{resource['img/iepi.ico']}" />
 
@@ -17,67 +16,63 @@
 
 <h:body styleClass="login-body">
 
-    <div style="display:flex; width:100%; min-height:100vh;">
+    <!-- Contenedor centrado -->
+    <div style="
+         min-height:100vh;
+         display:flex;
+         flex-direction:column;
+         justify-content:center;
+         align-items:center;
+         gap:18px;
+         padding:20px;
+    ">
 
-        <!-- LADO IZQUIERDO BLANCO -->
+        <!-- Título superior -->
         <div style="
-             width:38%;
-             background:#ffffff;
-             display:flex;
-             align-items:center;
-             justify-content:center;
-             padding:40px;
+             text-align:center;
+             font-size:22px;
+             font-weight:700;
         ">
-            <div style="text-align:center;">
-                <h:graphicImage library="img" name="logo.jpeg"
-                                style="max-width:520px; width:100%; margin-bottom:22px;" />
-
-                <div style="font-size:52px; font-weight:900; letter-spacing:3px;">
-                    SIAAS
-                </div>
-
-                <div style="font-size:18px; font-weight:600;">
-                    Sistema Institucional de Autorización de Accesos
-                </div>
-            </div>
+            Sistema Institucional de Autorización de Accesos
         </div>
 
-        <!-- LADO DERECHO DEGRADADO -->
-        <div style="
-             width:62%;
-             background:linear-gradient(135deg,#e5f0ff,#2f6df6);
-             display:flex;
-             align-items:center;
-             justify-content:center;
-        ">
+        <!-- Panel -->
+        <div class="login-box" style="width:460px; padding:26px 30px;">
 
-            <div class="login-box" style="width:440px;">
-                <h2 style="text-align:center;">Ingreso al Sistema</h2>
-
-                <h:form id="loginForm">
-                    <h:messages globalOnly="true" style="color:red; margin-bottom:10px;" />
-
-                    <div class="form-group">
-                        <label for="usuario">Usuario</label>
-                        <h:inputText id="usuario"
-                                     value="#{loginBean.username}"
-                                     styleClass="input"
-                                     required="true" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password">Contraseña</label>
-                        <h:inputSecret id="password"
-                                       value="#{loginBean.password}"
-                                       styleClass="input"
-                                       required="true" />
-                    </div>
-
-                    <h:commandButton value="Ingresar"
-                                     action="#{loginBean.login}"
-                                     styleClass="btn-login" />
-                </h:form>
+            <!-- Logo dentro del panel -->
+            <div style="text-align:center; margin-bottom:14px;">
+                <h:graphicImage library="img" name="logo.jpeg"
+                                alt="Logo SENADI"
+                                style="max-width:330px; width:100%; height:auto;" />
             </div>
+
+            <h2 style="text-align:center; margin: 10px 0 18px 0;">
+                Ingreso al Sistema
+            </h2>
+
+            <h:form id="loginForm">
+                <h:messages globalOnly="true" style="color:red; margin-bottom:10px;" />
+
+                <div class="form-group">
+                    <label for="usuario">Usuario</label>
+                    <h:inputText id="usuario"
+                                 value="#{loginBean.username}"
+                                 styleClass="input"
+                                 required="true" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <h:inputSecret id="password"
+                                   value="#{loginBean.password}"
+                                   styleClass="input"
+                                   required="true" />
+                </div>
+
+                <h:commandButton value="Ingresar"
+                                 action="#{loginBean.login}"
+                                 styleClass="btn-login" />
+            </h:form>
 
         </div>
 
