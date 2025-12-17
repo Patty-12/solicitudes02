@@ -20,8 +20,8 @@
 
 <h:body>
 
-    <!-- ruta actual real -->
-    <ui:param name="path" value="#{request.servletPath}" />
+    <!-- ✅ view actual (JSF real) -->
+    <ui:param name="viewId" value="#{facesContext.viewRoot.viewId}" />
 
     <div class="dashboard">
 
@@ -30,7 +30,7 @@
 
             <div class="sidebar-header">
                 <h3 style="font-size: 18px; font-weight: 700; line-height: 1.2;">
-                    Solicitud de Permisos
+                    Sistema Institucional de Autorización de Accesos
                 </h3>
             </div>
 
@@ -39,27 +39,40 @@
 
                     <!-- OPCIONES COMUNES -->
                     <li>
-                        <h:link outcome="/home" value="Inicio"
-                                styleClass="#{path eq '/home.xhtml' ? 'active' : ''}" />
+                        <h:link outcome="/home"
+                                styleClass="#{viewId eq '/home.xhtml' ? 'active' : ''}">
+                            <span class="menu-label">Inicio</span>
+                        </h:link>
                     </li>
 
+                    <!-- ✅ SOLO se marca cuando es el index de Solicitud -->
                     <li>
-                        <h:link outcome="/Solicitud/index" value="Solicitudes"
-                                styleClass="#{fn:contains(path, '/Solicitud/') ? 'active' : ''}" />
+                        <h:link outcome="/Solicitud/index"
+                                styleClass="#{viewId eq '/Solicitud/index.xhtml' ? 'active' : ''}">
+                            <span class="menu-label">Solicitudes</span>
+                        </h:link>
                     </li>
 
                     <!-- RESPONSABLE DE ACCESOS -->
                     <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'responsable accesos'}">
                         <li>
                             <h:link outcome="/Solicitud/pendientesAccesos"
-                                    value="Solicitudes por aplicar"
-                                    styleClass="#{fn:contains(path, '/Solicitud/pendientesAccesos') ? 'active' : ''}" />
+                                    styleClass="#{fn:contains(viewId, '/Solicitud/pendientesAccesos') ? 'active' : ''}">
+                                <span class="menu-label">Solicitudes por aplicar</span>
+
+                                <!-- ✅ badge (INLINE para que no baje) -->
+                                <h:panelGroup layout="inline"
+                                              rendered="#{solicitudesPendientesBean.pendientesPorAplicarCount gt 0}">
+                                    <span class="badge">#{solicitudesPendientesBean.pendientesPorAplicarCount}</span>
+                                </h:panelGroup>
+                            </h:link>
                         </li>
 
                         <li>
                             <h:link outcome="/Reportes/index"
-                                    value="Reportes de accesos aplicados"
-                                    styleClass="#{fn:contains(path, '/Reportes/') ? 'active' : ''}" />
+                                    styleClass="#{fn:contains(viewId, '/Reportes/') ? 'active' : ''}">
+                                <span class="menu-label">Reportes de accesos aplicados</span>
+                            </h:link>
                         </li>
                     </h:panelGroup>
 
@@ -67,14 +80,22 @@
                     <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director'}">
                         <li>
                             <h:link outcome="/Solicitud/pendientes"
-                                    value="Solicitudes Pendientes"
-                                    styleClass="#{fn:contains(path, '/Solicitud/pendientes') ? 'active' : ''}" />
+                                    styleClass="#{fn:contains(viewId, '/Solicitud/pendientes') ? 'active' : ''}">
+                                <span class="menu-label">Solicitudes Pendientes</span>
+
+                                <!-- ✅ badge (INLINE para que no baje) -->
+                                <h:panelGroup layout="inline"
+                                              rendered="#{solicitudesPendientesBean.pendientesFirmaCount gt 0}">
+                                    <span class="badge">#{solicitudesPendientesBean.pendientesFirmaCount}</span>
+                                </h:panelGroup>
+                            </h:link>
                         </li>
 
                         <li>
                             <h:link outcome="/Reportes/index"
-                                    value="Reportes"
-                                    styleClass="#{fn:contains(path, '/Reportes/') ? 'active' : ''}" />
+                                    styleClass="#{fn:contains(viewId, '/Reportes/') ? 'active' : ''}">
+                                <span class="menu-label">Reportes</span>
+                            </h:link>
                         </li>
                     </h:panelGroup>
 
@@ -82,23 +103,30 @@
                     <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'director tic'}">
                         <li>
                             <h:link outcome="/Solicitud/pendientes"
-                                    value="Solicitudes Pendientes"
-                                    styleClass="#{fn:contains(path, '/Solicitud/pendientes') ? 'active' : ''}" />
-                        </li>
+                                    styleClass="#{fn:contains(viewId, '/Solicitud/pendientes') ? 'active' : ''}">
+                                <span class="menu-label">Solicitudes Pendientes</span>
 
-                        <li>
-                            <h:link outcome="/Reportes/index"
-                                    value="Reportes Dirección TIC"
-                                    styleClass="#{(fn:contains(path, '/Reportes/') and param.tipo eq 'tic') ? 'active' : ''}">
-                                <f:param name="tipo" value="tic" />
+                                <!-- ✅ badge (INLINE para que no baje) -->
+                                <h:panelGroup layout="inline"
+                                              rendered="#{solicitudesPendientesBean.pendientesFirmaCount gt 0}">
+                                    <span class="badge">#{solicitudesPendientesBean.pendientesFirmaCount}</span>
+                                </h:panelGroup>
                             </h:link>
                         </li>
 
                         <li>
                             <h:link outcome="/Reportes/index"
-                                    value="Reportes Oficial Seguridad"
-                                    styleClass="#{(fn:contains(path, '/Reportes/') and param.tipo eq 'oficial') ? 'active' : ''}">
+                                    styleClass="#{(fn:contains(viewId, '/Reportes/') and param.tipo eq 'tic') ? 'active' : ''}">
+                                <f:param name="tipo" value="tic" />
+                                <span class="menu-label">Reportes Dirección TIC</span>
+                            </h:link>
+                        </li>
+
+                        <li>
+                            <h:link outcome="/Reportes/index"
+                                    styleClass="#{(fn:contains(viewId, '/Reportes/') and param.tipo eq 'oficial') ? 'active' : ''}">
                                 <f:param name="tipo" value="oficial" />
+                                <span class="menu-label">Reportes Oficial Seguridad</span>
                             </h:link>
                         </li>
                     </h:panelGroup>
@@ -106,28 +134,38 @@
                     <!-- ADMINISTRADOR -->
                     <h:panelGroup rendered="#{fn:toLowerCase(loginBean.usuario.cargo) eq 'administrador'}">
                         <li>
-                            <h:link outcome="/Usuario/index" value="Gestión de Usuarios"
-                                    styleClass="#{fn:contains(path, '/Usuario/') ? 'active' : ''}" />
+                            <h:link outcome="/Usuario/index"
+                                    styleClass="#{fn:contains(viewId, '/Usuario/') ? 'active' : ''}">
+                                <span class="menu-label">Gestión de Usuarios</span>
+                            </h:link>
                         </li>
 
                         <li>
-                            <h:link outcome="/UsuarioRol/index" value="Asignación de Rol"
-                                    styleClass="#{fn:contains(path, '/UsuarioRol/') ? 'active' : ''}" />
+                            <h:link outcome="/UsuarioRol/index"
+                                    styleClass="#{fn:contains(viewId, '/UsuarioRol/') ? 'active' : ''}">
+                                <span class="menu-label">Asignación de Rol</span>
+                            </h:link>
                         </li>
 
                         <li>
-                            <h:link outcome="/Aplicacion/index" value="Gestión de Aplicaciones"
-                                    styleClass="#{fn:contains(path, '/Aplicacion/') ? 'active' : ''}" />
+                            <h:link outcome="/Aplicacion/index"
+                                    styleClass="#{fn:contains(viewId, '/Aplicacion/') ? 'active' : ''}">
+                                <span class="menu-label">Gestión de Aplicaciones</span>
+                            </h:link>
                         </li>
 
                         <li>
-                            <h:link outcome="/PermisoAplicacion/index" value="Permisos de Aplicaciones"
-                                    styleClass="#{fn:contains(path, '/PermisoAplicacion/') ? 'active' : ''}" />
+                            <h:link outcome="/PermisoAplicacion/index"
+                                    styleClass="#{fn:contains(viewId, '/PermisoAplicacion/') ? 'active' : ''}">
+                                <span class="menu-label">Permisos de Aplicaciones</span>
+                            </h:link>
                         </li>
 
                         <li>
-                            <h:link outcome="/Auditoria/index" value="Auditoría del Sistema"
-                                    styleClass="#{fn:contains(path, '/Auditoria/') ? 'active' : ''}" />
+                            <h:link outcome="/Auditoria/index"
+                                    styleClass="#{fn:contains(viewId, '/Auditoria/') ? 'active' : ''}">
+                                <span class="menu-label">Auditoría del Sistema</span>
+                            </h:link>
                         </li>
                     </h:panelGroup>
 

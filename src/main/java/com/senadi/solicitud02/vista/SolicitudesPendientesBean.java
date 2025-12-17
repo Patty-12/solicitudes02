@@ -35,11 +35,21 @@ public class SolicitudesPendientesBean implements Serializable {
     private SolicitudControlador solCtrl = new SolicitudControladorImpl();
     private Usuario usuarioActual;
 
+    // =======================
+    // NOTIFICACIONES (badge)
+    // =======================
+    private Integer pendientesFirmaCountCache;
+    private Integer pendientesPorAplicarCountCache;
+
     @PostConstruct
     public void init() {
         usuarioActual = obtenerUsuarioLogueado();
         listaPendientes = new ArrayList<Solicitud>();
         listaPendientesAccesos = new ArrayList<Solicitud>();
+
+        // cache inicial (evita que salga null en el menú)
+        pendientesFirmaCountCache = null;
+        pendientesPorAplicarCountCache = null;
     }
 
     // ======================================================
@@ -79,6 +89,100 @@ public class SolicitudesPendientesBean implements Serializable {
         return cargo.contains("responsable") && cargo.contains("accesos");
     }
 
+    private List<Solicitud> safeBuscarPorEstado(String estado) {
+        try {
+            List<Solicitud> l = solCtrl.buscarPorEstado(estado);
+            return (l != null) ? l : new ArrayList<Solicitud>();
+        } catch (Exception e) {
+            return new ArrayList<Solicitud>();
+        }
+    }
+
+    private List<Solicitud> deduplicarPorId(List<Solicitud> input) {
+        Map<Long, Solicitud> mapa = new LinkedHashMap<Long, Solicitud>();
+        if (input != null) {
+            for (Solicitud s : input) {
+                if (s != null && s.getId() != null) {
+                    mapa.put(s.getId(), s);
+                }
+            }
+        }
+        return new ArrayList<Solicitud>(mapa.values());
+    }
+
+    // ======================================================
+    // CONTADORES PARA NOTIFICACIONES (MENÚ)
+    // ======================================================
+
+    /**
+     * Contador para badge en "Solicitudes Pendientes" (pendientes.xhtml)
+     * según el cargo del usuario actual.
+     */
+    public int getPendientesFirmaCount() {
+        if (pendientesFirmaCountCache == null) {
+            pendientesFirmaCountCache = calcularPendientesFirmaCount();
+        }
+        return pendientesFirmaCountCache;
+    }
+
+    /**
+     * Contador para badge en "Solicitudes por aplicar" (pendientesAccesos.xhtml)
+     * para Responsable de Accesos.
+     */
+    public int getPendientesPorAplicarCount() {
+        if (pendientesPorAplicarCountCache == null) {
+            pendientesPorAplicarCountCache = calcularPendientesPorAplicarCount();
+        }
+        return pendientesPorAplicarCountCache;
+    }
+
+    /**
+     * Recalcula ambos contadores (útil después de actualizar estado).
+     */
+    public void refrescarContadores() {
+        pendientesFirmaCountCache = calcularPendientesFirmaCount();
+        pendientesPorAplicarCountCache = calcularPendientesPorAplicarCount();
+    }
+
+    private int calcularPendientesFirmaCount() {
+        if (usuarioActual == null) return 0;
+
+        String cargo = cargoActual();
+        List<Solicitud> acumulado = new ArrayList<Solicitud>();
+
+        // Director de área
+        if (esDirector(cargo)) {
+            acumulado.addAll(safeBuscarPorEstado("PENDIENTE DIRECTOR"));
+        }
+
+        // Director TIC: ve Director TIC + Oficial Seguridad
+        if (esDirectorTic(cargo)) {
+            acumulado.addAll(safeBuscarPorEstado("PENDIENTE DIRECTOR TIC"));
+            acumulado.addAll(safeBuscarPorEstado("PENDIENTE OFICIAL SEGURIDAD"));
+        }
+        // Oficial Seguridad separado
+        else if (esOficialSeguridad(cargo)) {
+            acumulado.addAll(safeBuscarPorEstado("PENDIENTE OFICIAL SEGURIDAD"));
+        }
+
+        // Responsable de accesos (si también usa esta vista genérica)
+        if (esResponsableAccesos(cargo)) {
+            acumulado.addAll(safeBuscarPorEstado("PENDIENTE RESPONSABLE ACCESOS"));
+        }
+
+        return deduplicarPorId(acumulado).size();
+    }
+
+    private int calcularPendientesPorAplicarCount() {
+        if (usuarioActual == null) return 0;
+
+        String cargo = cargoActual();
+        if (!esResponsableAccesos(cargo)) return 0;
+
+        // pendientes por aplicar permisos
+        return safeBuscarPorEstado("PENDIENTE RESPONSABLE ACCESOS").size();
+    }
+
     // ======================================================
     // PENDIENTES DE FIRMA (pendientes.xhtml)
     // ======================================================
@@ -96,36 +200,32 @@ public class SolicitudesPendientesBean implements Serializable {
             }
 
             String cargo = cargoActual();
+            List<Solicitud> acumulado = new ArrayList<Solicitud>();
 
-            // Director de área: ve las PENDIENTE DIRECTOR
+            // Director de área
             if (esDirector(cargo)) {
-                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE DIRECTOR"));
+                acumulado.addAll(safeBuscarPorEstado("PENDIENTE DIRECTOR"));
             }
 
-            // Director TIC: ve PENDIENTE DIRECTOR TIC y también PENDIENTE OFICIAL SEGURIDAD
-            // (porque en tu flujo el Director TIC actúa también como Oficial)
+            // Director TIC
             if (esDirectorTic(cargo)) {
-                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE DIRECTOR TIC"));
-                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE OFICIAL SEGURIDAD"));
+                acumulado.addAll(safeBuscarPorEstado("PENDIENTE DIRECTOR TIC"));
+                acumulado.addAll(safeBuscarPorEstado("PENDIENTE OFICIAL SEGURIDAD"));
             }
-            // Si existe un usuario con cargo Oficial Seguridad separado
+            // Oficial Seguridad separado
             else if (esOficialSeguridad(cargo)) {
-                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE OFICIAL SEGURIDAD"));
+                acumulado.addAll(safeBuscarPorEstado("PENDIENTE OFICIAL SEGURIDAD"));
             }
 
-            // Responsable de Accesos también puede utilizar esta vista genérica
+            // Responsable Accesos también puede usar esta vista genérica
             if (esResponsableAccesos(cargo)) {
-                listaPendientes.addAll(solCtrl.buscarPorEstado("PENDIENTE RESPONSABLE ACCESOS"));
+                acumulado.addAll(safeBuscarPorEstado("PENDIENTE RESPONSABLE ACCESOS"));
             }
 
-            // Eliminar duplicados manteniendo orden
-            Map<Long, Solicitud> mapa = new LinkedHashMap<Long, Solicitud>();
-            for (Solicitud s : listaPendientes) {
-                if (s.getId() != null) {
-                    mapa.put(s.getId(), s);
-                }
-            }
-            listaPendientes = new ArrayList<Solicitud>(mapa.values());
+            listaPendientes = deduplicarPorId(acumulado);
+
+            // actualizar badge
+            pendientesFirmaCountCache = listaPendientes.size();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -133,6 +233,7 @@ public class SolicitudesPendientesBean implements Serializable {
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
                             "Error al cargar pendientes", e.getMessage()));
             listaPendientes = new ArrayList<Solicitud>();
+            pendientesFirmaCountCache = 0;
         }
     }
 
@@ -143,11 +244,6 @@ public class SolicitudesPendientesBean implements Serializable {
     /**
      * Carga las solicitudes que debe ver el Responsable de Accesos
      * en la vista /Solicitud/pendientesAccesos.xhtml.
-     *
-     * Diseño actual:
-     *  - Solo se muestran solicitudes en estado "PENDIENTE RESPONSABLE ACCESOS".
-     *  - Cuando se marcan como atendidas, cambian a "APLICADO PERMISOS"
-     *    y dejan de aparecer aquí (solo quedan visibles en Reportes).
      */
     public void cargarPendientesAccesos() {
         try {
@@ -159,16 +255,14 @@ public class SolicitudesPendientesBean implements Serializable {
 
             String cargo = cargoActual();
             if (!esResponsableAccesos(cargo)) {
-                // Seguridad básica: si no es responsable de accesos, no se carga nada.
                 return;
             }
 
-            // Aquí asumimos que el flujo pone en este estado las solicitudes
-            // que ya están aprobadas y esperan la aplicación de permisos.
-            List<Solicitud> pendientes = solCtrl.buscarPorEstado("PENDIENTE RESPONSABLE ACCESOS");
-            if (pendientes != null) {
-                listaPendientesAccesos.addAll(pendientes);
-            }
+            List<Solicitud> pendientes = safeBuscarPorEstado("PENDIENTE RESPONSABLE ACCESOS");
+            listaPendientesAccesos.addAll(pendientes);
+
+            // actualizar badge
+            pendientesPorAplicarCountCache = listaPendientesAccesos.size();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -176,14 +270,13 @@ public class SolicitudesPendientesBean implements Serializable {
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
                             "Error al cargar permisos por aplicar", e.getMessage()));
             listaPendientesAccesos = new ArrayList<Solicitud>();
+            pendientesPorAplicarCountCache = 0;
         }
     }
 
     /**
      * Marca una solicitud como "atendida" por el Responsable de Accesos.
-     * Implementación: actualizar el estado a "APLICADO PERMISOS".
-     *
-     * IMPORTANTE: en la base de datos, el campo "estado" debe aceptar este valor.
+     * Estado final: "APLICADO PERMISOS".
      */
     public void marcarComoAtendido() {
         if (solicitudSeleccionada == null || solicitudSeleccionada.getId() == null) {
@@ -202,8 +295,6 @@ public class SolicitudesPendientesBean implements Serializable {
 
             String estadoActual = (s.getEstado() != null) ? s.getEstado().toUpperCase() : "";
 
-            // Permitimos marcar como atendida si viene desde estado pendiente de accesos
-            // o, opcionalmente, desde "APROBADA" (ajusta según tu flujo real).
             if (!"PENDIENTE RESPONSABLE ACCESOS".equals(estadoActual)
                     && !"APROBADA".equals(estadoActual)) {
                 FacesContext.getCurrentInstance().addMessage(null,
@@ -213,13 +304,15 @@ public class SolicitudesPendientesBean implements Serializable {
                 return;
             }
 
-            // Estado final sugerido para cuando se aplicaron los permisos
             s.setEstado("APLICADO PERMISOS");
             solCtrl.actualizar(s);
 
             // Recargar listas
             cargarPendientesAccesos();
-            cargarPendientes(); // opcional, por si usas la vista genérica también
+            cargarPendientes();
+
+            // Recalcular notificaciones
+            refrescarContadores();
 
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO,

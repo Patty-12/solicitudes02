@@ -2,12 +2,8 @@ package com.senadi.solicitud02.vista;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -19,7 +15,6 @@ import javax.faces.context.FacesContext;
 
 import com.senadi.solicitud02.controlador.SolicitudControlador;
 import com.senadi.solicitud02.controlador.impl.SolicitudControladorImpl;
-import com.senadi.solicitud02.modelo.entidades.Firma;
 import com.senadi.solicitud02.modelo.entidades.Solicitud;
 import com.senadi.solicitud02.modelo.entidades.Usuario;
 
@@ -29,35 +24,44 @@ public class ReportesBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private SolicitudControlador solCtrl = new SolicitudControladorImpl();
+    private final SolicitudControlador solCtrl = new SolicitudControladorImpl();
 
-    // Usuario actual (logueado)
+    // =============================
+    // CONTEXTO
+    // =============================
     private Usuario usuarioActual;
 
-    // Lista base según el rol y lista filtrada que se muestra en la tabla
-    private List<Solicitud> listaBase;
-    private List<Solicitud> lista;
+    // =============================
+    // LISTAS
+    // =============================
+    private List<Solicitud> listaBase = new ArrayList<>();
+    private List<Solicitud> lista = new ArrayList<>();
 
-    // Título dinámico de la sección
-    private String tituloSeccion;
+    // =============================
+    // UI
+    // =============================
+    private String tituloSeccion = "Reportes";
 
-    // Modos según rol (se usan en rendered="#{reportesBean.modoX}")
+    // =============================
+    // MODOS (ROL)
+    // =============================
     private boolean modoAdmin;
     private boolean modoDirector;
     private boolean modoDirectorTic;
     private boolean modoResponsableAccesos;
     private boolean modoOficialSeguridad;
 
-    // Filtros comunes
-    private String nombreFiltro;  // nombre / apellido del solicitante
-    private Date fechaDesde;      // rango de fechas (desde)
-    private Date fechaHasta;      // rango de fechas (hasta)
+    // =============================
+    // FILTROS
+    // =============================
+    private String nombreFiltro;
+    private Date fechaDesde;
+    private Date fechaHasta;
 
-    // Parámetro de URL para forzar perspectiva (tic / oficial)
+    // =============================
+    // PARAM URL
+    // =============================
     private String tipoReporte;
-
-    // Formateador para fecha/hora de la última firma
-    private DateTimeFormatter fmtFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     // =====================================================
     // CICLO DE VIDA
@@ -69,36 +73,29 @@ public class ReportesBean implements Serializable {
         prepararPantalla();
     }
 
-    /**
-     * Inicializa la pantalla de reportes según el rol del usuario
-     * y/o el parámetro tipoReporte (tic / oficial).
-     */
     public void prepararPantalla() {
-        // Reset de modos y listas
+
         modoAdmin = false;
         modoDirector = false;
         modoDirectorTic = false;
         modoResponsableAccesos = false;
         modoOficialSeguridad = false;
 
-        tituloSeccion = "Reportes";
-        listaBase = new ArrayList<>();
-        lista = new ArrayList<>();
+        listaBase.clear();
+        lista.clear();
 
-        // Reset filtros
         nombreFiltro = null;
         fechaDesde = null;
         fechaHasta = null;
 
         if (usuarioActual == null) {
-            tituloSeccion = "Reportes (sin usuario)";
+            tituloSeccion = "Reportes";
             return;
         }
 
         String cargo = cargoActual();
         String tipo = (tipoReporte != null) ? tipoReporte.trim().toLowerCase() : "";
 
-        // 1) Si viene parámetro en la URL, manda él
         if ("tic".equals(tipo)) {
             modoDirectorTic = true;
             tituloSeccion = "Flujo por Dirección TIC";
@@ -106,31 +103,25 @@ public class ReportesBean implements Serializable {
             modoOficialSeguridad = true;
             tituloSeccion = "Flujo Oficial de Seguridad";
         } else {
-            // 2) Si no hay parámetro, se usa el cargo
             if (esAdministrador(cargo)) {
                 modoAdmin = true;
                 tituloSeccion = "Todas las solicitudes (Administrador)";
             } else if (esDirector(cargo)) {
                 modoDirector = true;
-                tituloSeccion = "Solicitudes que usted firmó y aprobó";
+                tituloSeccion = "Solicitudes firmadas por Dirección";
             } else if (esDirectorTic(cargo)) {
                 modoDirectorTic = true;
                 tituloSeccion = "Flujo por Dirección TIC";
-            } else if (esResponsableAccesos(cargo)) {
-                modoResponsableAccesos = true;
-                tituloSeccion = "Etapa Responsable de Accesos";
             } else if (esOficialSeguridad(cargo)) {
                 modoOficialSeguridad = true;
                 tituloSeccion = "Flujo Oficial de Seguridad";
-            } else {
-                tituloSeccion = "Reportes";
+            } else if (esResponsableAccesos(cargo)) {
+                modoResponsableAccesos = true;
+                tituloSeccion = "Responsable de Accesos";
             }
         }
 
-        // Cargar la lista base según el modo activo
         cargarBasePorRol();
-
-        // Inicialmente, mostrar la lista completa sin filtros
         lista = new ArrayList<>(listaBase);
     }
 
@@ -142,7 +133,7 @@ public class ReportesBean implements Serializable {
         try {
             FacesContext fc = FacesContext.getCurrentInstance();
             LoginBean lb = fc.getApplication()
-                             .evaluateExpressionGet(fc, "#{loginBean}", LoginBean.class);
+                    .evaluateExpressionGet(fc, "#{loginBean}", LoginBean.class);
             return (lb != null) ? lb.getUsuario() : null;
         } catch (Exception e) {
             return null;
@@ -150,128 +141,72 @@ public class ReportesBean implements Serializable {
     }
 
     private String cargoActual() {
-        if (usuarioActual == null || usuarioActual.getCargo() == null) return "";
-        return usuarioActual.getCargo().trim().toLowerCase();
+        return (usuarioActual != null && usuarioActual.getCargo() != null)
+                ? usuarioActual.getCargo().toLowerCase()
+                : "";
     }
 
-    private boolean esAdministrador(String cargo) {
-        return cargo.contains("administrador");
-    }
-
-    private boolean esDirector(String cargo) {
-        return cargo.contains("director") && !cargo.contains("tic");
-    }
-
-    private boolean esDirectorTic(String cargo) {
-        return cargo.contains("director") && cargo.contains("tic");
-    }
-
-    private boolean esResponsableAccesos(String cargo) {
-        return cargo.contains("responsable") && cargo.contains("accesos");
-    }
-
-    private boolean esOficialSeguridad(String cargo) {
-        return cargo.contains("oficial") && cargo.contains("seguridad");
-    }
+    private boolean esAdministrador(String c) { return c.contains("administrador"); }
+    private boolean esDirector(String c) { return c.contains("director") && !c.contains("tic"); }
+    private boolean esDirectorTic(String c) { return c.contains("director") && c.contains("tic"); }
+    private boolean esResponsableAccesos(String c) { return c.contains("responsable") && c.contains("accesos"); }
+    private boolean esOficialSeguridad(String c) { return c.contains("oficial") && c.contains("seguridad"); }
 
     // =====================================================
-    // CARGA BASE POR ROL
+    // CARGA BASE POR ROL (SIN Firma.usuario)
     // =====================================================
 
     private void cargarBasePorRol() {
-        listaBase = new ArrayList<>();
 
         try {
             List<Solicitud> todas = solCtrl.listarTodos();
             if (todas == null) return;
 
             for (Solicitud s : todas) {
-                if (s == null) continue;
-                String est = (s.getEstado() != null) ? s.getEstado().toUpperCase() : "";
+                if (s == null || s.getEstado() == null) continue;
 
-                // Excluir ANULADAS para todos
-                if ("ANULADA".equals(est)) {
-                    continue;
-                }
+                String est = s.getEstado().toUpperCase();
 
-                boolean tieneFirmaDirectorTic = contieneFirmaConTexto(s, "Director TIC");
-                boolean tieneFirmaOficial = contieneFirmaConTexto(s, "Oficial de Seguridad");
+                // Excluir anuladas
+                if ("ANULADA".equals(est)) continue;
 
-                // =========================
-                // ADMINISTRADOR
-                // =========================
+                // ADMIN
                 if (modoAdmin) {
                     listaBase.add(s);
                     continue;
                 }
 
-                // =========================
-                // DIRECTOR DE ÁREA
-                // =========================
+                // DIRECTOR
                 if (modoDirector) {
-                    if (s.getJefeAutoriza() == null
-                            || s.getJefeAutoriza().getId() == null
-                            || usuarioActual == null
-                            || usuarioActual.getId() == null) {
-                        continue;
+                    if (!"PENDIENTE DIRECTOR".equals(est)) {
+                        listaBase.add(s);
                     }
-
-                    if (!usuarioActual.getId().equals(s.getJefeAutoriza().getId())) {
-                        continue;
-                    }
-
-                    // No mostrar las que aún están en PENDIENTE DIRECTOR
-                    if ("PENDIENTE DIRECTOR".equals(est)) {
-                        continue;
-                    }
-
-                    listaBase.add(s);
                     continue;
                 }
 
-                // =========================
                 // DIRECTOR TIC
-                // =========================
                 if (modoDirectorTic) {
-                    // Sólo solicitudes en las que YA intervino el Director TIC
-                    // (tienen una firma con "Director TIC") y que están después
-                    // de su intervención.
-                    if (tieneFirmaDirectorTic &&
-                            ("PENDIENTE OFICIAL SEGURIDAD".equals(est)
-                             || "PENDIENTE RESPONSABLE ACCESOS".equals(est)
-                             || "APROBADA".equals(est)
-                             || "RECHAZADA".equals(est)
-                             || "APLICADO PERMISOS".equals(est)
-                             || "PERMISOS APLICADOS".equals(est))) {
+                    if (est.contains("TIC")
+                            || est.contains("OFICIAL")
+                            || est.contains("RESPONSABLE")
+                            || est.contains("APLICADO")) {
                         listaBase.add(s);
                     }
                     continue;
                 }
 
-                // =========================
-                // OFICIAL DE SEGURIDAD
-                // =========================
+                // OFICIAL SEGURIDAD
                 if (modoOficialSeguridad) {
-                    // Sólo solicitudes en las que YA intervino el Oficial
-                    // (firma con "Oficial de Seguridad") y que están después
-                    // de esa aprobación.
-                    if (tieneFirmaOficial &&
-                            ("PENDIENTE RESPONSABLE ACCESOS".equals(est)
-                             || "APROBADA".equals(est)
-                             || "RECHAZADA".equals(est)
-                             || "APLICADO PERMISOS".equals(est)
-                             || "PERMISOS APLICADOS".equals(est))) {
+                    if (est.contains("OFICIAL")
+                            || est.contains("RESPONSABLE")
+                            || est.contains("APLICADO")) {
                         listaBase.add(s);
                     }
                     continue;
                 }
 
-                // =========================
                 // RESPONSABLE DE ACCESOS
-                // =========================
                 if (modoResponsableAccesos) {
-                    // Aquí SOLO mostramos las solicitudes en las que YA
-                    // se aplicaron los permisos en sistemas reales.
                     if ("APLICADO PERMISOS".equals(est)
                             || "PERMISOS APLICADOS".equals(est)) {
                         listaBase.add(s);
@@ -280,90 +215,42 @@ public class ReportesBean implements Serializable {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             FacesContext.getCurrentInstance().addMessage(
                     null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Error al cargar reportes",
-                            e.getMessage()));
+                            "Error al cargar reportes", e.getMessage()));
         }
-    }
-
-    /**
-     * Verifica si la solicitud tiene alguna firma cuya descripción
-     * contenga cierto texto (por ejemplo, "Director TIC" o
-     * "Oficial de Seguridad").
-     */
-    private boolean contieneFirmaConTexto(Solicitud s, String texto) {
-        if (s == null || s.getFirmas() == null || texto == null) {
-            return false;
-        }
-        String t = texto.toLowerCase();
-        for (Firma f : s.getFirmas()) {
-            if (f != null && f.getDescripcion() != null
-                    && f.getDescripcion().toLowerCase().contains(t)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     // =====================================================
-    // FILTROS (BUSCAR / LIMPIAR)
+    // FILTROS
     // =====================================================
 
     public void buscar() {
         lista = new ArrayList<>();
 
-        if (listaBase == null) {
-            return;
-        }
-
         String texto = (nombreFiltro != null) ? nombreFiltro.trim().toLowerCase() : "";
-        LocalDate desde = null;
-        LocalDate hasta = null;
-
-        if (fechaDesde != null) {
-            desde = fechaDesde.toInstant()
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate();
-        }
-        if (fechaHasta != null) {
-            hasta = fechaHasta.toInstant()
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate();
-        }
+        LocalDate desde = (fechaDesde != null)
+                ? fechaDesde.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                : null;
+        LocalDate hasta = (fechaHasta != null)
+                ? fechaHasta.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                : null;
 
         for (Solicitud s : listaBase) {
             if (s == null) continue;
 
-            // ---- Filtro por nombre / apellido del solicitante ----
             if (!texto.isEmpty()) {
-                String nombreCompleto = "";
-                if (s.getUsuario() != null) {
-                    String n = (s.getUsuario().getNombre() != null)
-                            ? s.getUsuario().getNombre()
-                            : "";
-                    String a = (s.getUsuario().getApellido() != null)
-                            ? s.getUsuario().getApellido()
-                            : "";
-                    nombreCompleto = (n + " " + a).trim().toLowerCase();
-                }
-                if (!nombreCompleto.contains(texto)) {
-                    continue;
-                }
+                String nc = (s.getUsuario() != null)
+                        ? (s.getUsuario().getNombre() + " " + s.getUsuario().getApellido()).toLowerCase()
+                        : "";
+                if (!nc.contains(texto)) continue;
             }
 
-            // ---- Filtro por rango de fechas (usamos fechaCreacion) ----
             if (s.getFechaCreacion() != null && (desde != null || hasta != null)) {
-                LocalDate fechaSolicitud = s.getFechaCreacion().toLocalDate();
-
-                if (desde != null && fechaSolicitud.isBefore(desde)) {
-                    continue;
-                }
-                if (hasta != null && fechaSolicitud.isAfter(hasta)) {
-                    continue;
-                }
+                LocalDate f = s.getFechaCreacion().toLocalDate();
+                if (desde != null && f.isBefore(desde)) continue;
+                if (hasta != null && f.isAfter(hasta)) continue;
             }
 
             lista.add(s);
@@ -378,137 +265,86 @@ public class ReportesBean implements Serializable {
     }
 
     // =====================================================
-    // DESCRIPCIÓN AMIGABLE DE ESTADO (para la tabla)
+    // VISUALIZACIÓN PDF (POR ESTADO + ROL)
     // =====================================================
 
-    /**
-     * Devuelve una descripción amigable de estado:
-     * - "Rechazada"  cuando el estado real es RECHAZADA.
-     * - "Permisos aplicados" para los estados finales del Responsable de Accesos.
-     * - "Firmada y aprobada" para el resto de estados válidos.
-     */
+    public boolean puedeVerPdf(Solicitud s) {
+
+        if (s == null || s.getEstado() == null || usuarioActual == null) {
+            return false;
+        }
+
+        String est = s.getEstado().toUpperCase();
+
+        if (modoAdmin) return true;
+
+        if (modoDirector) {
+            return !"PENDIENTE DIRECTOR".equals(est);
+        }
+
+        if (modoDirectorTic) {
+            return est.contains("TIC")
+                    || est.contains("OFICIAL")
+                    || est.contains("RESPONSABLE")
+                    || est.contains("APLICADO");
+        }
+
+        if (modoOficialSeguridad) {
+            return est.contains("OFICIAL")
+                    || est.contains("RESPONSABLE")
+                    || est.contains("APLICADO");
+        }
+
+        if (modoResponsableAccesos) {
+            return est.contains("APLICADO");
+        }
+
+        return false;
+    }
+
+    // =====================================================
+    // UTILIDADES PARA LA VISTA
+    // =====================================================
+
     public String descripcionEstado(String estado) {
-        if (estado == null) {
-            return "";
-        }
+        if (estado == null) return "";
+        String e = estado.toUpperCase();
 
-        String est = estado.trim().toUpperCase();
-
-        if ("RECHAZADA".equals(est)) {
-            return "Rechazada";
-        }
-
-        if ("APLICADO PERMISOS".equals(est)
-                || "PERMISOS APLICADOS".equals(est)) {
+        if ("RECHAZADA".equals(e)) return "Rechazada";
+        if ("APLICADO PERMISOS".equals(e) || "PERMISOS APLICADOS".equals(e))
             return "Permisos aplicados";
-        }
 
         return "Firmada y aprobada";
     }
 
     // =====================================================
-    //  INFORMACIÓN DE ÚLTIMA FIRMA PARA LOS REPORTES
+    // GETTERS / SETTERS (JSF)
     // =====================================================
 
-    public String ultimaFirmaFecha(Solicitud s) {
-        if (s == null || s.getFirmas() == null || s.getFirmas().isEmpty()) {
-            return "";
-        }
-        Firma ultima = Collections.max(s.getFirmas(), Comparator.comparing(Firma::getFechaFirma));
-        LocalDateTime dt = ultima.getFechaFirma();
-        return (dt != null) ? dt.format(fmtFechaHora) : "";
-    }
+    public List<Solicitud> getLista() { return lista; }
+    public String getTituloSeccion() { return tituloSeccion; }
 
-    public String ultimaFirmaDescripcion(Solicitud s) {
-        if (s == null || s.getFirmas() == null || s.getFirmas().isEmpty()) {
-            return "Sin firmas registradas";
-        }
-        Firma ultima = Collections.max(s.getFirmas(), Comparator.comparing(Firma::getFechaFirma));
-        return (ultima.getDescripcion() != null) ? ultima.getDescripcion() : "";
-    }
+    public String getNombreFiltro() { return nombreFiltro; }
+    public void setNombreFiltro(String v) { nombreFiltro = v; }
 
-    // =====================================================
-    // GETTERS / SETTERS
-    // =====================================================
+    public Date getFechaDesde() { return fechaDesde; }
+    public void setFechaDesde(Date v) { fechaDesde = v; }
 
-    public Usuario getUsuarioActual() {
-        return usuarioActual;
-    }
+    public Date getFechaHasta() { return fechaHasta; }
+    public void setFechaHasta(Date v) { fechaHasta = v; }
 
-    public List<Solicitud> getLista() {
-        return lista;
-    }
+    public String getTipoReporte() { return tipoReporte; }
+    public void setTipoReporte(String v) { tipoReporte = v; }
 
-    public void setLista(List<Solicitud> lista) {
-        this.lista = lista;
-    }
+    public boolean isModoAdmin() { return modoAdmin; }
+    public boolean isModoDirector() { return modoDirector; }
+    public boolean isModoDirectorTic() { return modoDirectorTic; }
+    public boolean isModoResponsableAccesos() { return modoResponsableAccesos; }
+    public boolean isModoOficialSeguridad() { return modoOficialSeguridad; }
 
-    public String getTituloSeccion() {
-        return tituloSeccion;
-    }
-
-    public void setTituloSeccion(String tituloSeccion) {
-        this.tituloSeccion = tituloSeccion;
-    }
-
-    public String getNombreFiltro() {
-        return nombreFiltro;
-    }
-
-    public void setNombreFiltro(String nombreFiltro) {
-        this.nombreFiltro = nombreFiltro;
-    }
-
-    public Date getFechaDesde() {
-        return fechaDesde;
-    }
-
-    public void setFechaDesde(Date fechaDesde) {
-        this.fechaDesde = fechaDesde;
-    }
-
-    public Date getFechaHasta() {
-        return fechaHasta;
-    }
-
-    public void setFechaHasta(Date fechaHasta) {
-        this.fechaHasta = fechaHasta;
-    }
-
-    public String getTipoReporte() {
-        return tipoReporte;
-    }
-
-    public void setTipoReporte(String tipoReporte) {
-        this.tipoReporte = tipoReporte;
-    }
-
-    // --------- Getters booleanos (para JSF) ---------
-
-    public boolean isModoAdmin() {
-        return modoAdmin;
-    }
-
-    public boolean isModoDirector() {
-        return modoDirector;
-    }
-
-    public boolean isModoDirectorTic() {
-        return modoDirectorTic;
-    }
-
-    public boolean isModoResponsableAccesos() {
-        return modoResponsableAccesos;
-    }
-
-    public boolean isModoOficialSeguridad() {
-        return modoOficialSeguridad;
-    }
-
-    // También con getX para EL
-    public boolean getModoAdmin() { return isModoAdmin(); }
-    public boolean getModoDirector() { return isModoDirector(); }
-    public boolean getModoDirectorTic() { return isModoDirectorTic(); }
-    public boolean getModoResponsableAccesos() { return isModoResponsableAccesos(); }
-    public boolean getModoOficialSeguridad() { return isModoOficialSeguridad(); }
+    public boolean getModoAdmin() { return modoAdmin; }
+    public boolean getModoDirector() { return modoDirector; }
+    public boolean getModoDirectorTic() { return modoDirectorTic; }
+    public boolean getModoResponsableAccesos() { return modoResponsableAccesos; }
+    public boolean getModoOficialSeguridad() { return modoOficialSeguridad; }
 }
